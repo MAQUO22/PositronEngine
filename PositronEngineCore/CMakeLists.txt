@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.12)
 
-set(CORE_PROJECT_NAME PositronEngineCore)
+set(ENGINE_PROJECT_NAME PositronEngineCore)
 
-add_library(${CORE_PROJECT_NAME} STATIC
+add_library(${ENGINE_PROJECT_NAME} STATIC
     src/PositronEngineCore/Utilis/positron.cpp
     includes/PositroneEngineCore/Utilis/positron.hpp
     )
 
-target_include_directories(${CORE_PROJECT_NAME} PUBLIC includes)
+target_include_directories(${ENGINE_PROJECT_NAME} PUBLIC includes)
 
-target_compile_features(${CORE_PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${ENGINE_PROJECT_NAME} PUBLIC cxx_std_17)
+
+add_subdirectory(../submodules/glfw ${CMAKE_CURRENT_BINARY_DIR}/glfw)
+target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE glfw)

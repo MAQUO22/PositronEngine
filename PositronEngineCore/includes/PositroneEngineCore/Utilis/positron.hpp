@@ -1,3 +1,3 @@
 namespace PositronEngine{
-void hello_core();
+int hello_and_glfw();
 }
