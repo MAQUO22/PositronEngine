@@ -1,10 +1,17 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(ENGINE_PROJECT_NAME PositronEngineCore)
+set(ENGINE_PUBLIC_INCLUDES
+    includes/PositroneEngineCore/Application.hpp
+)
+set(ENGINE_PRIVATE_SOURSES
+    src/PositronEngineCore/Application.cpp
+)
+
 
 add_library(${ENGINE_PROJECT_NAME} STATIC
-    src/PositronEngineCore/Utilis/positron.cpp
-    includes/PositroneEngineCore/Utilis/positron.hpp
+    ${ENGINE_PUBLIC_INCLUDES}
+    ${ENGINE_PRIVATE_SOURSES}
     )
 
 target_include_directories(${ENGINE_PROJECT_NAME} PUBLIC includes)
