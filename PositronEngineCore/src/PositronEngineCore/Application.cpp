@@ -1,9 +1,18 @@
-#include"PositroneEngineCore/Application.hpp"
-#include<GLFW/glfw3.h>
-#include<iostream>
+#include "PositroneEngineCore/Application.hpp"
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <PositroneEngineCore/Log.hpp>
+
+#include <iostream>
+
 namespace PositronEngine{
     Application::Application(){
+        LOG_INFORMATION("Welcome to spdlog!");
+        LOG_ERROR("Some error message with arg: {}", 1);
 
+        LOG_WARNING("Easy padding in numbers like {:08d}", 12);
+        LOG_CRITICAL("Support for int: {0:d};  hex: {0:x};  oct: {0:o}; bin: {0:b}", 42);
     }
 
     Application::~Application(){
@@ -28,11 +37,19 @@ namespace PositronEngine{
         /* Make the window's context current */
         glfwMakeContextCurrent(window);
 
+        if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
+            LOG_CRITICAL("Initialization of GLAD is failed");
+            return -1;
+        }
+
+        glClearColor(1,1,0,0);
+
+
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {
             /* Render here */
-            //glClear(GL_COLOR_BUFFER_BIT); // <--- need GL
+            glClear(GL_COLOR_BUFFER_BIT); // <--- need GL
 
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
