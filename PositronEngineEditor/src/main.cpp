@@ -1,11 +1,11 @@
 #include<iostream>
-#include<PositroneEngineCore/Application.hpp>
+#include<PositronEngineCore/Application.hpp>
 #include<memory>
 
 class EditorApplication : public PositronEngine::Application{
     int frame;
 
-    virtual void on_update() override{
+    virtual void onUpdate() override{
         //std::cout << "Editor application working and showing frame number-> " << frame++ << std::endl;
     }
 };
