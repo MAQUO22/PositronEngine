@@ -5,6 +5,7 @@ set(ENGINE_PROJECT_NAME PositronEngineCore)
 set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/Application.hpp
     includes/PositronEngineCore/Log.hpp
+    includes/PositronEngineCore/Event.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES

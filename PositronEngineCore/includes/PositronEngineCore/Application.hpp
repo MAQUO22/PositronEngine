@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PositronEngineCore/Event.hpp"
 #include <memory>
 
 namespace PositronEngine{
@@ -18,6 +19,9 @@ class Application{
 
     private:
         std::unique_ptr<class Window> _window;
+        EventDispathcer _event_dispatcher;
+
+        bool isWindowAlive = true;
 };
 }
 

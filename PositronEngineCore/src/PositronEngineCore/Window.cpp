@@ -8,7 +8,7 @@ namespace PositronEngine{
 static bool is_GLFW_initialized_ = false;
 
 Window::Window(std::string title, unsigned int width, unsigned int height) :
-    _title(std::move(title)), _width(width), _heigth(height)
+    _window_data({std::move(title), width, height})
 {
     int result_code = initialization();
 }
@@ -27,7 +27,7 @@ void Window::onUpdate(){
 
 int Window::initialization(){
 
-    LOG_INFORMATION("Window '{0}' is created", _title);
+    LOG_INFORMATION("Window '{0}' is created", _window_data._title);
 
     if(!is_GLFW_initialized_){
         if (!glfwInit()){
@@ -37,10 +37,10 @@ int Window::initialization(){
         is_GLFW_initialized_ = true;
     }
 
-    _window = glfwCreateWindow(_width, _heigth, _title.c_str(), nullptr, nullptr);
+    _window = glfwCreateWindow(_window_data._width, _window_data._heigth, _window_data._title.c_str(), nullptr, nullptr);
     if (!_window)
     {
-        LOG_CRITICAL("Window '{0}' has not been created!", _title);
+        LOG_CRITICAL("Window '{0}' has not been created!", _window_data._title);
         glfwTerminate();
         return -2;
     }
@@ -51,6 +51,39 @@ int Window::initialization(){
         LOG_CRITICAL("Initialization of GLAD is failed");
         return -3;
     }
+
+    glfwSetWindowUserPointer(_window, &_window_data);
+
+    glfwSetWindowSizeCallback(_window,
+        [](GLFWwindow* window,int width, int height)
+        {
+            WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+            window_data._width = width;
+            window_data._heigth = height;
+
+            EventWindowResized event(width, height);
+            window_data._event_callback_function(event);
+        });
+
+    glfwSetCursorPosCallback(_window,
+        [](GLFWwindow* window, double x, double y)
+        {
+            WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+
+            EventMouseMoved event(x,y);
+            window_data._event_callback_function(event);
+        }
+    );
+
+    glfwSetWindowCloseCallback(_window,
+        [](GLFWwindow* window)
+        {
+             WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+
+             EventWindowClose event;
+             window_data._event_callback_function(event);
+        }
+    );
 
     return 0;
 }
