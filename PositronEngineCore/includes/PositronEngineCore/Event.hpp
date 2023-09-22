@@ -2,7 +2,8 @@
 #include <array>
 #include <functional>
 
-namespace PositronEngine{
+namespace PositronEngine
+{
 
     enum class EventType
     {
@@ -67,31 +68,30 @@ namespace PositronEngine{
 
     class EventDispathcer
     {
-
-    public:
-        template<typename EventType>
-        void addEventListener(std::function<void(EventType&)> callback)
-        {
-            auto base_callback = [function = std::move(callback)](BaseEvent& event)
+        public:
+            template<typename EventType>
+            void addEventListener(std::function<void(EventType&)> callback)
             {
-                if(event.getType() == EventType::type)
+                auto base_callback = [function = std::move(callback)](BaseEvent& event)
                 {
-                    function(static_cast<EventType&>(event));
-                }
-            };
+                    if(event.getType() == EventType::type)
+                    {
+                        function(static_cast<EventType&>(event));
+                    }
+                };
 
-            _events_callbacks[static_cast<size_t>(EventType::type)] = std::move(base_callback);
-        }
+                _events_callbacks[static_cast<size_t>(EventType::type)] = std::move(base_callback);
+            }
 
-        void dispatch(BaseEvent& event)
-        {
-            auto& callback = _events_callbacks[static_cast<size_t>(event.getType())];
+            void dispatch(BaseEvent& event)
+            {
+                auto& callback = _events_callbacks[static_cast<size_t>(event.getType())];
 
-            if(callback)
-                callback(event);
-        }
+                if(callback)
+                    callback(event);
+            }
 
-    private:
-        std::array<std::function<void(BaseEvent&)>, static_cast<size_t>(EventType::EventsCount)> _events_callbacks;
+        private:
+            std::array<std::function<void(BaseEvent&)>, static_cast<size_t>(EventType::EventsCount)> _events_callbacks;
     };
 }

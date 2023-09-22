@@ -5,12 +5,16 @@
 
 #include <iostream>
 
-namespace PositronEngine{
-    Application::Application(){
+namespace PositronEngine
+{
+
+    Application::Application()
+    {
         LOG_INFORMATION("Stating application");
     }
 
-    Application::~Application(){
+    Application::~Application()
+    {
         LOG_INFORMATION("Closing application");
     }
 
@@ -36,7 +40,7 @@ namespace PositronEngine{
             [&](EventWindowClose& event)
             {
                 LOG_INFORMATION("Event WINDOW_RESIZED is triggered. Window is closing");
-                isWindowAlive = false;
+                _is_window_alive = false;
 
             }
         );
@@ -49,7 +53,8 @@ namespace PositronEngine{
         );
 
 
-        while(isWindowAlive){
+        while(_is_window_alive)
+        {
             _window->onUpdate();
             onUpdate();
         }

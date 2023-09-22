@@ -6,47 +6,47 @@
 
 struct GLFWwindow;
 
-namespace PositronEngine{
-
-class Window{
-public:
-    using eventCallbackFunction = std::function<void(BaseEvent&)>;
-
-    Window(std::string title, unsigned int width, unsigned int height);
-    ~Window();
-
-    Window(const Window&) = delete;
-    Window(Window&&) = delete;
-    Window& operator=(const Window&) = delete;
-    Window& operator=(const Window&&) = delete;
-
-    virtual void onUpdate();
-
-    unsigned int getWidth() const { return this->_window_data._width; }
-    unsigned int getHeight() const { return this->_window_data._heigth; }
-
-    void setEventCallback(const eventCallbackFunction& callback)
+namespace PositronEngine
+{
+    class Window
     {
-        _window_data._event_callback_function = callback;
-    }
+        public:
+            using eventCallbackFunction = std::function<void(BaseEvent&)>;
 
-private:
-    struct WindowData
-    {
-        std::string _title;
-        unsigned int _width;
-        unsigned int _heigth;
-        eventCallbackFunction _event_callback_function;
+            Window(std::string title, unsigned int width, unsigned int height);
+            ~Window();
+
+            Window(const Window&) = delete;
+            Window(Window&&) = delete;
+            Window& operator=(const Window&) = delete;
+            Window& operator=(const Window&&) = delete;
+
+            virtual void onUpdate();
+
+            unsigned int getWidth() const { return this->_window_data._width; }
+            unsigned int getHeight() const { return this->_window_data._heigth; }
+
+            void setEventCallback(const eventCallbackFunction& callback)
+            {
+                _window_data._event_callback_function = callback;
+            }
+
+        private:
+            struct WindowData
+            {
+                std::string _title;
+                unsigned int _width;
+                unsigned int _heigth;
+                eventCallbackFunction _event_callback_function;
+            };
+
+            int initialization();
+            void shutDown();
+
+            GLFWwindow* _window = nullptr;
+            WindowData _window_data;
+
+            float _background_color[4] = {1.0f, 1.0f, 0.0f, 0.0f };
     };
-
-    int initialization();
-    void shutDown();
-
-    GLFWwindow* _window = nullptr;
-    WindowData _window_data;
-
-    float _background_color[4] = {1.0f, 1.0f, 0.0f, 0.0f };
-
-};
 }
 
