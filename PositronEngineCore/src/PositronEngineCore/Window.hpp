@@ -45,6 +45,8 @@ private:
     GLFWwindow* _window = nullptr;
     WindowData _window_data;
 
+    float _background_color[4] = {1.0f, 1.0f, 0.0f, 0.0f };
+
 };
 }
 

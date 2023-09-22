@@ -1,7 +1,12 @@
 #include <PositronEngineCore/Window.hpp>
 #include <PositronEngineCore/Log.hpp>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
+#include <imgui/backends/imgui_impl_glfw.h>
 
 namespace PositronEngine{
 
@@ -11,6 +16,13 @@ Window::Window(std::string title, unsigned int width, unsigned int height) :
     _window_data({std::move(title), width, height})
 {
     int result_code = initialization();
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplOpenGL3_Init();
+
+    ImGui_ImplGlfw_InitForOpenGL(_window, true);
+
 }
 
 Window::~Window(){
@@ -19,8 +31,27 @@ Window::~Window(){
 
 void Window::onUpdate(){
 
-    glClearColor(1,1,0,0);
+    glClearColor(_background_color[0],_background_color[1],_background_color[2],_background_color[3]);
     glClear(GL_COLOR_BUFFER_BIT); // <--- need GL
+
+    ImGuiIO& input_output = ImGui::GetIO();
+    input_output.DisplaySize.x = static_cast<float>(getWidth());
+    input_output.DisplaySize.y = static_cast<float>(getHeight());
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+
+    ImGui::NewFrame();
+
+
+    ImGui::Begin("Color Picker");
+    ImGui::SetWindowSize("Color Picker",ImVec2(300,60));
+    ImGui::ColorEdit4("Color", _background_color);
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(_window);
     glfwPollEvents();
 }
