@@ -25,7 +25,7 @@ namespace PositronEngine
         _event_dispatcher.addEventListener<EventMouseMoved>(
             [](EventMouseMoved& event)
             {
-                LOG_INFORMATION("Event MOUSE_MOVE is triggered. New mouse position is x:{0},y{1}", event.x, event.y);
+                //LOG_INFORMATION("Event MOUSE_MOVE is triggered. New mouse position is x:{0},y{1}", event.x, event.y);
             }
         );
 
@@ -39,7 +39,7 @@ namespace PositronEngine
         _event_dispatcher.addEventListener<EventWindowClose>(
             [&](EventWindowClose& event)
             {
-                LOG_INFORMATION("Event WINDOW_RESIZED is triggered. Window is closing");
+                LOG_INFORMATION("Event WINDOW_CLOSING is triggered. Window is closing");
                 _is_window_alive = false;
 
             }

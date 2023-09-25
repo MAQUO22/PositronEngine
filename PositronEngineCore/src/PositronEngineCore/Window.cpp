@@ -1,5 +1,7 @@
 #include <PositronEngineCore/Window.hpp>
 #include <PositronEngineCore/Log.hpp>
+#include <PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp>
+#include <PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -10,7 +12,6 @@
 
 namespace PositronEngine
 {
-
     static bool is_GLFW_initialized_ = false;
 
     GLfloat points[] = {
@@ -43,7 +44,11 @@ namespace PositronEngine
         "   frag_color = vec4(color, 1.0);"
         "}";
 
-    GLuint shader_program;
+    std::unique_ptr<ShaderProgram> shader_program;
+
+    std::unique_ptr<VertexBuffer> vertex_buffer_points;
+    std::unique_ptr<VertexBuffer> vertex_buffer_colors;
+
     GLuint vertext_array_object;
 
     Window::Window(std::string title, unsigned int width, unsigned int height) :
@@ -56,7 +61,6 @@ namespace PositronEngine
         ImGui_ImplOpenGL3_Init();
 
         ImGui_ImplGlfw_InitForOpenGL(_window, true);
-
     }
 
     Window::~Window()
@@ -71,7 +75,7 @@ namespace PositronEngine
         glClear(GL_COLOR_BUFFER_BIT); // <--- need GL
 
 
-        glUseProgram(shader_program);
+        shader_program->bind();
         glBindVertexArray(vertext_array_object);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -168,45 +172,25 @@ namespace PositronEngine
             }
         );
 
+        shader_program = std::make_unique<ShaderProgram>(vertex_shader, fragment_shader);
+        if(!shader_program->isCompile())
+        {
+            return false;
+        }
 
+        vertex_buffer_points = std::make_unique<VertexBuffer>(points, sizeof(points));
+        vertex_buffer_colors = std::make_unique<VertexBuffer>(colors, sizeof(colors));
 
-
-        GLuint vertex_shader_identificator = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex_shader_identificator, 1, &vertex_shader, nullptr);
-        glCompileShader(vertex_shader_identificator);
-
-        GLuint fragment_shader_identificator = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment_shader_identificator, 1, &fragment_shader, nullptr);
-        glCompileShader(fragment_shader_identificator);
-
-        shader_program = glCreateProgram();
-        glAttachShader(shader_program, vertex_shader_identificator);
-        glAttachShader(shader_program, fragment_shader_identificator);
-
-        glLinkProgram(shader_program);
-
-        glDeleteShader(vertex_shader_identificator);
-        glDeleteShader(fragment_shader_identificator);
-
-        GLuint points_vbo = 0;
-        glGenBuffers(1, &points_vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-
-        GLuint colors_vbo = 0;
-        glGenBuffers(1, &colors_vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
 
         glGenVertexArrays(1, &vertext_array_object);
         glBindVertexArray(vertext_array_object);
 
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+        vertex_buffer_points->bind();
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
         glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+        vertex_buffer_colors->bind();
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
         return 0;
@@ -217,5 +201,4 @@ namespace PositronEngine
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
-
 }
