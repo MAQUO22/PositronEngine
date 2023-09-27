@@ -2,9 +2,11 @@
 #include <PositronEngineCore/Log.hpp>
 #include <PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp>
 #include <PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp>
+#include <PositronEngineCore/Rendering/OpenGL/VertexArray.hpp>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
@@ -48,8 +50,9 @@ namespace PositronEngine
 
     std::unique_ptr<VertexBuffer> vertex_buffer_points;
     std::unique_ptr<VertexBuffer> vertex_buffer_colors;
+    std::unique_ptr<VertexArray> vertex_array_object;
 
-    GLuint vertext_array_object;
+    GLuint vao;
 
     Window::Window(std::string title, unsigned int width, unsigned int height) :
         _window_data({std::move(title), width, height})
@@ -72,11 +75,11 @@ namespace PositronEngine
     {
 
         glClearColor(_background_color[0],_background_color[1],_background_color[2],_background_color[3]);
-        glClear(GL_COLOR_BUFFER_BIT); // <--- need GL
+        glClear(GL_COLOR_BUFFER_BIT);
 
 
         shader_program->bind();
-        glBindVertexArray(vertext_array_object);
+        vertex_array_object->bind();
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
 
@@ -91,7 +94,7 @@ namespace PositronEngine
 
 
         ImGui::Begin("Color Picker");
-        ImGui::SetWindowSize("Color Picker",ImVec2(300,60));
+        ImGui::SetWindowSize("Color Picker", ImVec2(300,60));
         ImGui::ColorEdit4("Color", _background_color);
         ImGui::End();
 
@@ -175,23 +178,15 @@ namespace PositronEngine
         shader_program = std::make_unique<ShaderProgram>(vertex_shader, fragment_shader);
         if(!shader_program->isCompile())
         {
-            return false;
+            return -4;
         }
 
         vertex_buffer_points = std::make_unique<VertexBuffer>(points, sizeof(points));
         vertex_buffer_colors = std::make_unique<VertexBuffer>(colors, sizeof(colors));
+        vertex_array_object = std::make_unique<VertexArray>();
 
-
-        glGenVertexArrays(1, &vertext_array_object);
-        glBindVertexArray(vertext_array_object);
-
-        glEnableVertexAttribArray(0);
-        vertex_buffer_points->bind();
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-        glEnableVertexAttribArray(1);
-        vertex_buffer_colors->bind();
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        vertex_array_object->addBuffer(*vertex_buffer_points);
+        vertex_array_object->addBuffer(*vertex_buffer_colors);
 
         return 0;
     }
@@ -200,5 +195,6 @@ namespace PositronEngine
     {
         glfwDestroyWindow(_window);
         glfwTerminate();
+        LOG_INFORMATION("~Window");
     }
 }

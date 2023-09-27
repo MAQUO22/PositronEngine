@@ -15,8 +15,9 @@ class EditorApplication : public PositronEngine::Application
 int main()
 {
     auto app = std::make_unique<EditorApplication>();
-    int editor_start_code = app->start(1280,720,"Positron Engine");
+    int editor_start_code = app->start(1280,720,"Positron Engine Editor");
 
     std::cin.get();
+    std::cout << editor_start_code << std::endl;
     return editor_start_code;
  }
