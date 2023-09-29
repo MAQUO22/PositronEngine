@@ -5,8 +5,8 @@
 
 namespace PositronEngine
 {
-    VertexArray::VertexArray():
-        _id(0), _elements_count(0)
+    VertexArray::VertexArray()
+        : _id(0), _elements_count(0)
     {
         glGenVertexArrays(1, &_id);
     }
@@ -51,9 +51,17 @@ namespace PositronEngine
         bind();
         vertex_buffer.bind();
 
-        glEnableVertexAttribArray(_elements_count);
-        glVertexAttribPointer(_elements_count, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-        ++_elements_count;
+        for(const BufferElement current_element : vertex_buffer.getLayout().getElement())
+        {
+            glEnableVertexAttribArray(_elements_count);
+            glVertexAttribPointer(_elements_count,
+                                  static_cast<GLint>(current_element.component_count),
+                                  current_element.component_type,
+                                  GL_FALSE, // <-- normalize in grid (-1 : 1)
+                                  static_cast<GLsizei>(vertex_buffer.getLayout().getStride()),
+                                  reinterpret_cast<const void*>(current_element.offset) // <-- need pointer
+            );
+            ++_elements_count;
+        }
     }
 }

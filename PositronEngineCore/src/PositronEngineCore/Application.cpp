@@ -1,6 +1,6 @@
 #include "PositronEngineCore/Application.hpp"
-#include <PositronEngineCore/Log.hpp>
-#include <PositronEngineCore/Window.hpp>
+#include "PositronEngineCore/Log.hpp"
+#include "PositronEngineCore/Window.hpp"
 #include "PositronEngineCore/Event.hpp"
 
 #include <iostream>
