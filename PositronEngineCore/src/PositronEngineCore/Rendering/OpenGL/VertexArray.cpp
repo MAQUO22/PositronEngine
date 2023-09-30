@@ -46,7 +46,7 @@ namespace PositronEngine
         glBindVertexArray(0);
     }
 
-    void VertexArray::addBuffer(const VertexBuffer& vertex_buffer)
+    void VertexArray::addVertexBuffer(const VertexBuffer& vertex_buffer)
     {
         bind();
         vertex_buffer.bind();
@@ -63,5 +63,12 @@ namespace PositronEngine
             );
             ++_elements_count;
         }
+    }
+
+    void VertexArray::setIndexBuffer(const IndexBuffer& index_buffer)
+    {
+        bind();
+        index_buffer.bind();
+        _indices_count = index_buffer.getCount();
     }
 }

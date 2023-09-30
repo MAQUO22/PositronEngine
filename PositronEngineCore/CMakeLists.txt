@@ -13,6 +13,7 @@ set(ENGINE_PRIVATE_INCLUDES
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.hpp
+    src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp
 )
 
 set(ENGINE_PRIVATE_SOURSES
@@ -21,6 +22,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.cpp
+    src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
 )
 
 set(ENGINE_ALL_SOURCES

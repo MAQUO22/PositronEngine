@@ -3,6 +3,7 @@
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexArray.hpp"
+#include "PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -16,24 +17,16 @@ namespace PositronEngine
 {
     static bool is_GLFW_initialized_ = false;
 
-    GLfloat points[] = {
-        0.0f, 0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f
-    };
-
-    GLfloat colors[] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
-    };
-
-    GLfloat points_and_colors[] = {
-        0.0f, 0.5f, 0.0f,   1.0f, 0.5f, 0.0f,
+    GLfloat square_points_and_colors[] = {
+        -0.5f, -0.5f, 0.0f,   1.0f, 0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.5f,
-        -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 1.0f
+        -0.5f, 0.5f, 0.0f, 1.0f, 0.5f, 1.0f,
+        0.5f, 0.5f, 0.0f, 1.0, 0.5f, 1.0f
     };
 
+    GLuint indices[] = {
+        0, 1, 2, 3, 2, 1
+    };
 
     const char* vertex_shader =
         "#version 460\n"
@@ -53,23 +46,11 @@ namespace PositronEngine
         "   frag_color = vec4(color, 1.0);"
         "}";
 
-    //УМНЫЕ УКАЗАТЕЛИ ВЫЗЫВАЮТ ОШИБКУ СЕГМЕНТИРОВАНИЯ ПРИ УДАЛЕНИИ
-    //std::unique_ptr<ShaderProgram> shader_program = nullptr;
-
-    //std::unique_ptr<VertexBuffer> vertex_buffer_points = nullptr;
-    //std::unique_ptr<VertexBuffer> vertex_buffer_colors = nullptr;
-    //std::unique_ptr<VertexBuffer> vertex_buffer_points_and_colors = nullptr;
-
-    //std::unique_ptr<VertexArray> vertex_array_object_one_buffer = nullptr;
-    //std::unique_ptr<VertexArray> vertex_array_object_two_buffers = nullptr;
-
     ShaderProgram* shader_program = nullptr;
-    VertexBuffer* vertex_buffer_points = nullptr;
-    VertexBuffer* vertex_buffer_colors = nullptr;
     VertexBuffer* vertex_buffer_points_and_colors = nullptr;
+    IndexBuffer* index_buffer = nullptr;
 
-    VertexArray* vertex_array_object_one_buffer = nullptr;
-    VertexArray* vertex_array_object_two_buffers = nullptr;
+    VertexArray* vertex_array_object = nullptr;
 
     Window::Window(std::string title, unsigned int width, unsigned int height) :
         _window_data({std::move(title), width, height})
@@ -105,24 +86,13 @@ namespace PositronEngine
 
 
         ImGui::Begin("Color Picker");
-        ImGui::SetWindowSize("Color Picker", ImVec2(300,90));
+        ImGui::SetWindowSize("Color Picker", ImVec2(300,60));
         ImGui::ColorEdit4("Color", _background_color);
 
-        static bool use_buffer_with_two_objects = true;
-        ImGui::Checkbox("use buffer with 2 objects", &use_buffer_with_two_objects);
 
         shader_program->bind();
-
-        if(use_buffer_with_two_objects)
-        {
-            vertex_array_object_two_buffers->bind();
-        }
-        else{
-            vertex_array_object_one_buffer->bind();
-        }
-
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        vertex_array_object->bind();
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array_object->getIndicesCount()), GL_UNSIGNED_INT, nullptr);
 
 
         ImGui::End();
@@ -204,34 +174,11 @@ namespace PositronEngine
             }
         );
 
-        //shader_program = std::make_unique<ShaderProgram>(vertex_shader, fragment_shader);
         shader_program = new ShaderProgram(vertex_shader, fragment_shader);
         if(!shader_program->isCompile())
         {
             return -4;
         }
-
-        BufferLayout buffer_layout_one_element_vector3
-        {
-            ShaderDataType::Float3
-        };
-
-        //vertex_array_object_two_buffers = std::make_unique<VertexArray>();
-
-        //vertex_buffer_points = std::make_unique<VertexBuffer>(points, sizeof(points), buffer_layout_one_element_vector3);
-        //vertex_buffer_colors = std::make_unique<VertexBuffer>(colors, sizeof(colors), buffer_layout_one_element_vector3);
-
-        //vertex_array_object_two_buffers->addBuffer(*vertex_buffer_points);
-        //vertex_array_object_two_buffers->addBuffer(*vertex_buffer_colors);
-
-        vertex_array_object_two_buffers = new VertexArray();
-
-        vertex_buffer_points = new VertexBuffer(points, sizeof(points), buffer_layout_one_element_vector3);
-        vertex_buffer_colors = new VertexBuffer(colors, sizeof(colors), buffer_layout_one_element_vector3);
-
-        vertex_array_object_two_buffers->addBuffer(*vertex_buffer_points);
-        vertex_array_object_two_buffers->addBuffer(*vertex_buffer_colors);
-
 
 
         BufferLayout buffer_layout_two_elements_vector3
@@ -240,19 +187,16 @@ namespace PositronEngine
             ShaderDataType::Float3
         };
 
-        //vertex_array_object_one_buffer = std::make_unique<VertexArray>();
-        //vertex_buffer_points_and_colors = std::make_unique<VertexBuffer>(points_and_colors,
-        //                                                                 sizeof(points_and_colors),
-        //                                                                 buffer_layout_two_elements_vector3);
 
-        //vertex_array_object_one_buffer->addBuffer(*vertex_buffer_points_and_colors);
+        vertex_array_object = new VertexArray();
+        vertex_buffer_points_and_colors = new VertexBuffer(square_points_and_colors,
+                                                           sizeof(square_points_and_colors),
+                                                           buffer_layout_two_elements_vector3);
 
-        vertex_array_object_one_buffer = new VertexArray();
-        vertex_buffer_points_and_colors = new VertexBuffer(points_and_colors,
-                                                                         sizeof(points_and_colors),
-                                                                         buffer_layout_two_elements_vector3);
+        index_buffer = new IndexBuffer(indices, sizeof(indices) / sizeof(GLuint));
 
-        vertex_array_object_one_buffer->addBuffer(*vertex_buffer_points_and_colors);
+        vertex_array_object->addVertexBuffer(*vertex_buffer_points_and_colors);
+        vertex_array_object->setIndexBuffer(*index_buffer);
 
         return 0;
     }
@@ -263,11 +207,9 @@ namespace PositronEngine
         glfwTerminate();
 
         delete shader_program;
-        delete vertex_buffer_points;
-        delete vertex_buffer_colors;
         delete vertex_buffer_points_and_colors;
-        delete vertex_array_object_one_buffer;
-        delete vertex_array_object_two_buffers;
+        delete index_buffer;
+        delete vertex_array_object;
 
         LOG_INFORMATION("Window '{0}' is terminated.", _window_data._title);
     }
