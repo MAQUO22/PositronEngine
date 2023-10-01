@@ -1,5 +1,6 @@
 #include "PositronEngineCore/Window.hpp"
 #include "PositronEngineCore/Log.hpp"
+#include "PositronEngineCore/Camera.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexArray.hpp"
@@ -10,6 +11,7 @@
 #include <glm/mat3x3.hpp>
 #include <glm/trigonometric.hpp>
 #include <iostream>
+
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
@@ -35,10 +37,11 @@ namespace PositronEngine
         "layout(location = 0) in vec3 vertex_position;"
         "layout(location = 1) in vec3 vertex_color;"
         "uniform mat4 model_matrix;"
+        "uniform mat4 view_projection_matrix;"
         "out vec3 color;"
         "void main() {"
         "   color = vertex_color;"
-        "   gl_Position = model_matrix * vec4(vertex_position, 1.0);"
+        "   gl_Position = view_projection_matrix * model_matrix * vec4(vertex_position, 1.0);"
         "}";
 
     const char* fragment_shader =
@@ -55,10 +58,16 @@ namespace PositronEngine
 
     VertexArray* vertex_array_object = nullptr;
 
+    Camera camera;
+
     float location[3] = {0.0f, 0.0f, 0.0f};
     float rotation[3] = {0.0f, 0.0f, 0.0f};
     float scale[3] = {1.0f, 1.0f, 1.0f};
 
+    float camera_location[3] = {0.0f, 0.0f, 1.0f};
+    float camera_rotation[3] = {0.0f, 0.0f, 0.0f};
+
+    bool is_perspective_mode = false;
 
     Window::Window(std::string title, unsigned int width, unsigned int height) :
         _window_data({std::move(title), width, height})
@@ -113,11 +122,19 @@ namespace PositronEngine
                                     0, 0, scale[2], 0,
                                     0,  0,  0,  1};
 
+        camera.setLocationAndRotation(glm::vec3(camera_location[0],camera_location[1],camera_location[2]),
+                                       glm::vec3(camera_rotation[0],camera_rotation[1],camera_rotation[2]));
+
+        camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
+
         glm::mat4x4 model_matrix = location_matrix * rotate_matrix_x * rotate_matrix_y * rotate_matrix_z * scale_matrix;
 
         shader_program->setMatrix4("model_matrix", model_matrix);
+        shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+
 
         vertex_array_object->bind();
+
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array_object->getIndicesCount()), GL_UNSIGNED_INT, nullptr);
 
         ImGuiIO& input_output = ImGui::GetIO();
@@ -137,9 +154,16 @@ namespace PositronEngine
 
         ImGui::Begin("Local transform");
         ImGui::SetWindowSize("Local transform", ImVec2(400,100));
-        ImGui::SliderFloat3("Location", location, -1.0f, 1.0f);
-        ImGui::SliderFloat3("Rotate", rotation, 0.0f, 360.0f);
-        ImGui::SliderFloat3("Scale", scale, 0.0f, 2.0f);
+        ImGui::SliderFloat3("Location", location, -10.0f, 10.0f);
+        ImGui::SliderFloat3("Rotate", rotation, -360.0f, 360.0f);
+        ImGui::SliderFloat3("Scale", scale, -2.0f, 2.0f);
+        ImGui::End();
+
+        ImGui::Begin("Camera transform");
+        ImGui::SetWindowSize("Camera transform", ImVec2(400,100));
+        ImGui::SliderFloat3("Location", camera_location, -10.0f, 10.0f);
+        ImGui::SliderFloat3("Rotate", camera_rotation, -360.0f, 360.0f);
+        ImGui::Checkbox("Perspective mode", &is_perspective_mode);
         ImGui::End();
 
         ImGui::Render();
