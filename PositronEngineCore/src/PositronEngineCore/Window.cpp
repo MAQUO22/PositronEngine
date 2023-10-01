@@ -7,6 +7,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/mat3x3.hpp>
+#include <glm/trigonometric.hpp>
 #include <iostream>
 
 #include <imgui/imgui.h>
@@ -32,10 +34,11 @@ namespace PositronEngine
         "#version 460\n"
         "layout(location = 0) in vec3 vertex_position;"
         "layout(location = 1) in vec3 vertex_color;"
+        "uniform mat4 model_matrix;"
         "out vec3 color;"
         "void main() {"
         "   color = vertex_color;"
-        "   gl_Position = vec4(vertex_position, 1.0);"
+        "   gl_Position = model_matrix * vec4(vertex_position, 1.0);"
         "}";
 
     const char* fragment_shader =
@@ -51,6 +54,11 @@ namespace PositronEngine
     IndexBuffer* index_buffer = nullptr;
 
     VertexArray* vertex_array_object = nullptr;
+
+    float location[3] = {0.0f, 0.0f, 0.0f};
+    float rotation[3] = {0.0f, 0.0f, 0.0f};
+    float scale[3] = {1.0f, 1.0f, 1.0f};
+
 
     Window::Window(std::string title, unsigned int width, unsigned int height) :
         _window_data({std::move(title), width, height})
@@ -75,6 +83,43 @@ namespace PositronEngine
         glClearColor(_background_color[0],_background_color[1],_background_color[2],_background_color[3]);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        shader_program->bind();
+
+        glm::mat4 location_matrix(1,                    0,                  0,               0,
+                                  0,                    1,                  0,               0,
+                                  0,                    0,                  1,               0,
+                                  location[0],          location[1],        location[2],     1);
+
+
+        glm::mat4 rotate_matrix_x(1,    0,                                  0,                                  0,
+                                  0,    cos(glm::radians(rotation[0])),     sin(glm::radians(rotation[0])),     0,
+                                  0,    -sin(glm::radians(rotation[0])),    cos(glm::radians(rotation[0])),     0,
+                                  0,    0,                                  0,                                  1);
+
+
+        glm::mat4 rotate_matrix_y(cos(glm::radians(rotation[1])),       0,      -sin(glm::radians(rotation[1])),    0,
+                                  0,                                    1,      0,                                  0,
+                                  sin(glm::radians(rotation[1])),       0,      cos(glm::radians(rotation[1])),     0,
+                                  0,                                    0,      0,                                  1);
+
+
+        glm::mat4 rotate_matrix_z( cos(glm::radians(rotation[2])),      sin(glm::radians(rotation[2])),     0,      0,
+                                 -sin(glm::radians(rotation[2])),       cos(glm::radians(rotation[2])),     0,      0,
+                                 0,                                     0,                                  1,      0,
+                                 0,                                     0,                                  0,      1);
+
+        glm::mat4x4 scale_matrix = {scale[0], 0, 0, 0,
+                                    0, scale[1], 0, 0,
+                                    0, 0, scale[2], 0,
+                                    0,  0,  0,  1};
+
+        glm::mat4x4 model_matrix = location_matrix * rotate_matrix_x * rotate_matrix_y * rotate_matrix_z * scale_matrix;
+
+        shader_program->setMatrix4("model_matrix", model_matrix);
+
+        vertex_array_object->bind();
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array_object->getIndicesCount()), GL_UNSIGNED_INT, nullptr);
+
         ImGuiIO& input_output = ImGui::GetIO();
         input_output.DisplaySize.x = static_cast<float>(getWidth());
         input_output.DisplaySize.y = static_cast<float>(getHeight());
@@ -82,19 +127,19 @@ namespace PositronEngine
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
 
+
         ImGui::NewFrame();
 
-
         ImGui::Begin("Color Picker");
-        ImGui::SetWindowSize("Color Picker", ImVec2(300,60));
+        ImGui::SetWindowSize("Color Picker", ImVec2(350,60));
         ImGui::ColorEdit4("Color", _background_color);
+        ImGui::End();
 
-
-        shader_program->bind();
-        vertex_array_object->bind();
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array_object->getIndicesCount()), GL_UNSIGNED_INT, nullptr);
-
-
+        ImGui::Begin("Local transform");
+        ImGui::SetWindowSize("Local transform", ImVec2(400,100));
+        ImGui::SliderFloat3("Location", location, -1.0f, 1.0f);
+        ImGui::SliderFloat3("Rotate", rotation, 0.0f, 360.0f);
+        ImGui::SliderFloat3("Scale", scale, 0.0f, 2.0f);
         ImGui::End();
 
         ImGui::Render();

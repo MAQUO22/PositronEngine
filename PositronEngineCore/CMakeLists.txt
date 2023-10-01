@@ -79,4 +79,7 @@ target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE spdlog)
 add_subdirectory(../submodules/glad ${CMAKE_CURRENT_BINARY_DIR}/glad)
 target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE glad)
 
+add_subdirectory(../submodules/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
+target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE glm)
+
 

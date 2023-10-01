@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/mat4x4.hpp>
+
 namespace PositronEngine
 {
     class ShaderProgram
@@ -17,6 +19,8 @@ namespace PositronEngine
             void bind() const;
             static void unbind();
             bool isCompile() const {return _is_compiled; }
+
+            void setMatrix4(const char* matrix_name, const glm::mat4& matrix) const;
 
         private:
             bool _is_compiled = false;

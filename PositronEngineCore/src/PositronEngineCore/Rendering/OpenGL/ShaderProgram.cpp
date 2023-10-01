@@ -2,6 +2,7 @@
 #include "PositronEngineCore/Log.hpp"
 
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace PositronEngine
 {
@@ -116,5 +117,10 @@ namespace PositronEngine
         shader_program._is_compiled = false;
 
         return *this;
+    }
+
+    void ShaderProgram::setMatrix4(const char* matrix_name, const glm::mat4& matrix) const
+    {
+        glUniformMatrix4fv(glGetUniformLocation(_id, matrix_name), 1, GL_FALSE,glm::value_ptr(matrix));
     }
 }
