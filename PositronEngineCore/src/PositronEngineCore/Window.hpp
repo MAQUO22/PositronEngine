@@ -45,7 +45,6 @@ namespace PositronEngine
 
             GLFWwindow* _window = nullptr;
             WindowData _window_data;
-            float _background_color[4] = {0.0f, 0.0f, 0.0f, 0.0f };
     };
 }
 
