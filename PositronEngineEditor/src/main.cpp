@@ -2,7 +2,7 @@
 #include<PositronEngineCore/Application.hpp>
 #include<memory>
 
-class EditorApplication : public PositronEngine::Application
+class PositronEditor : public PositronEngine::Application
 {
     public:
         virtual void onUpdate() override
@@ -14,7 +14,7 @@ class EditorApplication : public PositronEngine::Application
 
 int main()
 {
-    auto application = std::make_unique<EditorApplication>();
+    auto application = std::make_unique<PositronEditor>();
 
     int editor_code = application->start(1280,720,"Positron Engine Editor");
 

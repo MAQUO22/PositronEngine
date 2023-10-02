@@ -4,7 +4,6 @@
 
 namespace PositronEngine
 {
-
     #ifdef NDEBUG
 
         #define LOG_INFORMATION(...)

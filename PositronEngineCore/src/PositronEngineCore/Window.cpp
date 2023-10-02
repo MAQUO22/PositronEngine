@@ -1,12 +1,15 @@
 #include "PositronEngineCore/Window.hpp"
 #include "PositronEngineCore/Log.hpp"
 #include "PositronEngineCore/Camera.hpp"
+
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexArray.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp"
+#include "PositronEngineCore/Rendering/OpenGL/RenderOpenGL.hpp"
 
-#include <glad/glad.h>
+#include "PositronEngineCore/Modules/GUImodule.hpp"
+
 #include <GLFW/glfw3.h>
 #include <glm/mat3x3.hpp>
 #include <glm/trigonometric.hpp>
@@ -19,8 +22,6 @@
 
 namespace PositronEngine
 {
-    static bool is_GLFW_initialized_ = false;
-
     GLfloat square_points_and_colors[] = {
         -0.5f, -0.5f, 0.0f,   1.0f, 0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.5f,
@@ -74,11 +75,8 @@ namespace PositronEngine
     {
         int result_code = initialization();
 
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGui_ImplOpenGL3_Init();
 
-        ImGui_ImplGlfw_InitForOpenGL(_window, true);
+
     }
 
     Window::~Window()
@@ -89,8 +87,8 @@ namespace PositronEngine
     void Window::onUpdate()
     {
 
-        glClearColor(_background_color[0],_background_color[1],_background_color[2],_background_color[3]);
-        glClear(GL_COLOR_BUFFER_BIT);
+        RenderOpenGL::setBackgroundColor(_background_color);
+        RenderOpenGL::clear();
 
         shader_program->bind();
 
@@ -133,19 +131,12 @@ namespace PositronEngine
         shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
 
 
-        vertex_array_object->bind();
 
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array_object->getIndicesCount()), GL_UNSIGNED_INT, nullptr);
+        RenderOpenGL::draw(*vertex_array_object);
 
-        ImGuiIO& input_output = ImGui::GetIO();
-        input_output.DisplaySize.x = static_cast<float>(getWidth());
-        input_output.DisplaySize.y = static_cast<float>(getHeight());
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-
-
-        ImGui::NewFrame();
+        GUImodule::onWindowStartUpdate();
+        bool show = true;
+        GUImodule::ShowExampleAppDockSpace(&show);
 
         ImGui::Begin("Color Picker");
         ImGui::SetWindowSize("Color Picker", ImVec2(350,60));
@@ -166,8 +157,7 @@ namespace PositronEngine
         ImGui::Checkbox("Perspective mode", &is_perspective_mode);
         ImGui::End();
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        GUImodule::onWindowUpdateDraw();
 
         glfwSwapBuffers(_window);
         glfwPollEvents();
@@ -177,29 +167,21 @@ namespace PositronEngine
     {
         LOG_INFORMATION("Window '{0}' is created", _window_data._title);
 
-        if(!is_GLFW_initialized_)
+        if (!glfwInit())
         {
-            if (!glfwInit())
-            {
-                LOG_CRITICAL("GLFW has not been initialized!");
-                return -1;
-            }
-            is_GLFW_initialized_ = true;
+            LOG_CRITICAL("GLFW has not been initialized!");
+            return -1;
         }
 
         _window = glfwCreateWindow(_window_data._width, _window_data._heigth, _window_data._title.c_str(), nullptr, nullptr);
         if (!_window)
         {
             LOG_CRITICAL("Window '{0}' has not been created!", _window_data._title);
-            glfwTerminate();
             return -2;
         }
 
-        glfwMakeContextCurrent(_window);
-
-        if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        if(!RenderOpenGL::initialize(_window))
         {
-            LOG_CRITICAL("Initialization of GLAD is failed");
             return -3;
         }
 
@@ -239,9 +221,11 @@ namespace PositronEngine
         glfwSetFramebufferSizeCallback(_window,
             [](GLFWwindow* window,int width, int height)
             {
-                glViewport(0, 0, width, height);
+                RenderOpenGL::setViewport(width, height);
             }
         );
+
+        GUImodule::onWindowCreate(_window);
 
         shader_program = new ShaderProgram(vertex_shader, fragment_shader);
         if(!shader_program->isCompile())
@@ -272,6 +256,7 @@ namespace PositronEngine
 
     void Window::shutDown()
     {
+        GUImodule::onWindowClose();
         glfwDestroyWindow(_window);
         glfwTerminate();
 

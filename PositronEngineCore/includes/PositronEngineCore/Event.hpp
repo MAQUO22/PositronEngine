@@ -4,7 +4,6 @@
 
 namespace PositronEngine
 {
-
     enum class EventType
     {
         WindowResized = 0,

@@ -11,20 +11,28 @@ set(ENGINE_PUBLIC_INCLUDES
 
 set(ENGINE_PRIVATE_INCLUDES
     src/PositronEngineCore/Window.hpp
+
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.hpp
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp
+    src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.hpp
+
+    src/PositronEngineCore/Modules/GUImodule.hpp
 )
 
 set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Application.cpp
     src/PositronEngineCore/Window.cpp
     src/PositronEngineCore/Camera.cpp
+
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.cpp
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
+    src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
+
+    src/PositronEngineCore/Modules/GUImodule.cpp
 )
 
 set(ENGINE_ALL_SOURCES
