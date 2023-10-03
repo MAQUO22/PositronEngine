@@ -7,6 +7,8 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/Log.hpp
     includes/PositronEngineCore/Event.hpp
     includes/PositronEngineCore/Camera.hpp
+    includes/PositronEngineCore/KeyCode.hpp
+    includes/PositronEngineCore/Input.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -25,7 +27,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Application.cpp
     src/PositronEngineCore/Window.cpp
     src/PositronEngineCore/Camera.cpp
-
+    src/PositronEngineCore/Input.cpp
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.cpp

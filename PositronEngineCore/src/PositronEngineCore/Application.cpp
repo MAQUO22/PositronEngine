@@ -3,6 +3,7 @@
 #include "PositronEngineCore/Window.hpp"
 #include "PositronEngineCore/Event.hpp"
 #include "PositronEngineCore/Camera.hpp"
+#include "PositronEngineCore/Input.hpp"
 
 
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
@@ -114,6 +115,22 @@ namespace PositronEngine
                 LOG_INFORMATION("Event WINDOW_CLOSING is triggered. Window is closing");
                 _is_window_alive = false;
 
+            }
+        );
+
+        _event_dispatcher.addEventListener<EventKeyPressed>(
+            [](EventKeyPressed& event)
+            {
+                Input::pressKey(event.key_code);
+                LOG_INFORMATION("Event KEYPRESSED : Key '{0} is pressed'",static_cast<char>(event.key_code));
+            }
+        );
+
+        _event_dispatcher.addEventListener<EventKeyReleased>(
+            [](EventKeyReleased& event)
+            {
+                Input::releaseKey(event.key_code);
+                LOG_INFORMATION("Event KEYPRESSED : Key '{0} is released'",static_cast<char>(event.key_code));
             }
         );
 

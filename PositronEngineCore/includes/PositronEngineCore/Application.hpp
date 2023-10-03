@@ -22,10 +22,11 @@ namespace PositronEngine
             virtual void onGUIdraw() {}
 
             Camera camera;
-            float camera_location[3] = {0.0f, 0.0f, 1.0f};
+            float camera_location[3] = {0.0f, 0.0f, 4.0f};
             float camera_rotation[3] = {0.0f, 0.0f, 0.0f};
+            float camera_speed = 0.01f;
 
-            bool is_perspective_mode = false;
+            bool is_perspective_mode = true;
 
         private:
             std::unique_ptr<class Window> _window;

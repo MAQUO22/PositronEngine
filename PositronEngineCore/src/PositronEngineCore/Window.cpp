@@ -54,6 +54,36 @@ namespace PositronEngine
 
         glfwSetWindowUserPointer(_window, &_window_data);
 
+        glfwSetKeyCallback(_window,
+            [](GLFWwindow* window, int key, int scancode, int action, int mods)
+            {
+                WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+
+                switch(action)
+                {
+                    case GLFW_PRESS:
+                    {
+                        EventKeyPressed event(static_cast<KeyCode>(key), false);
+                        window_data._event_callback_function(event);
+                        break;
+                    }
+
+                    case GLFW_RELEASE:
+                    {
+                        EventKeyReleased event(static_cast<KeyCode>(key));
+                        window_data._event_callback_function(event);
+                        break;
+                    }
+
+                    case GLFW_REPEAT:
+                    {
+                        EventKeyPressed event(static_cast<KeyCode>(key), true);
+                        window_data._event_callback_function(event);
+                        break;
+                    }
+                }
+            });
+
         glfwSetWindowSizeCallback(_window,
             [](GLFWwindow* window,int width, int height)
             {

@@ -1,4 +1,7 @@
 #pragma once
+
+#include "KeyCode.hpp"
+
 #include <array>
 #include <functional>
 
@@ -47,6 +50,39 @@ namespace PositronEngine
         virtual EventType getType() const override
         {
             return type;
+        }
+    };
+
+    struct EventKeyPressed : public BaseEvent
+    {
+        KeyCode key_code;
+        bool repeated;
+        static const EventType type = EventType::KeyPressed;
+
+        virtual EventType getType() const override
+        {
+            return type;
+        }
+
+        EventKeyPressed(const KeyCode _key_code, const bool _repeated)
+            : key_code(_key_code), repeated(_repeated)
+        {
+        }
+    };
+
+    struct EventKeyReleased : public BaseEvent
+    {
+        KeyCode key_code;
+        static const EventType type = EventType::KeyReleased;
+
+        virtual EventType getType() const override
+        {
+            return type;
+        }
+
+        EventKeyReleased(const KeyCode _key_code)
+            : key_code(_key_code)
+        {
         }
     };
 
