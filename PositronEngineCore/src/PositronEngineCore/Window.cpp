@@ -30,6 +30,15 @@ namespace PositronEngine
         glfwPollEvents();
     }
 
+    glm::vec2 Window::getCurrentCursorPosition() const
+    {
+        double x;
+        double y;
+        glfwGetCursorPos(_window, &x, &y);
+
+        return {x, y};
+    }
+
     int Window::initialization()
     {
         LOG_INFORMATION("Window '{0}' is created", _window_data._title);
@@ -78,6 +87,33 @@ namespace PositronEngine
                     case GLFW_REPEAT:
                     {
                         EventKeyPressed event(static_cast<KeyCode>(key), true);
+                        window_data._event_callback_function(event);
+                        break;
+                    }
+                }
+            });
+
+        glfwSetMouseButtonCallback(_window,
+            [](GLFWwindow* window, int button, int action, int mods)
+            {
+                WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+
+                double x;
+                double y;
+                glfwGetCursorPos(window, &x, &y);
+
+                switch(action)
+                {
+                    case GLFW_PRESS:
+                    {
+                        EventMouseButtonPressed event(static_cast<MouseButtonCode>(button), x, y);
+                        window_data._event_callback_function(event);
+                        break;
+                    }
+
+                    case GLFW_RELEASE:
+                    {
+                        EventMouseButtonReleased event(static_cast<MouseButtonCode>(button), x, y);
                         window_data._event_callback_function(event);
                         break;
                     }

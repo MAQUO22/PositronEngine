@@ -86,6 +86,45 @@ namespace PositronEngine
         }
     };
 
+    struct EventMouseButtonPressed : public BaseEvent
+    {
+        MouseButtonCode mouse_button_code;
+        double x;
+        double y;
+
+        static const EventType type = EventType::MouseButtonPressed;
+
+        virtual EventType getType() const override
+        {
+            return type;
+        }
+
+        EventMouseButtonPressed(const MouseButtonCode new_mouse_button_code, const double new_x, const double new_y)
+            : mouse_button_code(new_mouse_button_code), x(new_x), y(new_y)
+        {
+        }
+    };
+
+    struct EventMouseButtonReleased : public BaseEvent
+    {
+        MouseButtonCode mouse_button_code;
+        double x;
+        double y;
+
+        static const EventType type = EventType::MouseButtonReleased;
+
+        virtual EventType getType() const override
+        {
+            return type;
+        }
+
+        EventMouseButtonReleased(const MouseButtonCode new_mouse_button_code, const double new_x, const double new_y)
+            : mouse_button_code(new_mouse_button_code), x(new_x), y(new_y)
+        {
+        }
+    };
+
+
     struct EventMouseMoved : public BaseEvent
     {
         double x;

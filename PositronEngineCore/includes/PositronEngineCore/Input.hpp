@@ -11,7 +11,12 @@ namespace PositronEngine
             static void releaseKey(const KeyCode key_code);
             static void pressKey(const KeyCode key_code);
 
+            static bool isMouseButtonPressed(const MouseButtonCode mouse_button);
+            static void releaseMouseButton(const MouseButtonCode mouse_button);
+            static void pressMouseButton(const MouseButtonCode mouse_button);
+
         private:
-            static bool _keys_pressed[static_cast<int>(KeyCode::KEY_LAST)];
+            static bool _keys_pressed[];
+            static bool _mouse_buttons_pressed[];
     };
 }

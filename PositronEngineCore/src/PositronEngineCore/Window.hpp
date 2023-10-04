@@ -2,6 +2,8 @@
 
 #include <string>
 #include <functional>
+#include <glm/ext/vector_float2.hpp>
+
 #include "PositronEngineCore/Event.hpp"
 
 struct GLFWwindow;
@@ -25,6 +27,7 @@ namespace PositronEngine
 
             unsigned int getWidth() const { return this->_window_data._width; }
             unsigned int getHeight() const { return this->_window_data._heigth; }
+            glm::vec2 getCurrentCursorPosition() const;
 
             void setEventCallback(const eventCallbackFunction& callback)
             {

@@ -91,6 +91,11 @@ namespace PositronEngine
         LOG_INFORMATION("Closing application");
     }
 
+    glm::vec2 Application::getCurrentCursorPosition() const
+    {
+        return _window->getCurrentCursorPosition();
+    }
+
     int Application::start(unsigned int window_width,unsigned int window_height, const char* window_title)
     {
         _window = std::make_unique<Window>(window_title, window_width, window_height);
@@ -122,7 +127,7 @@ namespace PositronEngine
             [](EventKeyPressed& event)
             {
                 Input::pressKey(event.key_code);
-                LOG_INFORMATION("Event KEYPRESSED : Key '{0} is pressed'",static_cast<char>(event.key_code));
+                LOG_INFORMATION("Event KEY_PRESSED : Key '{0} is pressed'",static_cast<char>(event.key_code));
             }
         );
 
@@ -130,7 +135,31 @@ namespace PositronEngine
             [](EventKeyReleased& event)
             {
                 Input::releaseKey(event.key_code);
-                LOG_INFORMATION("Event KEYPRESSED : Key '{0} is released'",static_cast<char>(event.key_code));
+                LOG_INFORMATION("Event KEY_RELEASED : Key '{0} is released'",static_cast<char>(event.key_code));
+            }
+        );
+
+        _event_dispatcher.addEventListener<EventMouseButtonPressed>(
+            [&](EventMouseButtonPressed& event)
+            {
+                LOG_INFORMATION("Event MOUSE_BUTTON_PRESSED : Button '{0} is pressed (pos_x: {1}, pos_y: {2})'", static_cast<int>(event.mouse_button_code),
+                event.x,
+                event.y);
+
+                Input::pressMouseButton(event.mouse_button_code);
+                onMouseButtonEvent(event.mouse_button_code, event.x, event.y, true);
+            }
+        );
+
+        _event_dispatcher.addEventListener<EventMouseButtonReleased>(
+            [&](EventMouseButtonReleased& event)
+            {
+                LOG_INFORMATION("Event MOUSE_BUTTON_RELEASED : Button '{0} is released (pos_x: {1}, pos_y: {2})'", static_cast<int>(event.mouse_button_code),
+                event.x,
+                event.y);
+
+                Input::releaseMouseButton(event.mouse_button_code);
+                onMouseButtonEvent(event.mouse_button_code, event.x, event.y, false);
             }
         );
 
@@ -203,8 +232,6 @@ namespace PositronEngine
                                         0, 0, scale[2], 0,
                                         0,  0,  0,  1};
 
-            camera.setLocationAndRotation(glm::vec3(camera_location[0],camera_location[1],camera_location[2]),
-                                        glm::vec3(camera_rotation[0],camera_rotation[1],camera_rotation[2]));
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
