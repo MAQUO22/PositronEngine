@@ -5,17 +5,19 @@
 #include "PositronEngineCore/Camera.hpp"
 #include "PositronEngineCore/Input.hpp"
 
-
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexArray.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/RenderOpenGL.hpp"
 #include "PositronEngineCore/Modules/GUImodule.hpp"
+#include "PositronEngineCore/Rendering/OpenGL/Sphere.h"
 
 #include <imgui/imgui.h>
 #include <glm/trigonometric.hpp>
-#include <GLFW/glfw3.h>
+//#include <GLFW/glfw3.h>
+#include <glad/glad.h>
+
 
 namespace PositronEngine
 {
@@ -29,9 +31,9 @@ namespace PositronEngine
         1.0f, 1.0f, -1.0f,      0.5f, 1.0f, 1.0f,
         1.0f, -1.0f, 1.0f,      1.0f, 0.0f, 0.0f,
         1.0f, 1.0f, 1.0f,       1.0, 0.0f, 1.0f
-
-
     };
+
+     GLfloat shpere_positions[] = {};
 
     GLuint indices[] = {
         0, 1, 2, 3, 2, 1,
@@ -62,13 +64,22 @@ namespace PositronEngine
         "   frag_color = vec4(color, 1.0);"
         "}";
 
+
+    Sphere sphere(1.0f, 36, 18, true, 3);
+
+
     ShaderProgram* shader_program = nullptr;
     VertexBuffer* vertex_buffer_points_and_colors = nullptr;
+
+    VertexBuffer* vertex_buffer_sphere;
     IndexBuffer* index_buffer = nullptr;
 
     VertexArray* vertex_array_object = nullptr;
 
 
+    GLuint attribVert;
+    GLuint attribNorm;
+    GLuint attribTex;
 
     float location[3] = {0.0f, 0.0f, 0.0f};
     float rotation[3] = {0.0f, 0.0f, 0.0f};
@@ -86,6 +97,7 @@ namespace PositronEngine
     {
         delete shader_program;
         delete vertex_buffer_points_and_colors;
+        delete vertex_buffer_sphere;
         delete index_buffer;
         delete vertex_array_object;
         LOG_INFORMATION("Closing application");
@@ -181,21 +193,25 @@ namespace PositronEngine
         BufferLayout buffer_layout_two_elements_vector3
         {
             ShaderDataType::Float3,
-            ShaderDataType::Float3
+            ShaderDataType::Float3,
+            ShaderDataType::Float2
         };
 
-
         vertex_array_object = new VertexArray();
-        vertex_buffer_points_and_colors = new VertexBuffer(square_points_and_colors,
-                                                           sizeof(square_points_and_colors),
-                                                           buffer_layout_two_elements_vector3);
 
-        index_buffer = new IndexBuffer(indices, sizeof(indices) / sizeof(GLuint));
+        vertex_buffer_sphere = new VertexBuffer(sphere.getInterleavedVertices(),
+                                                sphere.getInterleavedVertexSize(),
+                                                buffer_layout_two_elements_vector3);
 
-        vertex_array_object->addVertexBuffer(*vertex_buffer_points_and_colors);
+
+        index_buffer = new IndexBuffer(sphere.getIndices(), sphere.getLineIndexSize());
+
+        vertex_array_object->addVertexBuffer(*vertex_buffer_sphere);
         vertex_array_object->setIndexBuffer(*index_buffer);
 
         /*=========================================================*/
+
+        RenderOpenGL::enableDepth();
 
         while(_is_window_alive)
         {
@@ -240,8 +256,6 @@ namespace PositronEngine
             shader_program->setMatrix4("model_matrix", model_matrix);
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
 
-
-
             RenderOpenGL::draw(*vertex_array_object);
 
             GUImodule::onWindowStartUpdate();
@@ -263,7 +277,6 @@ namespace PositronEngine
             onGUIdraw();
 
             GUImodule::onWindowUpdateDraw();
-
 
             _window->onUpdate();
             onUpdate();

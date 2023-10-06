@@ -13,7 +13,7 @@ set(ENGINE_PUBLIC_INCLUDES
 
 set(ENGINE_PRIVATE_INCLUDES
     src/PositronEngineCore/Window.hpp
-
+    src/PositronEngineCore/Rendering/OpenGL/Sphere.h
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.hpp
@@ -28,6 +28,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Window.cpp
     src/PositronEngineCore/Camera.cpp
     src/PositronEngineCore/Input.cpp
+    src/PositronEngineCore/Rendering/OpenGL/Sphere.cpp
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.cpp
@@ -74,8 +75,10 @@ add_library(ImGUI STATIC
 
 target_include_directories(ImGUI PUBLIC ../submodules)
 target_include_directories(ImGUI PUBLIC ../submodules/imgui)
+
 target_link_libraries(ImGUI PRIVATE glad glfw)
 target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE ImGUI)
+target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE GL)
 
 target_include_directories(${ENGINE_PROJECT_NAME} PUBLIC includes)
 target_include_directories(${ENGINE_PROJECT_NAME} PRIVATE src)

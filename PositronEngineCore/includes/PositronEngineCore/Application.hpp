@@ -23,10 +23,13 @@ namespace PositronEngine
             virtual void onGUIdraw() {}
             virtual void onMouseButtonEvent(const MouseButtonCode mouse_button, const double x, const double y, bool pressed) {}
 
+
+            void computeHalfVertex(const float v1[3], const float v2[3], float newV[3]);
+
             glm::vec2 getCurrentCursorPosition() const;
 
             Camera camera{glm::vec3(-5, 0, 0)};
-            float camera_location[3] = {0.0f, 0.0f, 4.0f};
+            float camera_location[3] = {0.0f, 0.0f, 3.0f};
             float camera_rotation[3] = {0.0f, 0.0f, 0.0f};
             float camera_speed = 0.035f;
 

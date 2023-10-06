@@ -2,6 +2,7 @@
 #include "VertexArray.hpp"
 #include "PositronEngineCore/Log.hpp"
 
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -29,7 +30,8 @@ namespace PositronEngine
 
     void RenderOpenGL::clear()
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     }
     void RenderOpenGL::setViewport(const unsigned int width, const unsigned int height,
                                     const unsigned int left_offset, const unsigned int bottom_offset)
@@ -41,6 +43,16 @@ namespace PositronEngine
     {
         vertex_array.bind();
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array.getIndicesCount()), GL_UNSIGNED_INT, nullptr);
+    }
+
+    void RenderOpenGL::enableDepth()
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    void RenderOpenGL::disableDepth()
+    {
+        glDisable(GL_DEPTH_TEST);
     }
 
     const char* RenderOpenGL::getVersionOpenGL()
