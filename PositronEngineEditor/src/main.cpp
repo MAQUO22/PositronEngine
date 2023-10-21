@@ -14,6 +14,7 @@ class PositronEditor : public PositronEngine::Application
 
         virtual void onUpdate() override
         {
+
             glm::vec3 movement_delta{0, 0, 0};
             glm::vec3 rotation_delta{0, 0, 0};
 

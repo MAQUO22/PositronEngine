@@ -6,6 +6,7 @@
 #include "PositronEngineCore/Input.hpp"
 
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
+#include "PositronEngineCore/Rendering/OpenGL/Bmp.h"
 #include "PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexArray.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp"
@@ -15,67 +16,73 @@
 
 #include <imgui/imgui.h>
 #include <glm/trigonometric.hpp>
-//#include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
 
 namespace PositronEngine
 {
-    GLfloat square_points_and_colors[] = {
-        -1.0f, -1.0f, -1.0f,     1.0f, 0.5f, 0.0f,
-        -1.0f, 1.0f, -1.0f,      0.5f, 1.0f, 0.5f,
-        -1.0f, -1.0f, 1.0f,      1.0f, 1.0f, 0.5f,
-        -1.0f, 1.0f, 1.0f,       0.5, 0.5f, 1.0f,
+    const char* vertex_shader = R"(
+    #version 460
 
-        1.0f, -1.0f, -1.0f,     1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, -1.0f,      0.5f, 1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,      1.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, 1.0f,       1.0, 0.0f, 1.0f
-    };
+    // uniforms
+    uniform mat4 model_matrix;
+    uniform mat4 normal_matrix;
+    uniform mat4 view_projection_matrix;
 
-     GLfloat shpere_positions[] = {};
+    // vertex attribs (input)
+    layout(location=0) in vec3 vertex_position;
+    layout(location=1) in vec3 vertex_normal;
+    layout(location=2) in vec2 vertex_tex_coord;
 
-    GLuint indices[] = {
-        0, 1, 2, 3, 2, 1,
-        4, 5, 6, 7, 6, 5,
-        0, 4, 6, 0, 2, 6,
-        1, 5, 3, 3, 7, 5,
-        3, 7, 2, 7, 6, 2,
-        1, 5, 0, 5, 0, 4
-    };
 
-    const char* vertex_shader =
-        "#version 460\n"
-        "layout(location = 0) in vec3 vertex_position;"
-        "layout(location = 1) in vec3 vertex_color;"
-        "uniform mat4 model_matrix;"
-        "uniform mat4 view_projection_matrix;"
-        "out vec3 color;"
-        "void main() {"
-        "   color = vertex_color;"
-        "   gl_Position = view_projection_matrix * model_matrix * vec4(vertex_position, 1.0);"
-        "}";
+    // varyings (output)
+    out vec3 esNormal;
+    out vec3 color;
+    out vec2 texCoord;
 
-    const char* fragment_shader =
-        "#version 460\n"
-        "in vec3 color;"
-        "out vec4 frag_color;"
-        "void main() {"
-        "   frag_color = vec4(color, 1.0);"
-        "}";
+
+    void main()
+    {
+        esNormal = vec3(normal_matrix * vec4(vertex_normal, 1.0));
+        texCoord = vertex_tex_coord;
+
+        gl_Position = view_projection_matrix * model_matrix * vec4(vertex_position, 1.0);
+    }
+    )";
+
+    const char* fragment_shader = R"(
+        #version 460
+
+        // uniforms
+        layout(binding=0) uniform sampler2D in_texture;
+
+        // varyings (input)
+        in vec2 texCoord;
+        in vec3 esNormal;
+
+        // output
+        out vec4 frag_color;
+
+        void main() {
+            frag_color = texture(in_texture, texCoord);
+        }
+    )";
 
 
     Sphere sphere(1.0f, 36, 18, true, 3);
 
 
     ShaderProgram* shader_program = nullptr;
-    VertexBuffer* vertex_buffer_points_and_colors = nullptr;
 
-    VertexBuffer* vertex_buffer_sphere;
+    VertexBuffer* vertex_buffer_position_sphere = nullptr;
+    VertexBuffer* vertex_buffer_normal_sphere = nullptr;
+    VertexBuffer* vertex_buffer_texCoords_sphere = nullptr;
+
     IndexBuffer* index_buffer = nullptr;
 
     VertexArray* vertex_array_object = nullptr;
 
+    GLuint earthTexture;
 
     GLuint attribVert;
     GLuint attribNorm;
@@ -96,10 +103,12 @@ namespace PositronEngine
     Application::~Application()
     {
         delete shader_program;
-        delete vertex_buffer_points_and_colors;
-        delete vertex_buffer_sphere;
+        delete vertex_buffer_position_sphere;
+        delete vertex_buffer_normal_sphere;
+        delete vertex_buffer_texCoords_sphere;
         delete index_buffer;
         delete vertex_array_object;
+
         LOG_INFORMATION("Closing application");
     }
 
@@ -182,6 +191,39 @@ namespace PositronEngine
             }
         );
 
+        Image::Bmp bmp;
+        if(!bmp.read("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth2048.bmp"))
+            LOG_ERROR("Texture is unloaded");    // exit if failed load image
+
+        // get bmp info
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        const unsigned char* data = bmp.getDataRGB();
+        GLenum type = GL_UNSIGNED_BYTE;    // only allow BMP with 8-bit per channel
+
+        // We assume the image is 8-bit, 24-bit or 32-bit BMP
+        GLenum format;
+        int bpp = bmp.getBitCount();
+        if(bpp == 8)
+            format = GL_RGB8;
+        else if(bpp == 24)
+            format = GL_RGB;
+        else if(bpp == 32)
+            format = GL_RGBA;
+        else
+            return 0;
+
+        GLuint texture;
+        glGenTextures(1, &texture);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         /*убери потом это в объект сцены*/
         shader_program = new ShaderProgram(vertex_shader, fragment_shader);
         if(!shader_program->isCompile())
@@ -199,14 +241,23 @@ namespace PositronEngine
 
         vertex_array_object = new VertexArray();
 
-        vertex_buffer_sphere = new VertexBuffer(sphere.getInterleavedVertices(),
+        vertex_buffer_position_sphere = new VertexBuffer(sphere.getInterleavedVertices(),
                                                 sphere.getInterleavedVertexSize(),
                                                 buffer_layout_two_elements_vector3);
 
+        vertex_buffer_normal_sphere = new VertexBuffer(sphere.getNormals(),
+                                                       sphere.getNormalSize(),
+                                                       buffer_layout_two_elements_vector3);
+
+        vertex_buffer_texCoords_sphere = new VertexBuffer(sphere.getTexCoords(),
+                                                       sphere.getTexCoordSize(),
+                                                       buffer_layout_two_elements_vector3);
 
         index_buffer = new IndexBuffer(sphere.getIndices(), sphere.getLineIndexSize());
 
-        vertex_array_object->addVertexBuffer(*vertex_buffer_sphere);
+        vertex_array_object->addVertexBuffer(*vertex_buffer_position_sphere);
+        vertex_array_object->addVertexBuffer(*vertex_buffer_normal_sphere);
+        vertex_array_object->addVertexBuffer(*vertex_buffer_texCoords_sphere);
         vertex_array_object->setIndexBuffer(*index_buffer);
 
         /*=========================================================*/
@@ -278,9 +329,12 @@ namespace PositronEngine
 
             GUImodule::onWindowUpdateDraw();
 
+            rotation[2] += 0.5f;
             _window->onUpdate();
             onUpdate();
         }
+
+        glDeleteTextures(1, &texture);
 
         _window = nullptr;
 

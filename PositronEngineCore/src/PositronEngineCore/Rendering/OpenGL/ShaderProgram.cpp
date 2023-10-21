@@ -75,7 +75,7 @@ namespace PositronEngine
             _is_compiled = true;
         }
 
-        //опенГЛ почему-то сам не удаляет шейдеры, делаем ручками (ТЕРПИМ) :^)
+        //опенГЛ почему-то сам не удаляет шейдеры, делаем ручками =ТЕРПИМ= :^)
         glDetachShader(_id, vertex_shader_id);
         glDetachShader(_id, fragment_shader_id);
 
