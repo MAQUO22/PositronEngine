@@ -15,12 +15,12 @@ set(ENGINE_PRIVATE_INCLUDES
     src/PositronEngineCore/Window.hpp
     src/PositronEngineCore/Rendering/OpenGL/Sphere.h
     src/PositronEngineCore/Rendering/OpenGL/Bmp.h
+    src/PositronEngineCore/Rendering/OpenGL/Texture2D.hpp
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.hpp
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.hpp
-
     src/PositronEngineCore/Modules/GUImodule.hpp
 )
 
@@ -29,6 +29,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Window.cpp
     src/PositronEngineCore/Camera.cpp
     src/PositronEngineCore/Input.cpp
+    src/PositronEngineCore/Rendering/OpenGL/Texture2D.cpp
     src/PositronEngineCore/Rendering/OpenGL/Sphere.cpp
     src/PositronEngineCore/Rendering/OpenGL/Bmp.cpp
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp

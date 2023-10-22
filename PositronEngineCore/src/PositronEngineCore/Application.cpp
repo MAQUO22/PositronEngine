@@ -6,7 +6,7 @@
 #include "PositronEngineCore/Input.hpp"
 
 #include "PositronEngineCore/Rendering/OpenGL/ShaderProgram.hpp"
-#include "PositronEngineCore/Rendering/OpenGL/Bmp.h"
+#include "PositronEngineCore/Rendering/OpenGL/Texture2D.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexBuffer.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/VertexArray.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/IndexBuffer.hpp"
@@ -16,8 +16,7 @@
 
 #include <imgui/imgui.h>
 #include <glm/trigonometric.hpp>
-#include <glad/glad.h>
-
+#include <glm/ext/matrix_transform.hpp>
 
 namespace PositronEngine
 {
@@ -69,28 +68,37 @@ namespace PositronEngine
     )";
 
 
-    Sphere sphere(1.0f, 36, 18, true, 3);
-
+    Sphere earth(6.37f, 36, 18, true, 3);
+    Sphere moon(1.73f, 36, 18, true, 3);
 
     ShaderProgram* shader_program = nullptr;
 
-    VertexBuffer* vertex_buffer_position_sphere = nullptr;
-    VertexBuffer* vertex_buffer_normal_sphere = nullptr;
-    VertexBuffer* vertex_buffer_texCoords_sphere = nullptr;
+    VertexBuffer* vertex_buffer_position_earth = nullptr;
+    VertexBuffer* vertex_buffer_normal_earth = nullptr;
+    VertexBuffer* vertex_buffer_texCoords_earth = nullptr;
 
-    IndexBuffer* index_buffer = nullptr;
+    IndexBuffer* index_buffer_earth = nullptr;
 
-    VertexArray* vertex_array_object = nullptr;
+    VertexArray* vertex_array_object_moon = nullptr;
 
-    GLuint earthTexture;
+    VertexBuffer* vertex_buffer_position_moon = nullptr;
+    VertexBuffer* vertex_buffer_normal_moon = nullptr;
+    VertexBuffer* vertex_buffer_texCoords_moon = nullptr;
 
-    GLuint attribVert;
-    GLuint attribNorm;
-    GLuint attribTex;
+    IndexBuffer* index_buffer_moon = nullptr;
+
+    VertexArray* vertex_array_object_earth = nullptr;
+
+    Texture2D* earth_texture = nullptr;
+    Texture2D* moon_texture = nullptr;
 
     float location[3] = {0.0f, 0.0f, 0.0f};
     float rotation[3] = {0.0f, 0.0f, 0.0f};
     float scale[3] = {1.0f, 1.0f, 1.0f};
+
+    float moon_location[3] = {0.0f, -18.0f, 5.0f};
+    float moon_rotation[3] = {0.0f, 0.0f, 0.0f};
+    float moon_scale[3] = {1.0f, 1.0f, 1.0f};
 
     float _background_color[4] = {0.0f, 0.0f, 0.0f, 0.0f };
 
@@ -103,11 +111,21 @@ namespace PositronEngine
     Application::~Application()
     {
         delete shader_program;
-        delete vertex_buffer_position_sphere;
-        delete vertex_buffer_normal_sphere;
-        delete vertex_buffer_texCoords_sphere;
-        delete index_buffer;
-        delete vertex_array_object;
+
+        delete vertex_buffer_position_earth;
+        delete vertex_buffer_normal_earth;
+        delete vertex_buffer_texCoords_earth;
+        delete index_buffer_earth;
+        delete vertex_array_object_earth;
+
+        delete vertex_buffer_position_moon;
+        delete vertex_buffer_normal_moon;
+        delete vertex_buffer_texCoords_moon;
+        delete index_buffer_moon;
+        delete vertex_array_object_moon;
+
+        delete earth_texture;
+        delete moon_texture;
 
         LOG_INFORMATION("Closing application");
     }
@@ -191,38 +209,11 @@ namespace PositronEngine
             }
         );
 
-        Image::Bmp bmp;
-        if(!bmp.read("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth2048.bmp"))
-            LOG_ERROR("Texture is unloaded");    // exit if failed load image
+        earth_texture = new Texture2D("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth2048.bmp");
+        earth_texture->bind(0);
 
-        // get bmp info
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-        const unsigned char* data = bmp.getDataRGB();
-        GLenum type = GL_UNSIGNED_BYTE;    // only allow BMP with 8-bit per channel
+        moon_texture = new Texture2D("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/moon1024.bmp");
 
-        // We assume the image is 8-bit, 24-bit or 32-bit BMP
-        GLenum format;
-        int bpp = bmp.getBitCount();
-        if(bpp == 8)
-            format = GL_RGB8;
-        else if(bpp == 24)
-            format = GL_RGB;
-        else if(bpp == 32)
-            format = GL_RGBA;
-        else
-            return 0;
-
-        GLuint texture;
-        glGenTextures(1, &texture);
-
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
 
         /*убери потом это в объект сцены*/
         shader_program = new ShaderProgram(vertex_shader, fragment_shader);
@@ -232,33 +223,55 @@ namespace PositronEngine
         }
 
 
-        BufferLayout buffer_layout_two_elements_vector3
+        BufferLayout sphere_layout
         {
             ShaderDataType::Float3,
             ShaderDataType::Float3,
             ShaderDataType::Float2
         };
 
-        vertex_array_object = new VertexArray();
+        vertex_array_object_moon = new VertexArray();
 
-        vertex_buffer_position_sphere = new VertexBuffer(sphere.getInterleavedVertices(),
-                                                sphere.getInterleavedVertexSize(),
-                                                buffer_layout_two_elements_vector3);
+        vertex_buffer_position_moon = new VertexBuffer(moon.getInterleavedVertices(),
+                                                         moon.getInterleavedVertexSize(),
+                                                         sphere_layout);
 
-        vertex_buffer_normal_sphere = new VertexBuffer(sphere.getNormals(),
-                                                       sphere.getNormalSize(),
-                                                       buffer_layout_two_elements_vector3);
+        vertex_buffer_normal_moon = new VertexBuffer(moon.getNormals(),
+                                                       moon.getNormalSize(),
+                                                       sphere_layout);
 
-        vertex_buffer_texCoords_sphere = new VertexBuffer(sphere.getTexCoords(),
-                                                       sphere.getTexCoordSize(),
-                                                       buffer_layout_two_elements_vector3);
+        vertex_buffer_texCoords_moon = new VertexBuffer(moon.getTexCoords(),
+                                                       moon.getTexCoordSize(),
+                                                       sphere_layout);
 
-        index_buffer = new IndexBuffer(sphere.getIndices(), sphere.getLineIndexSize());
+        index_buffer_moon = new IndexBuffer(moon.getIndices(), moon.getLineIndexSize());
 
-        vertex_array_object->addVertexBuffer(*vertex_buffer_position_sphere);
-        vertex_array_object->addVertexBuffer(*vertex_buffer_normal_sphere);
-        vertex_array_object->addVertexBuffer(*vertex_buffer_texCoords_sphere);
-        vertex_array_object->setIndexBuffer(*index_buffer);
+        vertex_array_object_moon->addVertexBuffer(*vertex_buffer_position_moon);
+        vertex_array_object_moon->addVertexBuffer(*vertex_buffer_normal_moon);
+        vertex_array_object_moon->addVertexBuffer(*vertex_buffer_texCoords_moon);
+        vertex_array_object_moon->setIndexBuffer(*index_buffer_moon);
+
+        vertex_array_object_earth = new VertexArray();
+
+        vertex_buffer_position_earth = new VertexBuffer(earth.getInterleavedVertices(),
+                                                         earth.getInterleavedVertexSize(),
+                                                         sphere_layout);
+
+        vertex_buffer_normal_earth = new VertexBuffer(earth.getNormals(),
+                                                       earth.getNormalSize(),
+                                                       sphere_layout);
+
+        vertex_buffer_texCoords_earth = new VertexBuffer(earth.getTexCoords(),
+                                                       earth.getTexCoordSize(),
+                                                       sphere_layout);
+
+        index_buffer_earth = new IndexBuffer(earth.getIndices(), earth.getLineIndexSize());
+
+        vertex_array_object_earth->addVertexBuffer(*vertex_buffer_position_earth);
+        vertex_array_object_earth->addVertexBuffer(*vertex_buffer_normal_earth);
+        vertex_array_object_earth->addVertexBuffer(*vertex_buffer_texCoords_earth);
+        vertex_array_object_earth->setIndexBuffer(*index_buffer_earth);
+
 
         /*=========================================================*/
 
@@ -307,7 +320,19 @@ namespace PositronEngine
             shader_program->setMatrix4("model_matrix", model_matrix);
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
 
-            RenderOpenGL::draw(*vertex_array_object);
+            earth_texture->bind(0);
+            RenderOpenGL::draw(*vertex_array_object_earth);
+
+            moon_texture->bind(0);
+            glm::mat4 moon_location_matrix(1,                    0,                  0,               0,
+                                    0,                    1,                  0,               0,
+                                    0,                    0,                  1,               0,
+                                    moon_location[0],          moon_location[1],        moon_location[2],     1);
+            shader_program->setMatrix4("model_matrix", moon_location_matrix);
+            RenderOpenGL::draw(*vertex_array_object_moon);
+
+
+
 
             GUImodule::onWindowStartUpdate();
             bool show = true;
@@ -329,12 +354,10 @@ namespace PositronEngine
 
             GUImodule::onWindowUpdateDraw();
 
-            rotation[2] += 0.5f;
+            rotation[2] += 0.15f;
             _window->onUpdate();
             onUpdate();
         }
-
-        glDeleteTextures(1, &texture);
 
         _window = nullptr;
 
