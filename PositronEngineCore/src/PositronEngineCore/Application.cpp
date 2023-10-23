@@ -11,8 +11,6 @@
 #include "PositronEngineCore/Rendering/OpenGL/Planet.hpp"
 
 #include <imgui/imgui.h>
-#include <glm/trigonometric.hpp>
-#include <glm/ext/matrix_transform.hpp>
 
 namespace PositronEngine
 {
@@ -52,8 +50,8 @@ namespace PositronEngine
         layout(binding=0) uniform sampler2D in_texture;
 
         // varyings (input)
-        in vec2 texCoord;
         in vec3 esNormal;
+        in vec2 texCoord;
 
         // output
         out vec4 frag_color;
@@ -64,17 +62,12 @@ namespace PositronEngine
     )";
 
 
+    Planet space(1.0f, 36, 18, true, 3);
     Planet earth(1.0f, 36, 18, true, 3);
-    Planet moon(1.1f, 36, 18, true, 3);
-    Planet sun(1.2f, 36, 18, true, 3);
+    Planet moon(1.0f, 36, 18, true, 3);
+    Planet sun(1.0f, 36, 18, true, 3);
 
     ShaderProgram* shader_program = nullptr;
-
-    float location[3] = {0.0f, 0.0f, 0.0f};
-    float rotation[3] = {0.0f, 0.0f, 0.0f};
-    float scale[3] = {1.0f, 1.0f, 1.0f};
-
-    float _background_color[4] = {0.0f, 0.0f, 0.0f, 0.0f };
 
     Application::Application()
     {
@@ -173,13 +166,24 @@ namespace PositronEngine
             return -4;
         }
 
-        earth.setVertexArrayObject();
-        //moon.setVertexArrayObject();
-        //sun.setVertexArrayObject();
 
-        earth.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth2048.bmp");
-        //moon.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/moon1024.bmp");
-        //sun.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/2k_sun.bmp");
+
+        space.setScale(100.0f, 100.0f, 100.0f);
+
+        sun.setScale(5.0f, 5.0f, 5.0f);
+
+        earth.setLocation(0.0f, -19.0f, 0.0f);
+        earth.setScale(0.9f, 0.9f, 0.9f);
+
+        moon.setLocation(0.0f, -21.5f, 0.0f);
+        moon.setScale(0.23f, 0.23f, 0.23f);
+
+        space.setVertexArrayObject();
+
+        earth.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth.bmp");
+        moon.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/moon.bmp");
+        sun.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/sun.bmp");
+        space.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/stars.bmp");
 
         /*=========================================================*/
 
@@ -187,77 +191,72 @@ namespace PositronEngine
 
         while(_is_window_alive)
         {
-            RenderOpenGL::setBackgroundColor(_background_color);
             RenderOpenGL::clear();
 
             shader_program->bind();
 
-            glm::mat4 location_matrix(1,                    0,                  0,               0,
-                                      0,                    1,                  0,               0,
-                                      0,                    0,                  1,               0,
-                                      location[0],          location[1],        location[2],     1);
-
-
-            glm::mat4 rotate_matrix_x(1,    0,                                  0,                                  0,
-                                      0,    cos(glm::radians(rotation[0])),     sin(glm::radians(rotation[0])),     0,
-                                      0,    -sin(glm::radians(rotation[0])),    cos(glm::radians(rotation[0])),     0,
-                                      0,    0,                                  0,                                  1);
-
-
-            glm::mat4 rotate_matrix_y(cos(glm::radians(rotation[1])),       0,      -sin(glm::radians(rotation[1])),    0,
-                                      0,                                    1,      0,                                  0,
-                                      sin(glm::radians(rotation[1])),       0,      cos(glm::radians(rotation[1])),     0,
-                                      0,                                    0,      0,                                  1);
-
-
-            glm::mat4 rotate_matrix_z( cos(glm::radians(rotation[2])),      sin(glm::radians(rotation[2])),     0,      0,
-                                      -sin(glm::radians(rotation[2])),       cos(glm::radians(rotation[2])),     0,      0,
-                                      0,                                     0,                                  1,      0,
-                                      0,                                     0,                                  0,      1);
-
-            glm::mat4x4 scale_matrix = {scale[0], 0, 0, 0,
-                                        0, scale[1], 0, 0,
-                                        0, 0, scale[2], 0,
-                                        0,  0,  0,  1};
-
-
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
-
-            glm::mat4x4 model_matrix = location_matrix * rotate_matrix_x * rotate_matrix_y * rotate_matrix_z * scale_matrix;
-
-            shader_program->setMatrix4("model_matrix", model_matrix);
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
 
+            space.getTexture()->bind(0);
+            space.updateMatrix();
+            shader_program->setMatrix4("model_matrix", space.getModelMatrix());
+            RenderOpenGL::draw(*space.getVertexArrayObject());
+
             earth.getTexture()->bind(0);
-            RenderOpenGL::draw(*earth.getVertexArrayObject());
+            earth.updateMatrix();
+            shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
+            RenderOpenGL::draw(*space.getVertexArrayObject());
 
-            //moon.getTexture()->bind(0);
-            //RenderOpenGL::draw(*moon.getVertexArrayObject());
+            moon.getTexture()->bind(0);
+            moon.updateMatrix();
+            shader_program->setMatrix4("model_matrix", moon.getModelMatrix());
+            RenderOpenGL::draw(*space.getVertexArrayObject());
 
-            //sun.getTexture()->bind(0);
-            //RenderOpenGL::draw(*sun.getVertexArrayObject());
+            sun.getTexture()->bind(0);
+            sun.updateMatrix();
+            shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
+            RenderOpenGL::draw(*space.getVertexArrayObject());
 
             GUImodule::onWindowStartUpdate();
             bool show = true;
             GUImodule::ShowExampleAppDockSpace(&show);
 
-            ImGui::Begin("Color Picker");
-            ImGui::SetWindowSize("Color Picker", ImVec2(350,60));
-            ImGui::ColorEdit4("Color", _background_color);
+            ImGui::Begin("Earth - Local transform");
+            ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", earth.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", earth.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", earth.getScale(), -2.0f, 2.0f);
             ImGui::End();
 
-            ImGui::Begin("Local transform");
-            ImGui::SetWindowSize("Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", location, -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", rotation, -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", scale, -2.0f, 2.0f);
+            ImGui::Begin("Moon - Local transform");
+            ImGui::SetWindowSize("Moon - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", moon.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", moon.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", moon.getScale(), -2.0f, 2.0f);
+            ImGui::End();
+
+            ImGui::Begin("Sun - Local transform");
+            ImGui::SetWindowSize("Sun - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", sun.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", sun.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", sun.getScale(), -2.0f, 2.0f);
+            ImGui::End();
+
+            ImGui::Begin("Sky - Local transform");
+            ImGui::SetWindowSize("Sky - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", space.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", space.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", space.getScale(), -100.0f, 100.0f);
             ImGui::End();
 
             onGUIdraw();
 
             GUImodule::onWindowUpdateDraw();
 
-            //rotation[2] += 0.15f;
+            earth.getRotation()[2] += 0.25f;
+            moon.getRotation()[2] += 0.35f;
+            sun.getRotation()[2] += 0.08f;
             _window->onUpdate();
             onUpdate();
         }
