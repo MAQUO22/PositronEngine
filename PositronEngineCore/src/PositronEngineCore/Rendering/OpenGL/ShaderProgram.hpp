@@ -21,6 +21,9 @@ namespace PositronEngine
             bool isCompile() const {return _is_compiled; }
 
             void setMatrix4(const char* matrix_name, const glm::mat4& matrix) const;
+            void setInt(const char* name, const int value) const;
+            void setFloat(const char* name, const float value) const;
+            void setVec3(const char* name, const glm::vec3& value) const;
 
         private:
             bool _is_compiled = false;
