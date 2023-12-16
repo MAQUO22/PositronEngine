@@ -22,7 +22,7 @@ namespace PositronEngine
                 delete _vertex_buffer_normal;
                 delete _vertex_buffer_texCoords;
                 delete _index_buffer;
-                delete _texture;
+                //delete _textures_vector();
             }
 
             float* getLocation();
@@ -36,11 +36,12 @@ namespace PositronEngine
             void updateMatrix();
 
             VertexArray* getVertexArrayObject();
-            Texture2D* getTexture();
+            Texture2D* getTexture(const int id);
             glm::mat4 getModelMatrix();
+            void setModelMatrix(glm::mat4 new_model_matrix);
 
             void setVertexArrayObject();
-            void setTexture(const char* path);
+            void addTexture(const char* path);
 
 
         private:
@@ -51,7 +52,7 @@ namespace PositronEngine
 
             IndexBuffer* _index_buffer = nullptr;
 
-            Texture2D* _texture = nullptr;
+            std::vector<Texture2D*> _textures_vector;
 
             BufferLayout _planet_layout
             {

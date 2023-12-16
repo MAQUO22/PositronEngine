@@ -24,7 +24,7 @@ namespace PositronEngine
             void setInt(const char* name, const int value) const;
             void setFloat(const char* name, const float value) const;
             void setVec3(const char* name, const glm::vec3& value) const;
-
+            void setVec2(const char* name, const glm::vec2& value) const;
         private:
             bool _is_compiled = false;
             unsigned int _id = 0;

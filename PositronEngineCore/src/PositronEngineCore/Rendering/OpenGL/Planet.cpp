@@ -22,14 +22,19 @@ namespace PositronEngine
         return _vertex_array_object;
     }
 
-    Texture2D* Planet::getTexture()
+    Texture2D* Planet::getTexture(const int id)
     {
-        return _texture;
+        return _textures_vector[id];
     }
 
     glm::mat4 Planet::getModelMatrix()
     {
         return _model_matrix;
+    }
+
+    void Planet::setModelMatrix(glm::mat4 new_model_matrix)
+    {
+        _model_matrix = new_model_matrix;
     }
 
     void Planet::updateMatrix()
@@ -65,9 +70,9 @@ namespace PositronEngine
             _model_matrix = location_matrix * _rotate_matrix_x * _rotate_matrix_y * _rotate_matrix_z * _scale_matrix;
     }
 
-    void Planet::setTexture(const char* path)
-    {
-        _texture = new Texture2D(path);
+    void Planet::addTexture(const char* path)
+    {;
+        _textures_vector.push_back(new Texture2D(path));
     }
 
     void Planet::setLocation(const float x, const float y, const float z)

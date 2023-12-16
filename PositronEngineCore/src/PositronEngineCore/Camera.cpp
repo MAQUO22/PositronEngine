@@ -97,8 +97,8 @@ namespace PositronEngine
 
         const glm::mat3 euler_rotate_matrix = rotate_matrix_z * rotate_matrix_y * rotate_matrix_x;
 
-        _direction = glm::normalize(_world_forward * euler_rotate_matrix);
-        _right = glm::normalize(_world_right * euler_rotate_matrix);
+        _direction = glm::normalize(euler_rotate_matrix * _world_forward);
+        _right = glm::normalize(euler_rotate_matrix * _world_right);
         _up = glm::cross(_right, _direction);
 
         _view_matrix = glm::lookAt(_location, _location + _direction, _up);

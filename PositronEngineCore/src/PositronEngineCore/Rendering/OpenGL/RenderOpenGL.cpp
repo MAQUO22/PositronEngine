@@ -2,10 +2,8 @@
 #include "VertexArray.hpp"
 #include "PositronEngineCore/Log.hpp"
 
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 
 namespace PositronEngine
 {
@@ -59,4 +57,34 @@ namespace PositronEngine
     {
         return reinterpret_cast<const char*>(glGetString(GL_VERSION));
     }
+
+    double RenderOpenGL::getCurrentTime()
+    {
+        _current_time = glfwGetTime();
+        return _current_time;
+    }
+
+    void RenderOpenGL::enableSync()
+    {
+        glfwSwapInterval(1);
+    }
+
+    void RenderOpenGL::disableSync()
+    {
+        glfwSwapInterval(0);
+    }
+
+    void RenderOpenGL::postFrame(double& frame_time)
+    {
+        _elapsed_time += frame_time;
+        ++_frame_count;
+        if(getElapsedTime() > 1.0f)
+        {
+            double fps = _frame_count / _elapsed_time;
+            _elapsed_time = 0.0f;
+            _frame_count = 0;
+            LOG_INFORMATION("FPS: {0}",fps);
+        }
+    }
+
 }

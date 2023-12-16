@@ -134,6 +134,11 @@ namespace PositronEngine
         glUniform3f(glGetUniformLocation(_id, name), value.x, value.y, value.z);
     }
 
+    void ShaderProgram::setVec2(const char* name, const glm::vec2& value) const
+    {
+        glUniform2f(glGetUniformLocation(_id, name), value.x, value.y);
+    }
+
     void PositronEngine::ShaderProgram::setFloat(const char* name, const float value) const
     {
         glUniform1f(glGetUniformLocation(_id, name), value);

@@ -11,6 +11,8 @@
 #include "PositronEngineCore/Rendering/OpenGL/Planet.hpp"
 
 #include <imgui/imgui.h>
+#include <glm/gtc/matrix_transform.hpp>
+
 
 namespace PositronEngine
 {
@@ -20,6 +22,7 @@ namespace PositronEngine
     // uniforms
     uniform mat4 model_matrix;
     uniform mat4 view_projection_matrix;
+    uniform int current_frame;
 
     // vertex attribs (input)
     layout(location=0) in vec3 vertex_position;
@@ -30,7 +33,9 @@ namespace PositronEngine
     // varyings (output)
     out vec3 frag_normal;
     out vec3 frag_position;
-    out vec2 texCoord;
+    out vec2 texCoordGround;
+    out vec2 texCoordCloud;
+    //out vec2 texCoordNight;
 
 
 
@@ -39,12 +44,16 @@ namespace PositronEngine
         frag_normal = mat3(transpose(inverse(model_matrix))) * vertex_normal;
         vec4 world_vertex_position = model_matrix * vec4(vertex_position, 1.0);
         frag_position = world_vertex_position.xyz;
-        texCoord = vertex_tex_coord;
+        texCoordGround = vertex_tex_coord;
+        texCoordCloud = vertex_tex_coord + vec2(current_frame / 8400.0f, current_frame);
+        //texCoordNight = vertex_tex_coord;
+
 
         gl_Position = view_projection_matrix * world_vertex_position;
     }
     )";
 
+    /*
     const char* fragment_shader = R"(
         #version 460
 
@@ -53,31 +62,97 @@ namespace PositronEngine
         uniform vec3 light_position;
         uniform float ambient_factor;
         uniform float diffuse_factor;
-        layout(binding=0) uniform sampler2D in_texture;
+        layout(binding=0) uniform sampler2D in_texture;      // Земля
+        layout(binding=1) uniform sampler2D in_cloud_texture; // Облака
 
         // varyings (input)
         in vec3 frag_normal;
         in vec3 frag_position;
-        in vec2 texCoord;
+        in vec2 texCoordGround;
+        in vec2 texCoordCloud;
+
 
         // output
         out vec4 frag_color;
 
         void main() {
-            //ambient
+            // ambient
             vec3 ambient = ambient_factor * light_color;
 
-            //diffuse
+            // diffuse
             vec3 normal = normalize(frag_normal);
-            vec3 ligth_direction = normalize(light_position - frag_position);
-            vec3 diffuse = diffuse_factor * light_color * max(dot(normal, ligth_direction), 0.0);
+            vec3 light_direction = normalize(light_position - frag_position);
+            vec3 diffuse = diffuse_factor * light_color * max(dot(normal, light_direction), 0.0);
 
-            //specular
-            vec3 specular = vec3(0.0f);
+            // specular
+            vec3 specular = vec3(0.0);
 
-            frag_color = texture(in_texture, texCoord) * vec4(ambient + diffuse + specular, 1.0);
+            // Load colors from textures
+            vec4 ground_color = texture(in_texture, texCoordGround);
+            vec4 cloud_color = texture(in_cloud_texture, texCoordCloud);
+
+            // Set the color of clouds to white using the red channel
+            vec3 final_color = mix(ground_color.rgb, vec3(1.0), cloud_color.r);
+
+            frag_color = vec4(ambient + diffuse + specular, 1.0) * vec4(final_color, 1.0);
         }
-    )";
+)";
+
+    */
+
+ const char* fragment_shader = R"(
+    #version 460
+
+    // uniforms
+    uniform vec3 light_color;
+    uniform vec3 light_position;
+    uniform float ambient_factor;
+    uniform float diffuse_factor;
+    layout(binding=0) uniform sampler2D in_texture;         // Земля
+    layout(binding=1) uniform sampler2D in_cloud_texture;   // Облака
+    layout(binding=2) uniform sampler2D in_night_texture;   // Ночная текстура
+
+    // varyings (input)
+    in vec3 frag_normal;
+    in vec3 frag_position;
+    in vec2 texCoordGround;
+    in vec2 texCoordCloud;
+
+    // output
+    out vec4 frag_color;
+
+    void main() {
+        // ambient
+        vec3 ambient = ambient_factor * light_color;
+
+        // diffuse
+        vec3 normal = normalize(frag_normal);
+        vec3 light_direction = normalize(light_position - frag_position);
+        float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
+        vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
+
+        // specular
+        vec3 specular = vec3(0.0);
+
+        // Если свет не попадает на объект, изменяем яркость и смягчаем переход ночной текстуры
+        vec4 ground_color;
+        if (diffuse_factor_modified > 0.0) {
+            ground_color = texture(in_texture, texCoordGround);
+        } else {
+            // Применяем ночную текстуру с ярче
+            vec4 night_color = texture(in_night_texture, texCoordGround);
+            ground_color = mix(vec4(1.0), night_color, 1) * 8.0f; // Меняем 0.5 на нужный вам коэффициент смягчения
+        }
+
+        // Цвет для облаков (белый)
+        vec4 cloud_color = texture(in_cloud_texture, texCoordCloud);
+
+        // Смешиваем цвета текстур для земли и облаков
+        vec3 final_color = mix(ground_color.rgb, vec3(1.0), cloud_color.r);
+
+        frag_color = vec4(ambient + diffuse + specular, 1.0) * vec4(final_color, 1.0);
+    }
+)";
 
     const char* ligth_vertex_shader = R"(
     #version 460
@@ -97,7 +172,6 @@ namespace PositronEngine
     out vec3 esNormal;
     out vec3 color;
     out vec2 texCoord;
-
 
     void main()
     {
@@ -127,9 +201,6 @@ namespace PositronEngine
         }
     )";
 
-
-
-
     Planet space(1.0f, 36, 18, true, 3);
     Planet earth(1.0f, 36, 18, true, 3);
     Planet moon(1.0f, 36, 18, true, 3);
@@ -141,6 +212,9 @@ namespace PositronEngine
     float light_color[3] = {1.0f, 1.0f, 1.0f};
     float ambient_factor = 0.08f;
     float diffuse_factor = 1.5f;
+
+
+
 
     Application::~Application()
     {
@@ -246,30 +320,52 @@ namespace PositronEngine
             return -4;
         }
 
+        int frame = 0;
+        const float sun_radius = 5.0f;  // Радиус солнца
+        const float orbit_radius = 20.0f;  // Радиус орбиты объекта вокруг солнца
+        float object_angle = 1.0f;  // Угол объекта вокруг орбиты
+        float object_orbit_speed = 0.008f;  // Скорость вращения объекта
 
         space.setScale(150.0f, 150.0f, 150.0f);
 
         sun.setScale(5.0f, 5.0f, 5.0f);
 
-        earth.setLocation(0.0f, -26.0f, 0.0f);
-        earth.setScale(0.9f, 0.9f, 0.9f);
+        earth.setLocation(orbit_radius, 0.0f, 0.0f);
+        earth.setScale(2.0f, 2.0f, 2.0f);
 
         moon.setLocation(0.0f, -27.5f, 0.0f);
         moon.setScale(0.23f, 0.23f, 0.23f);
 
         space.setVertexArrayObject();
 
-        earth.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth.bmp");
-        moon.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/moon.bmp");
-        sun.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/sun.bmp");
-        space.setTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/stars.bmp");
+        earth.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth.bmp");
+        earth.getTexture(0)->bind(0);
+        earth.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth_clouds.bmp");
+        earth.getTexture(1)->bind(1);
+        earth.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth_nightmap.bmp");
+        earth.getTexture(2)->bind(2);
 
+        sun.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/sun.bmp");
+        sun.getTexture(0)->bind(0);
+
+        moon.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/moon.bmp");
+        moon.getTexture(0)->bind(0);
+
+        space.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/stars.bmp");
+        space.getTexture(0)->bind(0);
         /*=========================================================*/
 
+        RenderOpenGL::setElapsedTime(0.0f);
+        RenderOpenGL::setRunTime(0.0f);
+
         RenderOpenGL::enableDepth();
+        RenderOpenGL::enableSync();
 
         while(_is_window_alive)
         {
+            double frame_time = RenderOpenGL::getCurrentTime() - RenderOpenGL::getRunTime();
+            RenderOpenGL::setRunTime(RenderOpenGL::getCurrentTime());
+
             RenderOpenGL::clear();
 
             shader_program->bind();
@@ -279,30 +375,30 @@ namespace PositronEngine
             shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1], light_color[2]));
             shader_program->setFloat("ambient_factor", ambient_factor);
             shader_program->setFloat("diffuse_factor", diffuse_factor);
+            shader_program->setInt("current_frame", frame);
             shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
 
-            space.getTexture()->bind(0);
-            space.updateMatrix();
-            shader_program->setMatrix4("model_matrix", space.getModelMatrix());
-            RenderOpenGL::draw(*space.getVertexArrayObject());
 
-            earth.getTexture()->bind(0);
+
+
+
+            earth.getTexture(0)->bind(0);
             earth.updateMatrix();
             shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
+
             RenderOpenGL::draw(*space.getVertexArrayObject());
 
-            moon.getTexture()->bind(0);
-            moon.updateMatrix();
-            shader_program->setMatrix4("model_matrix", moon.getModelMatrix());
-            RenderOpenGL::draw(*space.getVertexArrayObject());
-
+            sun.getTexture(0)->bind(0);
             ligth_shader_program->bind();
-            sun.getTexture()->bind(0);
             sun.updateMatrix();
             ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
             ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
             ligth_shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1], light_color[2]));
+
             RenderOpenGL::draw(*space.getVertexArrayObject());
+
+
+
 
 
             GUImodule::onWindowStartUpdate();
@@ -311,8 +407,8 @@ namespace PositronEngine
 
             ImGui::Begin("light_color");
             ImGui::ColorEdit3("light_color", light_color);
-            ImGui::SliderFloat("ambient_factor", &ambient_factor, 0.0f, 1.0f);
-            ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 3.0f);
+            ImGui::SliderFloat("ambient_factor", &ambient_factor, 0.0f, 2.0f);
+            ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
             ImGui::End();
             ImGui::Begin("Earth - Local transform");
             ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
@@ -346,15 +442,26 @@ namespace PositronEngine
 
             GUImodule::onWindowUpdateDraw();
 
-            earth.getRotation()[2] += 0.25f;
-            moon.getRotation()[2] += 0.35f;
-            sun.getRotation()[2] += 0.08f;
+
+            earth.getRotation()[2] += 0.01f;
+            float x = orbit_radius * cos(object_angle);
+            float y = orbit_radius * sin(object_angle);
+
+            earth.setLocation(x,y,earth.getLocation()[2]);
+            sun.getRotation()[2] += 0.015f;
+
+            object_angle += 0.0008f;
+
+
+            frame++;
+            RenderOpenGL::postFrame(frame_time);
             _window->onUpdate();
             onUpdate();
+
+
         }
 
         _window = nullptr;
-
         return 0;
     }
 }

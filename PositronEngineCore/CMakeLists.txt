@@ -39,7 +39,6 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.cpp
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
-
     src/PositronEngineCore/Modules/GUImodule.cpp
 )
 
