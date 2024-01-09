@@ -1,4 +1,5 @@
 build/
+built/
 *.user
 .kdev4/
 *.kdev4

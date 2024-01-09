@@ -394,20 +394,20 @@ namespace PositronEngine
 
         space.setVertexArrayObject();
 
-        earth.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth.bmp");
+        earth.addTexture("../../textures/earth.bmp");
         earth.getTexture(0)->bind(0);
-        earth.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth_clouds.bmp");
+        earth.addTexture("../../textures/earth_clouds.bmp");
         earth.getTexture(1)->bind(1);
-        earth.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/earth_nightmap.bmp");
+        earth.addTexture("../../textures/earth_nightmap.bmp");
         earth.getTexture(2)->bind(2);
 
-        sun.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/sun.bmp");
+        sun.addTexture("../../textures/sun.bmp");
         sun.getTexture(0)->bind(0);
 
-        moon.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/moon.bmp");
+        moon.addTexture("../../textures/moon.bmp");
         moon.getTexture(0)->bind(0);
 
-        space.addTexture("/home/n0rr/Desctop/C++/3D Engine Linux/PositronEngine/textures/stars.bmp");
+        space.addTexture("../../textures/stars.bmp");
         space.getTexture(0)->bind(0);
         /*=========================================================*/
 
