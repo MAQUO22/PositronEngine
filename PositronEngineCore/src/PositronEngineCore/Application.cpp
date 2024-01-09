@@ -35,7 +35,6 @@ namespace PositronEngine
     out vec3 frag_position;
     out vec2 texCoordGround;
     out vec2 texCoordCloud;
-    //out vec2 texCoordNight;
 
 
 
@@ -45,15 +44,13 @@ namespace PositronEngine
         vec4 world_vertex_position = model_matrix * vec4(vertex_position, 1.0);
         frag_position = world_vertex_position.xyz;
         texCoordGround = vertex_tex_coord;
-        texCoordCloud = vertex_tex_coord + vec2(current_frame / 8400.0f, current_frame);
-        //texCoordNight = vertex_tex_coord;
+        texCoordCloud = vertex_tex_coord + vec2(current_frame / 9900.0f, current_frame);
 
 
         gl_Position = view_projection_matrix * world_vertex_position;
     }
     )";
 
-    /*
     const char* fragment_shader = R"(
         #version 460
 
@@ -62,15 +59,15 @@ namespace PositronEngine
         uniform vec3 light_position;
         uniform float ambient_factor;
         uniform float diffuse_factor;
-        layout(binding=0) uniform sampler2D in_texture;      // Земля
-        layout(binding=1) uniform sampler2D in_cloud_texture; // Облака
+        layout(binding=0) uniform sampler2D in_texture;         // Земля
+        layout(binding=1) uniform sampler2D in_cloud_texture;   // Облака
+        layout(binding=2) uniform sampler2D in_night_texture;   // Ночная текстура
 
         // varyings (input)
         in vec3 frag_normal;
         in vec3 frag_position;
         in vec2 texCoordGround;
         in vec2 texCoordCloud;
-
 
         // output
         out vec4 frag_color;
@@ -82,77 +79,103 @@ namespace PositronEngine
             // diffuse
             vec3 normal = normalize(frag_normal);
             vec3 light_direction = normalize(light_position - frag_position);
-            vec3 diffuse = diffuse_factor * light_color * max(dot(normal, light_direction), 0.0);
+            float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
+            vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
 
             // specular
             vec3 specular = vec3(0.0);
 
-            // Load colors from textures
-            vec4 ground_color = texture(in_texture, texCoordGround);
+            // Если свет не попадает на объект, изменяем яркость и смягчаем переход ночной текстуры
+            vec4 ground_color;
+            if (diffuse_factor_modified > 0.0) {
+                ground_color = texture(in_texture, texCoordGround);
+            } else {
+                // Применяем ночную текстуру с ярче
+                vec4 night_color = texture(in_night_texture, texCoordGround);
+                ground_color = mix(vec4(1.0), night_color, 1) * 7.0f; // Меняем 0.5 на нужный вам коэффициент смягчения
+            }
+
+            // Цвет для облаков (белый)
             vec4 cloud_color = texture(in_cloud_texture, texCoordCloud);
 
-            // Set the color of clouds to white using the red channel
+            // Смешиваем цвета текстур для земли и облаков
             vec3 final_color = mix(ground_color.rgb, vec3(1.0), cloud_color.r);
 
             frag_color = vec4(ambient + diffuse + specular, 1.0) * vec4(final_color, 1.0);
         }
-)";
+    )";
 
-    */
 
- const char* fragment_shader = R"(
-    #version 460
 
-    // uniforms
-    uniform vec3 light_color;
-    uniform vec3 light_position;
-    uniform float ambient_factor;
-    uniform float diffuse_factor;
-    layout(binding=0) uniform sampler2D in_texture;         // Земля
-    layout(binding=1) uniform sampler2D in_cloud_texture;   // Облака
-    layout(binding=2) uniform sampler2D in_night_texture;   // Ночная текстура
+    const char* vertex_shader_no_atmoshpere= R"(
+        #version 460
 
-    // varyings (input)
-    in vec3 frag_normal;
-    in vec3 frag_position;
-    in vec2 texCoordGround;
-    in vec2 texCoordCloud;
+        // uniforms
+        uniform mat4 model_matrix;
+        uniform mat4 view_projection_matrix;
 
-    // output
-    out vec4 frag_color;
+        // vertex attribs (input)
+        layout(location=0) in vec3 vertex_position;
+        layout(location=1) in vec3 vertex_normal;
+        layout(location=2) in vec2 vertex_tex_coord;
 
-    void main() {
-        // ambient
-        vec3 ambient = ambient_factor * light_color;
+        // varyings (output)
+        out vec3 frag_normal;
+        out vec3 frag_position;
+        out vec2 texCoordGround;
 
-        // diffuse
-        vec3 normal = normalize(frag_normal);
-        vec3 light_direction = normalize(light_position - frag_position);
-        float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
-        vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
+        void main()
+        {
+            frag_normal = mat3(transpose(inverse(model_matrix))) * vertex_normal;
+            vec4 world_vertex_position = model_matrix * vec4(vertex_position, 1.0);
+            frag_position = world_vertex_position.xyz;
+            texCoordGround = vertex_tex_coord;
 
-        // specular
-        vec3 specular = vec3(0.0);
-
-        // Если свет не попадает на объект, изменяем яркость и смягчаем переход ночной текстуры
-        vec4 ground_color;
-        if (diffuse_factor_modified > 0.0) {
-            ground_color = texture(in_texture, texCoordGround);
-        } else {
-            // Применяем ночную текстуру с ярче
-            vec4 night_color = texture(in_night_texture, texCoordGround);
-            ground_color = mix(vec4(1.0), night_color, 1) * 8.0f; // Меняем 0.5 на нужный вам коэффициент смягчения
+            gl_Position = view_projection_matrix * world_vertex_position;
         }
+        )";
 
-        // Цвет для облаков (белый)
-        vec4 cloud_color = texture(in_cloud_texture, texCoordCloud);
+    const char* fragment_shader_no_atmoshpere = R"(
+        #version 460
 
-        // Смешиваем цвета текстур для земли и облаков
-        vec3 final_color = mix(ground_color.rgb, vec3(1.0), cloud_color.r);
+        // uniforms
+        uniform vec3 light_color;
+        uniform vec3 light_position;
+        uniform float ambient_factor;
+        uniform float diffuse_factor;
+        layout(binding=0) uniform sampler2D in_texture;
 
-        frag_color = vec4(ambient + diffuse + specular, 1.0) * vec4(final_color, 1.0);
-    }
-)";
+        // varyings (input)
+        in vec3 frag_normal;
+        in vec3 frag_position;
+        in vec2 texCoordGround;
+
+        // output
+        out vec4 frag_color;
+
+        void main() {
+            // ambient
+            vec3 ambient = ambient_factor * light_color;
+
+            // diffuse
+            vec3 normal = normalize(frag_normal);
+            vec3 light_direction = normalize(light_position - frag_position);
+            float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
+            vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
+
+            // specular
+            vec3 specular = vec3(0.0);
+
+            vec4 ground_color = texture(in_texture, texCoordGround);
+
+
+            frag_color = vec4(ambient + diffuse + specular, 1.0) * ground_color;
+        }
+    )";
+
+
+
+
 
     const char* ligth_vertex_shader = R"(
     #version 460
@@ -197,7 +220,26 @@ namespace PositronEngine
         out vec4 frag_color;
 
         void main() {
-            frag_color = texture(in_texture, texCoord) * vec4(light_color, 1.0f);
+            // Применяем эффект bloom к текстуре
+            vec4 bloom = vec4(0.0);
+
+            // Применяем размытие Гаусса к bloom
+            float blurSize = 5.0; // Размер размытия
+            float sigma = 2.0; // Параметр Гауссовой функции
+
+            for (float x = -blurSize; x <= blurSize; x += 1.0) {
+                for (float y = -blurSize; y <= blurSize; y += 1.0) {
+                    bloom += texture(in_texture, texCoord + vec2(x, y) / 800.0) *
+                            exp(-(x*x + y*y) / (2.0 * sigma * sigma)) / (2.0 * 3.14159 * sigma * sigma);
+                }
+            }
+
+            // Сложение с исходной текстурой (in_texture)
+            vec4 final_color = texture(in_texture, texCoord) + bloom;
+
+            // Настраиваемый коэффициент для усиления эффекта bloom для солнца
+            float bloomIntensity = 1.0;
+            frag_color = final_color * vec4(light_color * bloomIntensity, 1.0);
         }
     )";
 
@@ -208,18 +250,22 @@ namespace PositronEngine
 
     ShaderProgram* shader_program = nullptr;
     ShaderProgram* ligth_shader_program = nullptr;
+    int* asdasd = nullptr;
+    ShaderProgram* no_atmoshpere_program = nullptr;
+
 
     float light_color[3] = {1.0f, 1.0f, 1.0f};
-    float ambient_factor = 0.08f;
-    float diffuse_factor = 1.5f;
-
+    float ambient_factor = 0.055f;
+    float diffuse_factor = 0.8f;
 
 
 
     Application::~Application()
     {
         delete shader_program;
+        delete no_atmoshpere_program;
         delete ligth_shader_program;
+
 
         LOG_INFORMATION("Closing application");
     }
@@ -308,6 +354,7 @@ namespace PositronEngine
             }
         );
 
+
         shader_program = new ShaderProgram(vertex_shader, fragment_shader);
         if(!shader_program->isCompile())
         {
@@ -320,21 +367,30 @@ namespace PositronEngine
             return -4;
         }
 
+
+        no_atmoshpere_program = new ShaderProgram(vertex_shader_no_atmoshpere, fragment_shader_no_atmoshpere);
+        if(!no_atmoshpere_program->isCompile())
+        {
+            return -4;
+        }
+
+
         int frame = 0;
         const float sun_radius = 5.0f;  // Радиус солнца
-        const float orbit_radius = 20.0f;  // Радиус орбиты объекта вокруг солнца
+        const float earth_orbit_radius = 15.0f;
+        const float moon_orbit_radius = 4.0f;// Радиус орбиты объекта вокруг солнца
         float object_angle = 1.0f;  // Угол объекта вокруг орбиты
-        float object_orbit_speed = 0.008f;  // Скорость вращения объекта
+        float object_orbit_speed = 0.004f;  // Скорость вращения объекта
 
         space.setScale(150.0f, 150.0f, 150.0f);
 
         sun.setScale(5.0f, 5.0f, 5.0f);
 
-        earth.setLocation(orbit_radius, 0.0f, 0.0f);
+        earth.setLocation(earth_orbit_radius, 0.0f, 0.0f);
         earth.setScale(2.0f, 2.0f, 2.0f);
 
-        moon.setLocation(0.0f, -27.5f, 0.0f);
-        moon.setScale(0.23f, 0.23f, 0.23f);
+        moon.setLocation(moon_orbit_radius, 7.0f, 0.0f);
+        moon.setScale(0.5f, 0.5f, 0.5f);
 
         space.setVertexArrayObject();
 
@@ -360,6 +416,9 @@ namespace PositronEngine
 
         RenderOpenGL::enableDepth();
         RenderOpenGL::enableSync();
+        bool show = true;
+
+        ShaderProgram* asd;
 
         while(_is_window_alive)
         {
@@ -379,14 +438,26 @@ namespace PositronEngine
             shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
 
 
-
-
-
             earth.getTexture(0)->bind(0);
             earth.updateMatrix();
             shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
 
             RenderOpenGL::draw(*space.getVertexArrayObject());
+
+
+            no_atmoshpere_program->bind();
+            no_atmoshpere_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            no_atmoshpere_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1], light_color[2]));
+            no_atmoshpere_program->setFloat("ambient_factor", ambient_factor);
+            no_atmoshpere_program->setFloat("diffuse_factor", diffuse_factor);
+            no_atmoshpere_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
+
+            moon.getTexture(0)->bind(0);
+            moon.updateMatrix();
+            no_atmoshpere_program->setMatrix4("model_matrix", moon.getModelMatrix());
+            RenderOpenGL::draw(*space.getVertexArrayObject());
+
+
 
             sun.getTexture(0)->bind(0);
             ligth_shader_program->bind();
@@ -399,11 +470,9 @@ namespace PositronEngine
 
 
 
-
-
             GUImodule::onWindowStartUpdate();
-            bool show = true;
             GUImodule::ShowExampleAppDockSpace(&show);
+
 
             ImGui::Begin("light_color");
             ImGui::ColorEdit3("light_color", light_color);
@@ -442,15 +511,24 @@ namespace PositronEngine
 
             GUImodule::onWindowUpdateDraw();
 
-
-            earth.getRotation()[2] += 0.01f;
-            float x = orbit_radius * cos(object_angle);
-            float y = orbit_radius * sin(object_angle);
-
-            earth.setLocation(x,y,earth.getLocation()[2]);
             sun.getRotation()[2] += 0.015f;
 
-            object_angle += 0.0008f;
+
+            earth.getRotation()[2] -= 0.19f;
+            float e_x = sun.getLocation()[0] + earth_orbit_radius * cos(object_angle);
+            float e_y = sun.getLocation()[1] + earth_orbit_radius * sin(object_angle);
+
+            earth.setLocation(e_x, e_y, earth.getLocation()[2]);
+
+            object_angle += 0.0025f;
+
+            earth.getRotation()[2] -= 0.20f;
+            float m_x = earth.getLocation()[0] + moon_orbit_radius * cos(object_angle);
+            float m_y = earth.getLocation()[1] + moon_orbit_radius * sin(object_angle);
+
+            moon.setLocation(m_x, m_y, moon.getLocation()[2]);
+
+
 
 
             frame++;
