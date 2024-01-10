@@ -6,29 +6,32 @@
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
 
+
 namespace PositronEngine
 {
-    class Planet : public Sphere
+    class Star : public Sphere
     {
         public:
-            Planet(float radius, int sectors, int stacks, bool smooth, int up)
+            Star(float radius, int sectors, int stacks, bool smooth, int up)
                 : Sphere(radius, sectors, stacks, smooth, up)
                 {}
 
-            ~Planet()
+            ~Star()
             {
                 delete _vertex_array_object;
                 delete _vertex_buffer_position;
                 delete _vertex_buffer_normal;
                 delete _vertex_buffer_texCoords;
                 delete _index_buffer;
-                //delete _textures_vector();
             }
 
             float* getLocation();
             float* getRotation();
             float* getScale();
+            float* getLightColor();
 
+            float getAmbientFactor();
+            float getDiffuseFactor();
             float getOrbitRadius();
             float getOrbitSpeed();
             float getAngle();
@@ -36,15 +39,16 @@ namespace PositronEngine
             void setLocation(const float x, const float y, const float z);
             void setRotation(const float x, const float y, const float z);
             void setScale(const float x, const float y, const float z);
+            void setLightColor(const float r, const float g, const float b);
 
+            void setAmbientFactor(const float factor);
+            void setDiffuseFactor(const float factor);
             void setOrbirRadius(const float radius);
             void setAngle(const float angle);
             void setOrbitSpeed(const float speed);
 
             void updateMatrix();
             void addRotation(const float vel);
-            void addAngle();
-            void doOrbitalMotion(const float* location);
 
             VertexArray* getVertexArrayObject();
             Texture2D* getTexture(const int id);
@@ -65,7 +69,7 @@ namespace PositronEngine
 
             std::vector<Texture2D*> _textures_vector;
 
-            BufferLayout _planet_layout
+            BufferLayout _star_layout
             {
                 ShaderDataType::Float3,
                 ShaderDataType::Float3,
@@ -76,11 +80,16 @@ namespace PositronEngine
             float _rotation[3] = {0.0f, 0.0f, 0.0f};
             float _scale[3] = {1.0f, 1.0f, 1.0f};
 
+            float _light_color[3] = {1.0f, 1.0f, 1.0f};
+            float _ambient_factor = 0.055f;
+            float _diffuse_factor = 0.8f;
+
             float _orbit_radius = 0.0f;
             float _angle = 1.0f;
-            float _orbit_speed = 0.0008f;
+            float _orbit_speed = 0.0f;
 
             glm::mat4 _model_matrix;
+
 
     };
 }

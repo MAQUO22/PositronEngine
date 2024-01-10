@@ -1,59 +1,73 @@
-#include "Planet.hpp"
+#include "Star.hpp"
 
 namespace PositronEngine
 {
-    float* PositronEngine::Planet::getLocation()
+    float* PositronEngine::Star::getLocation()
     {
         return _location;
     }
 
-    float* PositronEngine::Planet::getRotation()
+    float* PositronEngine::Star::getRotation()
     {
         return _rotation;
     }
 
-    float* PositronEngine::Planet::getScale()
+    float* PositronEngine::Star::getScale()
     {
         return _scale;
     }
 
-    VertexArray* Planet::getVertexArrayObject()
+    float* PositronEngine::Star::getLightColor()
+    {
+        return _light_color;
+    }
+
+    VertexArray* Star::getVertexArrayObject()
     {
         return _vertex_array_object;
     }
 
-    Texture2D* Planet::getTexture(const int id)
+    Texture2D* Star::getTexture(const int id)
     {
         return _textures_vector[id];
     }
 
-    glm::mat4 Planet::getModelMatrix()
+    glm::mat4 Star::getModelMatrix()
     {
         return _model_matrix;
     }
 
-    float Planet::getOrbitRadius()
+    float Star::getAmbientFactor()
+    {
+        return _ambient_factor;
+    }
+
+    float Star::getDiffuseFactor()
+    {
+        return _diffuse_factor;
+    }
+
+    float Star::getOrbitRadius()
     {
         return _orbit_radius;
     }
 
-    float Planet::getOrbitSpeed()
+    float Star::getOrbitSpeed()
     {
         return _orbit_speed;
     }
 
-    float Planet::getAngle()
+    float Star::getAngle()
     {
         return _angle;
     }
 
-
-    void Planet::setModelMatrix(glm::mat4 new_model_matrix)
+    void Star::setModelMatrix(glm::mat4 new_model_matrix)
     {
         _model_matrix = new_model_matrix;
     }
 
-    void Planet::updateMatrix()
+    void Star::updateMatrix()
     {
         glm::mat4 location_matrix(1,                    0,                  0,               0,
                                   0,                    1,                  0,               0,
@@ -86,82 +100,86 @@ namespace PositronEngine
             _model_matrix = location_matrix * _rotate_matrix_x * _rotate_matrix_y * _rotate_matrix_z * _scale_matrix;
     }
 
-    void Planet::addRotation(const float vel)
-    {
+    void Star::addRotation(const float vel){
         _rotation[2] -= vel;
     }
 
-    void Planet::addAngle()
-    {
-        _angle += _orbit_speed;
-    }
-
-    void Planet::doOrbitalMotion(const float* location)
-    {
-        float e_x = location[0] + _orbit_radius * cos(_angle);
-        float e_y = location[1] + _orbit_radius * sin(_angle);
-
-        setLocation(e_x, e_y, _location[2]);
-    }
-
-    void Planet::addTexture(const char* path)
+    void Star::addTexture(const char* path)
     {;
         _textures_vector.push_back(new Texture2D(path));
     }
 
-    void Planet::setLocation(const float x, const float y, const float z)
+    void Star::setLocation(const float x, const float y, const float z)
     {
         _location[0] = x;
         _location[1] = y;
         _location[2] = z;
     }
 
-    void Planet::setRotation(const float x, const float y, const float z)
+    void Star::setRotation(const float x, const float y, const float z)
     {
         _rotation[0] = x;
         _rotation[1] = y;
         _rotation[2] = z;
     }
 
-    void Planet::setScale(const float x, const float y, const float z)
+    void Star::setScale(const float x, const float y, const float z)
     {
         _scale[0] = x;
         _scale[1] = y;
         _scale[2] = z;
     }
 
-    void Planet::setOrbirRadius(const float radius)
+    void Star::setLightColor(const float r, const float g, const float b)
+    {
+        _light_color[0] = r;
+        _light_color[1] = g;
+        _light_color[2] = b;
+    }
+
+
+    void Star::setAmbientFactor(const float factor)
+    {
+        _ambient_factor = factor;
+    }
+
+    void Star::setDiffuseFactor(const float factor)
+    {
+        _diffuse_factor = factor;
+    }
+
+    void Star::setOrbirRadius(const float radius)
     {
         _orbit_radius = radius;
     }
 
-    void Planet::setAngle(const float angle)
+    void Star::setAngle(const float angle)
     {
         _angle = angle;
     }
 
-    void Planet::setOrbitSpeed(const float speed)
+    void Star::setOrbitSpeed(const float speed)
     {
         _orbit_speed = speed;
     }
 
-    void PositronEngine::Planet::setVertexArrayObject()
+    void PositronEngine::Star::setVertexArrayObject()
     {
         _vertex_array_object = new VertexArray();
 
-        _vertex_buffer_position = new VertexBuffer(Planet::getInterleavedVertices(),
-                                                   Planet::getInterleavedVertexSize(),
-                                                   _planet_layout);
+        _vertex_buffer_position = new VertexBuffer(Star::getInterleavedVertices(),
+                                                   Star::getInterleavedVertexSize(),
+                                                   _star_layout);
 
-        _vertex_buffer_normal = new VertexBuffer(Planet::getNormals(),
-                                                 Planet::getNormalSize(),
-                                                 _planet_layout);
+        _vertex_buffer_normal = new VertexBuffer(Star::getNormals(),
+                                                 Star::getNormalSize(),
+                                                 _star_layout);
 
-        _vertex_buffer_texCoords = new VertexBuffer(Planet::getTexCoords(),
-                                                    Planet::getTexCoordSize(),
-                                                    _planet_layout);
+        _vertex_buffer_texCoords = new VertexBuffer(Star::getTexCoords(),
+                                                    Star::getTexCoordSize(),
+                                                    _star_layout);
 
-        _index_buffer = new IndexBuffer(Planet::getIndices(), Planet::getIndexSize());
+        _index_buffer = new IndexBuffer(Star::getIndices(), Star::getIndexSize());
 
         _vertex_array_object->addVertexBuffer(*_vertex_buffer_position);
         _vertex_array_object->addVertexBuffer(*_vertex_buffer_normal);

@@ -9,6 +9,7 @@
 #include "PositronEngineCore/Rendering/OpenGL/RenderOpenGL.hpp"
 #include "PositronEngineCore/Modules/GUImodule.hpp"
 #include "PositronEngineCore/Rendering/OpenGL/Planet.hpp"
+#include "PositronEngineCore/Rendering/OpenGL/Star.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -246,18 +247,14 @@ namespace PositronEngine
     Planet space(1.0f, 36, 18, true, 3);
     Planet earth(1.0f, 36, 18, true, 3);
     Planet moon(1.0f, 36, 18, true, 3);
-    Planet sun(1.0f, 36, 18, true, 3);
+    Star sun(1.0f, 36, 18, true, 3);
 
     ShaderProgram* shader_program = nullptr;
     ShaderProgram* ligth_shader_program = nullptr;
-    int* asdasd = nullptr;
     ShaderProgram* no_atmoshpere_program = nullptr;
 
-
-    float light_color[3] = {1.0f, 1.0f, 1.0f};
-    float ambient_factor = 0.055f;
-    float diffuse_factor = 0.8f;
-
+    bool show = true;
+    int frame = 0;
 
 
     Application::~Application()
@@ -374,23 +371,18 @@ namespace PositronEngine
             return -4;
         }
 
-
-        int frame = 0;
-        const float sun_radius = 5.0f;  // Радиус солнца
-        const float earth_orbit_radius = 15.0f;
-        const float moon_orbit_radius = 4.0f;// Радиус орбиты объекта вокруг солнца
-        float object_angle = 1.0f;  // Угол объекта вокруг орбиты
-        float object_orbit_speed = 0.004f;  // Скорость вращения объекта
-
         space.setScale(150.0f, 150.0f, 150.0f);
 
         sun.setScale(5.0f, 5.0f, 5.0f);
 
-        earth.setLocation(earth_orbit_radius, 0.0f, 0.0f);
+        earth.setOrbirRadius(40.0f);
+        earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
         earth.setScale(2.0f, 2.0f, 2.0f);
 
-        moon.setLocation(moon_orbit_radius, 7.0f, 0.0f);
+        moon.setOrbirRadius(4.0f);
+        moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
         moon.setScale(0.5f, 0.5f, 0.5f);
+        moon.setOrbitSpeed(0.006f);
 
         space.setVertexArrayObject();
 
@@ -407,6 +399,7 @@ namespace PositronEngine
         moon.addTexture("../../textures/moon.bmp");
         moon.getTexture(0)->bind(0);
 
+
         space.addTexture("../../textures/stars.bmp");
         space.getTexture(0)->bind(0);
         /*=========================================================*/
@@ -416,9 +409,7 @@ namespace PositronEngine
 
         RenderOpenGL::enableDepth();
         RenderOpenGL::enableSync();
-        bool show = true;
 
-        ShaderProgram* asd;
 
         while(_is_window_alive)
         {
@@ -431,9 +422,9 @@ namespace PositronEngine
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1], light_color[2]));
-            shader_program->setFloat("ambient_factor", ambient_factor);
-            shader_program->setFloat("diffuse_factor", diffuse_factor);
+            shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
+            shader_program->setFloat("ambient_factor", sun.getAmbientFactor());
+            shader_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
             shader_program->setInt("current_frame", frame);
             shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
 
@@ -447,9 +438,9 @@ namespace PositronEngine
 
             no_atmoshpere_program->bind();
             no_atmoshpere_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            no_atmoshpere_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1], light_color[2]));
-            no_atmoshpere_program->setFloat("ambient_factor", ambient_factor);
-            no_atmoshpere_program->setFloat("diffuse_factor", diffuse_factor);
+            no_atmoshpere_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
+            no_atmoshpere_program->setFloat("ambient_factor", sun.getAmbientFactor());
+            no_atmoshpere_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
             no_atmoshpere_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
 
             moon.getTexture(0)->bind(0);
@@ -458,13 +449,12 @@ namespace PositronEngine
             RenderOpenGL::draw(*space.getVertexArrayObject());
 
 
-
             sun.getTexture(0)->bind(0);
             ligth_shader_program->bind();
             sun.updateMatrix();
             ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
             ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
-            ligth_shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1], light_color[2]));
+            ligth_shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
 
             RenderOpenGL::draw(*space.getVertexArrayObject());
 
@@ -475,9 +465,9 @@ namespace PositronEngine
 
 
             ImGui::Begin("light_color");
-            ImGui::ColorEdit3("light_color", light_color);
-            ImGui::SliderFloat("ambient_factor", &ambient_factor, 0.0f, 2.0f);
-            ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
+            ImGui::ColorEdit3("light_color", sun.getLightColor());
+            //ImGui::SliderFloat("ambient_factor", &sun.()), 0.0f, 2.0f);
+            //ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
             ImGui::End();
             ImGui::Begin("Earth - Local transform");
             ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
@@ -511,24 +501,14 @@ namespace PositronEngine
 
             GUImodule::onWindowUpdateDraw();
 
-            sun.getRotation()[2] += 0.015f;
+            sun.addRotation(0.015f);
 
+            earth.addRotation(0.007f);
+            earth.doOrbitalMotion(sun.getLocation());
+            earth.addAngle();
 
-            earth.getRotation()[2] -= 0.19f;
-            float e_x = sun.getLocation()[0] + earth_orbit_radius * cos(object_angle);
-            float e_y = sun.getLocation()[1] + earth_orbit_radius * sin(object_angle);
-
-            earth.setLocation(e_x, e_y, earth.getLocation()[2]);
-
-            object_angle += 0.0025f;
-
-            earth.getRotation()[2] -= 0.20f;
-            float m_x = earth.getLocation()[0] + moon_orbit_radius * cos(object_angle);
-            float m_y = earth.getLocation()[1] + moon_orbit_radius * sin(object_angle);
-
-            moon.setLocation(m_x, m_y, moon.getLocation()[2]);
-
-
+            moon.doOrbitalMotion(earth.getLocation());
+            moon.addAngle();
 
 
             frame++;
