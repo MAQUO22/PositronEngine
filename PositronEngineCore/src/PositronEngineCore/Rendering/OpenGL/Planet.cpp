@@ -1,4 +1,4 @@
-#include "Planet.hpp"
+#include "PositronEngineCore/Planet.hpp"
 
 namespace PositronEngine
 {

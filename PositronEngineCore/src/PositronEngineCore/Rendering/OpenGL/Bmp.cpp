@@ -23,7 +23,7 @@
 #include <cstring>                      // for memcpy()
 #include <cstdlib>                      // for abs()
 #include <bitset>                       // for bitset<>()
-#include "Bmp.h"
+#include "PositronEngineCore/Bmp.h"
 //using std::ifstream;
 //using std::ofstream;
 //using std::ios;

@@ -19,8 +19,11 @@ namespace PositronEngine
 
             virtual int start(unsigned int window_width,unsigned int window_height, const char* window_title);
 
-            virtual void onUpdate() {}
+            virtual bool compileShaders() {}
+            virtual void initializeSpheres() {}
+            virtual void onInputUpdate() {}
             virtual void onGUIdraw() {}
+            virtual void onEditorUpdate() {}
             virtual void onMouseButtonEvent(const MouseButtonCode mouse_button, const double x, const double y, bool pressed) {}
 
 

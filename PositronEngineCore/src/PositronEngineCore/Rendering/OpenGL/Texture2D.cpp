@@ -1,4 +1,4 @@
-#include "Texture2D.hpp"
+#include "PositronEngineCore/Texture2D.hpp"
 #include "PositronEngineCore/Log.hpp"
 #include <glad/glad.h>
 

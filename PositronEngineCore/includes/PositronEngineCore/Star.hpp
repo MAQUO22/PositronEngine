@@ -1,8 +1,8 @@
 #pragma once
-#include "Sphere.h"
+#include "PositronEngineCore/Sphere.h"
 #include "VertexArray.hpp"
 #include "VertexBuffer.hpp"
-#include "Texture2D.hpp"
+#include "PositronEngineCore/Texture2D.hpp"
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
 

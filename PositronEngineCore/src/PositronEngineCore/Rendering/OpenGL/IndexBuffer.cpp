@@ -1,4 +1,4 @@
-#include "IndexBuffer.hpp"
+#include "PositronEngineCore/IndexBuffer.hpp"
 #include "PositronEngineCore/Log.hpp"
 
 #include <glad/glad.h>

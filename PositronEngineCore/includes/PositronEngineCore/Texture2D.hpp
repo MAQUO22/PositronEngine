@@ -1,5 +1,5 @@
 #pragma once
-#include "Bmp.h"
+#include "PositronEngineCore/Bmp.h"
 
 namespace PositronEngine
 {

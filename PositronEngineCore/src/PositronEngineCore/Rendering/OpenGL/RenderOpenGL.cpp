@@ -1,5 +1,5 @@
-#include "RenderOpenGL.hpp"
-#include "VertexArray.hpp"
+#include "PositronEngineCore/RenderOpenGL.hpp"
+#include "PositronEngineCore/VertexArray.hpp"
 #include "PositronEngineCore/Log.hpp"
 
 #include <glad/glad.h>

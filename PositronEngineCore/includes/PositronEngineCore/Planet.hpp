@@ -1,5 +1,5 @@
 #pragma once
-#include "Sphere.h"
+#include "PositronEngineCore/Sphere.h"
 #include "VertexArray.hpp"
 #include "VertexBuffer.hpp"
 #include "Texture2D.hpp"
@@ -22,7 +22,6 @@ namespace PositronEngine
                 delete _vertex_buffer_normal;
                 delete _vertex_buffer_texCoords;
                 delete _index_buffer;
-                //delete _textures_vector();
             }
 
             float* getLocation();

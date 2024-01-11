@@ -1,4 +1,4 @@
-#include "VertexBuffer.hpp"
+#include "PositronEngineCore/VertexBuffer.hpp"
 #include "PositronEngineCore/Log.hpp"
 
 #include <glad/glad.h>

@@ -1,4 +1,4 @@
-#include "Star.hpp"
+#include "PositronEngineCore/Star.hpp"
 
 namespace PositronEngine
 {

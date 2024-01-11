@@ -1,4 +1,4 @@
-#include "VertexArray.hpp"
+#include "PositronEngineCore/VertexArray.hpp"
 
 #include <glad/glad.h>
 #include <iostream>

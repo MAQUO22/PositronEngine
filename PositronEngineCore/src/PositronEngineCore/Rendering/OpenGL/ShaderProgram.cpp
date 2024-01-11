@@ -1,4 +1,4 @@
-#include "ShaderProgram.hpp"
+#include "PositronEngineCore/ShaderProgram.hpp"
 #include "PositronEngineCore/Log.hpp"
 
 #include <glad/glad.h>

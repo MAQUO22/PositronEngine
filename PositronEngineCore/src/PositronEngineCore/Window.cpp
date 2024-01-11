@@ -1,7 +1,7 @@
 #include "PositronEngineCore/Window.hpp"
 #include "PositronEngineCore/Log.hpp"
 
-#include "PositronEngineCore/Rendering/OpenGL/RenderOpenGL.hpp"
+#include "PositronEngineCore/RenderOpenGL.hpp"
 #include "PositronEngineCore/Modules/GUImodule.hpp"
 
 #include <GLFW/glfw3.h>
