@@ -13,7 +13,10 @@ namespace PositronEngine
         public:
             Planet(float radius, int sectors, int stacks, bool smooth, int up)
                 : Sphere(radius, sectors, stacks, smooth, up)
-                {}
+                {
+
+
+                }
 
             ~Planet()
             {

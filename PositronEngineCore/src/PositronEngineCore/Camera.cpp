@@ -51,7 +51,7 @@ namespace PositronEngine
         {
             float r = 0.1f;
             float t = 0.1f;
-            float f = 1000.0f;
+            float f = 9000.0f;
             float n = 0.1f;
 
            _projection_matrix = glm::mat4(n/r,      0,          0,                       0,
@@ -63,7 +63,7 @@ namespace PositronEngine
         {
             float r = 2.0f;
             float t = 2.0f;
-            float f = 1000.0f;
+            float f = 9000.0f;
             float n = 0.1f;
 
             _projection_matrix = glm::mat4(1/r,      0,          0,                       0,

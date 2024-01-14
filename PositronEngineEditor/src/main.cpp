@@ -43,132 +43,136 @@ const char* vertex_shader = R"(
 
         gl_Position = view_projection_matrix * world_vertex_position;
     }
-    )";
+)";
 
 const char* fragment_shader = R"(
-        #version 460
+    #version 460
 
-        // uniforms
-        uniform vec3 light_color;
-        uniform vec3 light_position;
-        uniform float ambient_factor;
-        uniform float diffuse_factor;
-        layout(binding=0) uniform sampler2D in_texture;         // Земля
-        layout(binding=1) uniform sampler2D in_cloud_texture;   // Облака
-        layout(binding=2) uniform sampler2D in_night_texture;   // Ночная текстура
+    // uniforms
+    uniform vec3 light_color;
+    uniform vec3 light_position;
+    uniform float ambient_factor;
+    uniform float diffuse_factor;
+    layout(binding=0) uniform sampler2D in_texture;         // Земля
+    layout(binding=1) uniform sampler2D in_cloud_texture;   // Облака
+    layout(binding=2) uniform sampler2D in_night_texture;   // Ночная текстура
 
-        // varyings (input)
-        in vec3 frag_normal;
-        in vec3 frag_position;
-        in vec2 texCoordGround;
-        in vec2 texCoordCloud;
+    // varyings (input)
+    in vec3 frag_normal;
+    in vec3 frag_position;
+    in vec2 texCoordGround;
+    in vec2 texCoordCloud;
 
-        // output
-        out vec4 frag_color;
+    // output
+    out vec4 frag_color;
 
-        void main() {
-            // ambient
-            vec3 ambient = ambient_factor * light_color;
+    void main() {
+        // ambient
+        vec3 ambient = ambient_factor * light_color;
 
-            // diffuse
-            vec3 normal = normalize(frag_normal);
-            vec3 light_direction = normalize(light_position - frag_position);
-            float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
-            vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
+        // diffuse
+        vec3 normal = normalize(frag_normal);
+        vec3 light_direction = normalize(light_position - frag_position);
+        float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
+        vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
 
-            // specular
-            vec3 specular = vec3(0.0);
+        // specular
+        vec3 specular = vec3(0.0);
 
-            // Если свет не попадает на объект, изменяем яркость и смягчаем переход ночной текстуры
-            vec4 ground_color;
-            if (diffuse_factor_modified > 0.0) {
-                ground_color = texture(in_texture, texCoordGround);
-            } else {
-                // Применяем ночную текстуру с ярче
-                vec4 night_color = texture(in_night_texture, texCoordGround);
-                ground_color = mix(vec4(1.0), night_color, 1) * 7.0f; // Меняем 0.5 на нужный вам коэффициент смягчения
-            }
-
-            // Цвет для облаков (белый)
-            vec4 cloud_color = texture(in_cloud_texture, texCoordCloud);
-
-            // Смешиваем цвета текстур для земли и облаков
-            vec3 final_color = mix(ground_color.rgb, vec3(1.0), cloud_color.r);
-
-            frag_color = vec4(ambient + diffuse + specular, 1.0) * vec4(final_color, 1.0);
+        // Если свет не попадает на объект, изменяем яркость и смягчаем переход ночной текстуры
+        vec4 ground_color;
+        if (diffuse_factor_modified > 0.0) {
+            ground_color = texture(in_texture, texCoordGround);
+        } else {
+            // Применяем ночную текстуру с ярче
+            vec4 night_color = texture(in_night_texture, texCoordGround);
+            ground_color = mix(vec4(1.0), night_color, 1) * 7.0f; // Меняем 0.5 на нужный вам коэффициент смягчения
         }
-    )";
+
+        // Цвет для облаков (белый)
+        vec4 cloud_color = texture(in_cloud_texture, texCoordCloud);
+
+        // Голубой цвет для озонового слоя
+        vec3 ozone_color = vec3(0.0, 0.3, 0.7);
+
+        // Смешиваем цвета текстур для земли и облаков
+        vec3 final_color = mix(ground_color.rgb, vec3(1.0), cloud_color.r);
+
+        // Добавляем голубой цвет в область, где свет попадает на поверхность Земли
+        final_color += mix(vec3(0.0), ozone_color, diffuse_factor_modified);
+
+        frag_color = vec4(ambient + diffuse + specular, 1.0) * vec4(final_color, 1.0);
+    }
+)";
+
+const char* vertex_shader_no_atmoshpere = R"(
+    #version 460
+
+    // uniforms
+    uniform mat4 model_matrix;
+    uniform mat4 view_projection_matrix;
+
+    // vertex attribs (input)
+    layout(location=0) in vec3 vertex_position;
+    layout(location=1) in vec3 vertex_normal;
+    layout(location=2) in vec2 vertex_tex_coord;
+
+    // varyings (output)
+    out vec3 frag_normal;
+    out vec3 frag_position;
+    out vec2 texCoordGround;
+
+    void main()
+    {
+        frag_normal = mat3(transpose(inverse(model_matrix))) * vertex_normal;
+        vec4 world_vertex_position = model_matrix * vec4(vertex_position, 1.0);
+        frag_position = world_vertex_position.xyz;
+        texCoordGround = vertex_tex_coord;
+
+        gl_Position = view_projection_matrix * world_vertex_position;
+    }
+)";
+
+const char* fragment_shader_no_atmoshpere = R"(
+    #version 460
+
+    // uniforms
+    uniform vec3 light_color;
+    uniform vec3 light_position;
+    uniform float ambient_factor;
+    uniform float diffuse_factor;
+    layout(binding=0) uniform sampler2D in_texture;
+
+    // varyings (input)
+    in vec3 frag_normal;
+    in vec3 frag_position;
+    in vec2 texCoordGround;
+
+    // output
+    out vec4 frag_color;
+
+    void main() {
+        // ambient
+        vec3 ambient = ambient_factor * light_color;
+
+        // diffuse
+        vec3 normal = normalize(frag_normal);
+        vec3 light_direction = normalize(light_position - frag_position);
+        float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
+        vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
+
+        // specular
+        vec3 specular = vec3(0.0);
+
+        vec4 ground_color = texture(in_texture, texCoordGround);
 
 
-
-    const char* vertex_shader_no_atmoshpere= R"(
-        #version 460
-
-        // uniforms
-        uniform mat4 model_matrix;
-        uniform mat4 view_projection_matrix;
-
-        // vertex attribs (input)
-        layout(location=0) in vec3 vertex_position;
-        layout(location=1) in vec3 vertex_normal;
-        layout(location=2) in vec2 vertex_tex_coord;
-
-        // varyings (output)
-        out vec3 frag_normal;
-        out vec3 frag_position;
-        out vec2 texCoordGround;
-
-        void main()
-        {
-            frag_normal = mat3(transpose(inverse(model_matrix))) * vertex_normal;
-            vec4 world_vertex_position = model_matrix * vec4(vertex_position, 1.0);
-            frag_position = world_vertex_position.xyz;
-            texCoordGround = vertex_tex_coord;
-
-            gl_Position = view_projection_matrix * world_vertex_position;
-        }
-        )";
-
-    const char* fragment_shader_no_atmoshpere = R"(
-        #version 460
-
-        // uniforms
-        uniform vec3 light_color;
-        uniform vec3 light_position;
-        uniform float ambient_factor;
-        uniform float diffuse_factor;
-        layout(binding=0) uniform sampler2D in_texture;
-
-        // varyings (input)
-        in vec3 frag_normal;
-        in vec3 frag_position;
-        in vec2 texCoordGround;
-
-        // output
-        out vec4 frag_color;
-
-        void main() {
-            // ambient
-            vec3 ambient = ambient_factor * light_color;
-
-            // diffuse
-            vec3 normal = normalize(frag_normal);
-            vec3 light_direction = normalize(light_position - frag_position);
-            float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
-            vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
-
-            // specular
-            vec3 specular = vec3(0.0);
-
-            vec4 ground_color = texture(in_texture, texCoordGround);
+        frag_color = vec4(ambient + diffuse + specular, 1.0) * ground_color;
+    }
+)";
 
 
-            frag_color = vec4(ambient + diffuse + specular, 1.0) * ground_color;
-        }
-    )";
-
-
-    const char* ligth_vertex_shader = R"(
+const char* ligth_vertex_shader = R"(
     #version 460
 
     // uniforms
@@ -194,58 +198,61 @@ const char* fragment_shader = R"(
 
         gl_Position = view_projection_matrix * model_matrix * vec4(vertex_position, 1.0);
     }
-    )";
+)";
 
-    const char* ligth_fragment_shader = R"(
-        #version 460
+const char* ligth_fragment_shader = R"(
+    #version 460
 
-        // uniforms
-        uniform vec3 light_color;
-        layout(binding=0) uniform sampler2D in_texture;
+    // uniforms
+    uniform vec3 light_color;
+    layout(binding=0) uniform sampler2D in_texture;
 
-        // varyings (input)
-        in vec3 esNormal;
-        in vec2 texCoord;
+    // varyings (input)
+    in vec3 esNormal;
+    in vec2 texCoord;
 
-        // output
-        out vec4 frag_color;
+    // output
+    out vec4 frag_color;
 
-        void main() {
-            // Применяем эффект bloom к текстуре
-            vec4 bloom = vec4(0.0);
+    void main() {
+        // Применяем эффект bloom к текстуре
+        vec4 bloom = vec4(0.0);
 
-            // Применяем размытие Гаусса к bloom
-            float blurSize = 5.0; // Размер размытия
-            float sigma = 2.0; // Параметр Гауссовой функции
+        // Применяем размытие Гаусса к bloom
+        float blurSize = 5.0; // Размер размытия
+        float sigma = 2.0; // Параметр Гауссовой функции
 
-            for (float x = -blurSize; x <= blurSize; x += 1.0) {
-                for (float y = -blurSize; y <= blurSize; y += 1.0) {
-                    bloom += texture(in_texture, texCoord + vec2(x, y) / 800.0) *
-                            exp(-(x*x + y*y) / (2.0 * sigma * sigma)) / (2.0 * 3.14159 * sigma * sigma);
-                }
+        for (float x = -blurSize; x <= blurSize; x += 1.0) {
+            for (float y = -blurSize; y <= blurSize; y += 1.0) {
+                bloom += texture(in_texture, texCoord + vec2(x, y) / 800.0) *
+                        exp(-(x*x + y*y) / (2.0 * sigma * sigma)) / (2.0 * 3.14159 * sigma * sigma);
             }
-
-            // Сложение с исходной текстурой (in_texture)
-            vec4 final_color = texture(in_texture, texCoord) + bloom;
-
-            // Настраиваемый коэффициент для усиления эффекта bloom для солнца
-            float bloomIntensity = 1.0;
-            frag_color = final_color * vec4(light_color * bloomIntensity, 1.0);
         }
-    )";
 
-    PositronEngine::Planet space(1.0f, 36, 18, true, 3);
-    PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
-    PositronEngine::Planet moon(1.0f, 36, 18, true, 3);
-    PositronEngine::Star sun(1.0f, 36, 18, true, 3);
+        // Сложение с исходной текстурой (in_texture)
+        vec4 final_color = texture(in_texture, texCoord) + bloom;
 
-    //std::unique_ptr<PositronEngine::ShaderProgram> shader_program;
-    //std::unique_ptr<PositronEngine::ShaderProgram> ligth_shader_program;
-    //std::unique_ptr<PositronEngine::ShaderProgram> no_atmoshpere_program;
+        // Настраиваемый коэффициент для усиления эффекта bloom для солнца
+        float bloomIntensity = 1.0;
+        frag_color = final_color * vec4(light_color * bloomIntensity, 1.0);
+    }
+)";
 
-    PositronEngine::ShaderProgram* shader_program = nullptr;
-    PositronEngine::ShaderProgram* ligth_shader_program = nullptr;
-    PositronEngine::ShaderProgram* no_atmoshpere_program = nullptr;
+
+PositronEngine::Planet space(1.0f, 36, 18, true, 3);
+PositronEngine::Planet* asd;
+
+PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
+PositronEngine::Planet moon(1.0f, 36, 18, true, 3);
+PositronEngine::Star sun(1.0f, 36, 18, true, 3);
+
+//std::unique_ptr<PositronEngine::ShaderProgram> shader_program;
+//std::unique_ptr<PositronEngine::ShaderProgram> ligth_shader_program;
+//std::unique_ptr<PositronEngine::ShaderProgram> no_atmoshpere_program;
+
+PositronEngine::ShaderProgram* shader_program = nullptr;
+PositronEngine::ShaderProgram* ligth_shader_program = nullptr;
+PositronEngine::ShaderProgram* no_atmoshpere_program = nullptr;
 
 
 
@@ -403,7 +410,7 @@ class PositronEditor : public PositronEngine::Application
 
             sun.setScale(5.0f, 5.0f, 5.0f);
 
-            earth.setOrbirRadius(40.0f);
+            earth.setOrbirRadius(20.0f);
             earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
             earth.setScale(2.0f, 2.0f, 2.0f);
 
@@ -456,7 +463,7 @@ class PositronEditor : public PositronEngine::Application
             {
                 camera.setRotation(glm::vec3(camera_rotation[0], camera_rotation[1], camera_rotation[2]));
             }
-            ImGui::SliderFloat("Speed", &camera_speed, 0.05f, 0.1f);
+            ImGui::SliderFloat("Speed", &camera_speed, 0.05f, 20.0f);
             ImGui::Checkbox("Perspective camera mode", &is_perspective_mode);
             ImGui::End();
 
