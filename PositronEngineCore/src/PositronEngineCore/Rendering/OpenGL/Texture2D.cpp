@@ -4,9 +4,11 @@
 
 namespace PositronEngine
 {
+    const std::string PATH_TO_TEXTURES = "../../ResourceFiles/Textures/";
+
     Texture2D::Texture2D(const char* path)
     {
-        if(!_image_bmp.read(path))
+        if(!_image_bmp.read((PATH_TO_TEXTURES + std::string(path)).c_str()))
             LOG_ERROR("Texture is unloaded");
 
         int width = _image_bmp.getWidth();

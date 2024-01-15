@@ -3,12 +3,35 @@
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <fstream>
 
 namespace PositronEngine
 {
-    bool createShader(const char* shader_source, const GLenum shader_type, GLuint& shader_id)
+    const std::string PATH_TO_SHADERS = "../../ResourceFiles/Shaders/";
+
+    std::string getShaderFromFile(const char* file_name)
+    {
+        std::ifstream in(file_name, std::ios::binary);
+        if(in)
+        {
+            std::string shader;
+            in.seekg(0, std::ios::end);
+            shader.resize(in.tellg());
+            in.seekg(0, std::ios::beg);
+            in.read(&shader[0], shader.size());
+            in.close();
+            return(shader);
+        }
+        LOG_CRITICAL("SHADER IS NOT READ FROM THE FILE !");
+        throw(errno);
+    }
+
+
+    bool createShader(const char* shader_file, const GLenum shader_type, GLuint& shader_id)
     {
         shader_id = glCreateShader(shader_type);
+        std::string shader_code = getShaderFromFile((PATH_TO_SHADERS + std::string(shader_file)).c_str());
+        const char* shader_source = shader_code.c_str();
         glShaderSource(shader_id, 1, &shader_source, nullptr);
         glCompileShader(shader_id);
 
@@ -27,10 +50,10 @@ namespace PositronEngine
         return true;
     }
 
-    ShaderProgram::ShaderProgram(const char* vertex_shader_source, const char* fragment_shader_source)
+    ShaderProgram::ShaderProgram(const char* vertex_shader_file, const char* fragment_shader_file)
     {
         GLuint vertex_shader_id = 0;
-        if(!createShader(vertex_shader_source, GL_VERTEX_SHADER, vertex_shader_id))
+        if(!createShader(vertex_shader_file, GL_VERTEX_SHADER, vertex_shader_id))
         {
             LOG_CRITICAL("VERTEX SHADER IS NOT COMPILED !");
             glDeleteShader(vertex_shader_id);
@@ -38,7 +61,7 @@ namespace PositronEngine
         }
 
         GLuint fragment_shader_id = 0;
-        if(!createShader(fragment_shader_source, GL_FRAGMENT_SHADER, fragment_shader_id))
+        if(!createShader(fragment_shader_file, GL_FRAGMENT_SHADER, fragment_shader_id))
         {
             LOG_CRITICAL("FRAGMENT SHADER IS NOT COMPILED !");
             glDeleteShader(vertex_shader_id);

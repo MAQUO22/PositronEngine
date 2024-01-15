@@ -19,40 +19,6 @@ namespace PositronEngine
     bool show = true;
     int frame = 0;
 
-    const char* frame_buffer_vertex = R"(
-    #version 330 core
-    layout (location = 0) in vec2 aPos;
-    layout (location = 1) in vec2 aTexCoords;
-
-    out vec2 TexCoords;
-
-    void main()
-    {
-        gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
-        TexCoords = aTexCoords;
-    }
-    )";
-
-
-    const char* frame_buffer_fragment = R"(
-    #version 330 core
-    in vec2 TexCoords;
-    out vec4 FragColor;
-
-    uniform sampler2D image;
-    uniform float gamma;
-    uniform float exposure;
-
-    void main()
-    {
-        vec3 fragment = texture(image, TexCoords).rgb;
-        vec3 toneMapped = vec3(1.0f) - exp(-fragment * exposure);
-        FragColor.rgb = pow(toneMapped, vec3(1.0f / gamma));
-    }
-    )";
-
-
-
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
@@ -156,10 +122,11 @@ namespace PositronEngine
             }
         );
 
-        frame_buffer_program = new ShaderProgram(frame_buffer_vertex, frame_buffer_fragment);
+        frame_buffer_program = new ShaderProgram("post_processing.vert", "post_processing.frag");
         if(!frame_buffer_program->isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
+            return -2;
         }
 
         compileShaders();
@@ -191,8 +158,6 @@ namespace PositronEngine
 
         unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffers(2, attachments);
-
-
 
 
         unsigned int rbo;
@@ -245,7 +210,6 @@ namespace PositronEngine
 
             onEditorUpdate();
 
-
             GUImodule::onWindowStartUpdate();
             GUImodule::ShowExampleAppDockSpace(&show);
 
@@ -271,8 +235,6 @@ namespace PositronEngine
             RenderOpenGL::disableDepth();
             glBindTexture(GL_TEXTURE_2D, texColorBuffer);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-
 
             _window->onUpdate();
             onInputUpdate();
