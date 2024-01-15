@@ -53,6 +53,8 @@ const char* fragment_shader = R"(
     uniform vec3 light_position;
     uniform float ambient_factor;
     uniform float diffuse_factor;
+    uniform vec3 camera_position;
+
     layout(binding=0) uniform sampler2D in_texture;         // Земля
     layout(binding=1) uniform sampler2D in_cloud_texture;   // Облака
     layout(binding=2) uniform sampler2D in_night_texture;   // Ночная текстура
@@ -77,7 +79,11 @@ const char* fragment_shader = R"(
         vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
 
         // specular
-        vec3 specular = vec3(0.0);
+        //vec3 view_dir = normalize(camera_position * frag_position);
+        //vec3 reflect_dir = reflect(light_direction, normal);
+        //float specular_value = pow(max(dot(view_dir, reflect_dir), 0.0), 0.9);
+        //vec3 specular = 0.9 * specular_value * light_color;
+        vec3 specular = vec3(0.0f);
 
         // Если свет не попадает на объект, изменяем яркость и смягчаем переход ночной текстуры
         vec4 ground_color;
@@ -268,9 +274,9 @@ class PositronEditor : public PositronEngine::Application
 
         ~PositronEditor()
         {
-            //delete shader_program;
-            //delete no_atmoshpere_program;
-            //delete ligth_shader_program;
+            delete shader_program;
+            delete no_atmoshpere_program;
+            delete ligth_shader_program;
         }
 
         virtual bool compileShaders() override
@@ -354,6 +360,7 @@ class PositronEditor : public PositronEngine::Application
             shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
             shader_program->setFloat("ambient_factor", sun.getAmbientFactor());
             shader_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
+            shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
             shader_program->setInt("current_frame", kekes);
             shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
 

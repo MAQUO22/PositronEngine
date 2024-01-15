@@ -21,7 +21,7 @@ namespace PositronEngine
         else if(bpp == 24)
             format = GL_RGB;
         else
-            format = GL_RGBA;
+            format = GL_SRGB_ALPHA;
 
         glGenTextures(1, &_id);
 

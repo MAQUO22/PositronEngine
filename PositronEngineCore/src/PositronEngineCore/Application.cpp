@@ -14,6 +14,8 @@
 
 namespace PositronEngine
 {
+    float gamma = 0.280f;
+    float exposure = 1.75f;
     bool show = true;
     int frame = 0;
 
@@ -34,57 +36,21 @@ namespace PositronEngine
 
     const char* frame_buffer_fragment = R"(
     #version 330 core
+    in vec2 TexCoords;
     out vec4 FragColor;
 
-    in vec2 TexCoords;
-
-    uniform sampler2D screenTexture;
-
-    // Функция для вычисления гауссовой функции
-    float gaussian(float x, float sigma)
-    {
-        return exp(-(x * x) / (2.0 * sigma * sigma)) / (sqrt(2.0 * 3.14159) * sigma);
-    }
+    uniform sampler2D image;
+    uniform float gamma;
+    uniform float exposure;
 
     void main()
     {
-        // Размеры экрана
-        ivec2 screenSize = textureSize(screenTexture, 0);
-
-        // Радиус размытия (можете настроить)
-        float radius = 5.0;
-
-        // Сумма весов для нормализации
-        float weightSum = 0.0;
-
-        vec3 finalColor = vec3(0.0);
-
-        // Проход по соседним пикселям с использованием гауссового веса
-        for (int i = -5; i <= 5; ++i)
-        {
-            for (int j = -5; j <= 5; ++j)
-            {
-                // Координаты текущего пикселя
-                ivec2 currentCoords = ivec2(TexCoords * screenSize) + ivec2(i, j);
-
-                // Нормализация координат
-                vec2 texCoords = vec2(currentCoords) / vec2(screenSize);
-
-                // Гауссов вес
-                float weight = gaussian(length(vec2(i, j)), radius);
-
-                // Суммирование взвешенных цветов
-                finalColor += texture(screenTexture, texCoords).rgb * weight;
-
-                // Сумма весов для нормализации
-                weightSum += weight;
-            }
-        }
-
-        // Нормализация и установка окончательного цвета
-        FragColor = vec4(finalColor / weightSum, 1.0);
+        vec3 fragment = texture(image, TexCoords).rgb;
+        vec3 toneMapped = vec3(1.0f) - exp(-fragment * exposure);
+        FragColor.rgb = pow(toneMapped, vec3(1.0f / gamma));
     }
-)";
+    )";
+
 
 
 
@@ -100,9 +66,6 @@ namespace PositronEngine
     };
 
     ShaderProgram* frame_buffer_program = nullptr;
-
-    float glowRadius = 0.1f;
-    int blurRadius = 15;
 
     Application::~Application()
     {
@@ -210,13 +173,27 @@ namespace PositronEngine
         unsigned int texColorBuffer;
         glGenTextures(1, &texColorBuffer);
         glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
-
-
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+
+        unsigned int bloomTexture;
+        glGenTextures(1, &bloomTexture);
+        glBindTexture(GL_TEXTURE_2D, bloomTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloomTexture, 0);
+
+        unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffers(2, attachments);
+
+
+
 
         unsigned int rbo;
         glGenRenderbuffers(1, &rbo);
@@ -250,30 +227,45 @@ namespace PositronEngine
         RenderOpenGL::setElapsedTime(0.0f);
         RenderOpenGL::setRunTime(0.0f);
 
+        glEnable(GL_FRAMEBUFFER_SRGB);
 
         RenderOpenGL::enableSync();
 
         while(_is_window_alive)
         {
-
             double frame_time = RenderOpenGL::getCurrentTime() - RenderOpenGL::getRunTime();
             RenderOpenGL::setRunTime(RenderOpenGL::getCurrentTime());
 
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            RenderOpenGL::clear(); // буфер трафарета не используется
+            glClearColor(pow(0.0f, gamma),pow(0.0f, gamma), pow(0.0f, gamma), 1.0f);
+            RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
             onEditorUpdate();
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0); // возвращаем буфер кадра по умолчанию
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+            GUImodule::onWindowStartUpdate();
+            GUImodule::ShowExampleAppDockSpace(&show);
+
+            ImGui::Begin("Post-processing");
+            ImGui::SliderFloat("Gamma", &gamma, 0.0f, 3.0f);
+            ImGui::SliderFloat("Exposure", &exposure, 0.1f, 5.0f);
+            ImGui::End();
+
+            onGUIdraw();
+
+            GUImodule::onWindowUpdateDraw();
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             frame_buffer_program->bind();
-            frame_buffer_program->setVec2("lightPosition", glm::vec2(0.0f,0.0f));
+            frame_buffer_program->setFloat("gamma", gamma);
+            frame_buffer_program->setFloat("exposure", exposure);
+
 
             glBindVertexArray(fullscreenQuadVAO);
             RenderOpenGL::disableDepth();
@@ -282,35 +274,11 @@ namespace PositronEngine
 
 
 
-
-
-            GUImodule::onWindowStartUpdate();
-            GUImodule::ShowExampleAppDockSpace(&show);
-
-            onGUIdraw();
-
-            GUImodule::onWindowUpdateDraw();
-
-
-
-            frame++;
-            RenderOpenGL::postFrame(frame_time);
-
             _window->onUpdate();
             onInputUpdate();
 
-            GUImodule::onWindowStartUpdate();
-            GUImodule::ShowExampleAppDockSpace(&show);
-            onGUIdraw();
-            GUImodule::onWindowUpdateDraw();
-
             frame++;
             RenderOpenGL::postFrame(frame_time);
-
-            _window->onUpdate();
-            onInputUpdate();
-
-
         }
         _window = nullptr;
         return 0;
