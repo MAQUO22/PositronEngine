@@ -7,6 +7,8 @@
 #include "PositronEngineCore/RenderOpenGL.hpp"
 #include "PositronEngineCore/Modules/GUImodule.hpp"
 #include "PositronEngineCore/ShaderProgram.hpp"
+#include "PositronEngineCore/Planet.hpp"
+#include "PositronEngineCore/Star.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,6 +21,15 @@ namespace PositronEngine
     bool show = true;
     int frame = 0;
 
+    PositronEngine::Planet space(1.0f, 36, 18, true, 3);
+    PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
+    PositronEngine::Planet moon(1.0f, 36, 18, true, 3);
+    PositronEngine::Star sun(1.0f, 36, 18, true, 3);
+
+    PositronEngine::ShaderProgram* shader_program = nullptr;
+    PositronEngine::ShaderProgram* ligth_shader_program = nullptr;
+    PositronEngine::ShaderProgram* blur_program = nullptr;
+    PositronEngine::ShaderProgram* roflan_chinilka;
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
@@ -36,6 +47,9 @@ namespace PositronEngine
     Application::~Application()
     {
         LOG_INFORMATION("Closing application");
+        delete shader_program;
+        delete ligth_shader_program;
+        delete blur_program;
     }
 
     Application::Application()
@@ -129,22 +143,71 @@ namespace PositronEngine
             return -2;
         }
 
-        compileShaders();
-        initializeSpheres();
+        blur_program = new ShaderProgram("post_processing.vert", "gaussian_blur.frag");
+        if(!frame_buffer_program->isCompile())
+        {
+            LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
+            return -2;
+        }
 
+        shader_program = new PositronEngine::ShaderProgram("planet_shader.vert", "planet_shader.frag");
+        if(!shader_program->isCompile())
+        {
+            return -4;
+        }
+
+        ligth_shader_program  = new PositronEngine::ShaderProgram("light.vert", "light.frag");
+        if(!ligth_shader_program->isCompile())
+        {
+            return -4;
+        }
+
+        //compileShaders();
+        //initializeSpheres();
+
+        space.setScale(150.0f, 150.0f, 150.0f);
+
+        sun.setScale(5.0f, 5.0f, 5.0f);
+
+        earth.setOrbirRadius(20.0f);
+        earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
+        earth.setScale(2.0f, 2.0f, 2.0f);
+
+        moon.setOrbirRadius(4.0f);
+        moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
+        moon.setScale(0.5f, 0.5f, 0.5f);
+        moon.setOrbitSpeed(0.006f);
+
+        space.setVertexArrayObject();
+
+        earth.addTexture("earth.bmp");
+        earth.addTexture("earth_clouds.bmp");
+        earth.addTexture("earth_nightmap.bmp");
+
+        sun.addTexture("sun.bmp");
+
+        moon.addTexture("moon.bmp");
+
+        moon.setOrbirRadius(4.0f);
+        moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
+        moon.setScale(0.5f, 0.5f, 0.5f);
+        moon.setOrbitSpeed(0.006f);
+
+        space.addTexture("stars.bmp");
+        space.getTexture(0)->bind(0);
 
         unsigned int framebuffer;
         glGenFramebuffers(1, &framebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-        unsigned int texColorBuffer;
-        glGenTextures(1, &texColorBuffer);
-        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+        unsigned int post_processing_texture;
+        glGenTextures(1, &post_processing_texture);
+        glBindTexture(GL_TEXTURE_2D, post_processing_texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, post_processing_texture, 0);
 
         unsigned int bloomTexture;
         glGenTextures(1, &bloomTexture);
@@ -166,8 +229,31 @@ namespace PositronEngine
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _window->getWidth(), _window->getHeight());
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            LOG_CRITICAL("Framebuffer not complete!");
+        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+            LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
+
+        unsigned int pingpongFBO[2];
+        unsigned int pingpongBuffer[2];
+        glGenFramebuffers(2, pingpongFBO);
+        glGenTextures(2, pingpongBuffer);
+        for(unsigned int i = 0; i < 2; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0);
+
+            fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            if(fboStatus != GL_FRAMEBUFFER_COMPLETE)
+                LOG_CRITICAL("Ping-pong framebuffer error: {0}", fboStatus);
+        }
+
+
 
         glGenVertexArrays(1, &fullscreenQuadVAO);
         glGenBuffers(1, &fullscreenQuadVBO);
@@ -198,6 +284,8 @@ namespace PositronEngine
 
         while(_is_window_alive)
         {
+            bool horizontal = true, first_iteration = true;
+            int amount = 10;
             double frame_time = RenderOpenGL::getCurrentTime() - RenderOpenGL::getRunTime();
             RenderOpenGL::setRunTime(RenderOpenGL::getCurrentTime());
 
@@ -208,7 +296,55 @@ namespace PositronEngine
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
-            onEditorUpdate();
+
+            shader_program->bind();
+
+            shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
+            shader_program->setFloat("ambient_factor", sun.getAmbientFactor());
+            shader_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
+            shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
+            shader_program->setInt("current_frame", frame);
+            shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
+            shader_program->setBool("atphmosphere", 1);
+
+            earth.getTexture(0)->bind(0);
+            earth.getTexture(1)->bind(1);
+            earth.getTexture(2)->bind(2);
+
+            earth.updateMatrix();
+            shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
+            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+
+
+            shader_program->setBool("atphmosphere", 0);
+            moon.getTexture(0)->bind(0);
+            moon.updateMatrix();
+            shader_program->setMatrix4("model_matrix", moon.getModelMatrix());
+            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+
+
+            sun.getTexture(0)->bind(0);
+            ligth_shader_program->bind();
+            sun.updateMatrix();
+
+            ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
+            ligth_shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
+
+            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+
+            sun.addRotation(0.015f);
+
+            earth.addRotation(0.004f);
+            earth.doOrbitalMotion(sun.getLocation());
+            earth.addAngle();
+
+            moon.doOrbitalMotion(earth.getLocation());
+            moon.addAngle();
+
+
+            //onEditorUpdate();
 
             GUImodule::onWindowStartUpdate();
             GUImodule::ShowExampleAppDockSpace(&show);
@@ -218,22 +354,95 @@ namespace PositronEngine
             ImGui::SliderFloat("Exposure", &exposure, 0.1f, 5.0f);
             ImGui::End();
 
+            ImGui::Begin("light_color");
+            ImGui::ColorEdit3("light_color", sun.getLightColor());
+            //ImGui::SliderFloat("ambient_factor", &sun.()), 0.0f, 2.0f);
+            //ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
+            ImGui::End();
+            ImGui::Begin("Earth - Local transform");
+            ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", earth.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", earth.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", earth.getScale(), -2.0f, 2.0f);
+            ImGui::End();
+
+            ImGui::Begin("Moon - Local transform");
+            ImGui::SetWindowSize("Moon - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", moon.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", moon.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", moon.getScale(), -2.0f, 2.0f);
+            ImGui::End();
+
+            ImGui::Begin("Sun - Local transform");
+            ImGui::SetWindowSize("Sun - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", sun.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", sun.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", sun.getScale(), -2.0f, 2.0f);
+            ImGui::End();
+
+            ImGui::Begin("Sky - Local transform");
+            ImGui::SetWindowSize("Sky - Local transform", ImVec2(400,100));
+            ImGui::SliderFloat3("Location", space.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("Rotate", space.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("Scale", space.getScale(), -100.0f, 100.0f);
+            ImGui::End();
+
+
             onGUIdraw();
 
             GUImodule::onWindowUpdateDraw();
+
+            // bool horizontal = true, first_iteration = true;
+            // int amount = 8;
+            blur_program->bind();
+            blur_program->setInt("screen_texture", 0);
+
+            for(unsigned int i = 0; i < amount; i++)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+                blur_program->setBool("horizontal", horizontal);
+
+                if(first_iteration)
+                {
+                    glBindTexture(GL_TEXTURE_2D, bloomTexture);
+                    first_iteration = false;
+                }
+                else
+                {
+                    glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
+                }
+
+                glBindVertexArray(fullscreenQuadVAO);
+                RenderOpenGL::disableDepth();
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+                horizontal = !horizontal;
+            }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            frame_buffer_program->bind();
-            frame_buffer_program->setFloat("gamma", gamma);
-            frame_buffer_program->setFloat("exposure", exposure);
+            // frame_buffer_program->bind();
+            // frame_buffer_program->setFloat("gamma", gamma);
+            // frame_buffer_program->setFloat("exposure", exposure);
+            //
+            // frame_buffer_program->setInt("image", 0);
+            // frame_buffer_program->setInt("bloomTexture", 1);
+            //
+            //
+            // glActiveTexture(GL_TEXTURE0);
+            // glBindTexture(GL_TEXTURE_2D, post_processing_texture);
+            //
+            // glActiveTexture(GL_TEXTURE1);
+            // glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
 
+
+
+            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
 
             glBindVertexArray(fullscreenQuadVAO);
             RenderOpenGL::disableDepth();
-            glBindTexture(GL_TEXTURE_2D, texColorBuffer);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
             _window->onUpdate();

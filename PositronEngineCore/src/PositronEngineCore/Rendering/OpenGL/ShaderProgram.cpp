@@ -166,4 +166,16 @@ namespace PositronEngine
     {
         glUniform1f(glGetUniformLocation(_id, name), value);
     }
+
+    void PositronEngine::ShaderProgram::setBool(const char* name, const int value) const
+    {
+        if(value > 0){
+            glUniform1i(glGetUniformLocation(_id, name), 1);
+        }
+        else
+        {
+            glUniform1i(glGetUniformLocation(_id, name), 0);
+        }
+    }
+
 }

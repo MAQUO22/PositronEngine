@@ -16,6 +16,7 @@ namespace PositronEngine
             ~Texture2D();
 
             void bind(const unsigned int unit) const;
+            void unbind(const unsigned int unit) const;
 
         private:
             unsigned int _id = 0;

@@ -11,14 +11,13 @@
 
 int kekes = 0;
 
-PositronEngine::Planet space(1.0f, 36, 18, true, 3);
-PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
-PositronEngine::Planet moon(1.0f, 36, 18, true, 3);
-PositronEngine::Star sun(1.0f, 36, 18, true, 3);
-
-PositronEngine::ShaderProgram* shader_program = nullptr;
-PositronEngine::ShaderProgram* ligth_shader_program = nullptr;
-PositronEngine::ShaderProgram* no_atmoshpere_program = nullptr;
+// PositronEngine::Planet space(1.0f, 36, 18, true, 3);
+// PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
+// PositronEngine::Planet moon(1.0f, 36, 18, true, 3);
+// PositronEngine::Star sun(1.0f, 36, 18, true, 3);
+//
+// PositronEngine::ShaderProgram* shader_program = nullptr;
+// PositronEngine::ShaderProgram* ligth_shader_program = nullptr;
 
 
 
@@ -30,32 +29,26 @@ class PositronEditor : public PositronEngine::Application
 
         ~PositronEditor()
         {
-            delete shader_program;
-            delete no_atmoshpere_program;
-            delete ligth_shader_program;
+            // delete shader_program;
+            // delete no_atmoshpere_program;
+            // delete ligth_shader_program;
         }
 
         virtual bool compileShaders() override
         {
-            shader_program = new PositronEngine::ShaderProgram("with_atphmos.vert", "with_atphmos.frag");
-            if(!shader_program->isCompile())
-            {
-                return -4;
-            }
-
-            ligth_shader_program  = new PositronEngine::ShaderProgram("light.vert", "light.frag");
-            if(!ligth_shader_program->isCompile())
-            {
-                return -4;
-            }
-
-            no_atmoshpere_program = new PositronEngine::ShaderProgram("no_atphmos.vert", "no_atphmos.frag");
-            if(!no_atmoshpere_program->isCompile())
-            {
-                return -4;
-            }
-
-            return 1;
+            // shader_program = new PositronEngine::ShaderProgram("planet_shader.vert", "planet_shader.frag");
+            // if(!shader_program->isCompile())
+            // {
+            //     return -4;
+            // }
+            //
+            // ligth_shader_program  = new PositronEngine::ShaderProgram("light.vert", "light.frag");
+            // if(!ligth_shader_program->isCompile())
+            // {
+            //     return -4;
+            // }
+            //
+            // return 1;
         }
 
         virtual void onInputUpdate() override
@@ -109,52 +102,48 @@ class PositronEditor : public PositronEngine::Application
 
         virtual void onEditorUpdate() override
         {
-            shader_program->bind();
-
-            shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
-            shader_program->setFloat("ambient_factor", sun.getAmbientFactor());
-            shader_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
-            shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
-            shader_program->setInt("current_frame", kekes);
-            shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
-
-            earth.getTexture(0)->bind(0);
-            earth.updateMatrix();
-            shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
-            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
-
-            no_atmoshpere_program->bind();
-            no_atmoshpere_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            no_atmoshpere_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
-            no_atmoshpere_program->setFloat("ambient_factor", sun.getAmbientFactor());
-            no_atmoshpere_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
-            no_atmoshpere_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
-
-            moon.getTexture(0)->bind(0);
-            moon.updateMatrix();
-            no_atmoshpere_program->setMatrix4("model_matrix", moon.getModelMatrix());
-            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
-
-
-            sun.getTexture(0)->bind(0);
-            ligth_shader_program->bind();
-            sun.updateMatrix();
-
-            ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
-            ligth_shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
-
-            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
-
-            sun.addRotation(0.015f);
-
-            earth.addRotation(0.004f);
-            earth.doOrbitalMotion(sun.getLocation());
-            earth.addAngle();
-
-            moon.doOrbitalMotion(earth.getLocation());
-            moon.addAngle();
+            // shader_program->bind();
+            //
+            // shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            // shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
+            // shader_program->setFloat("ambient_factor", sun.getAmbientFactor());
+            // shader_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
+            // shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
+            // shader_program->setInt("current_frame", kekes);
+            // shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
+            // shader_program->setBool("atphmosphere", 1);
+            //
+            // earth.getTexture(0)->bind(0);
+            // earth.updateMatrix();
+            // shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
+            // PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+            //
+            //
+            // shader_program->setBool("atphmosphere", 0);
+            // moon.getTexture(0)->bind(0);
+            // moon.updateMatrix();
+            // shader_program->setMatrix4("model_matrix", moon.getModelMatrix());
+            // PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+            //
+            //
+            // sun.getTexture(0)->bind(0);
+            // ligth_shader_program->bind();
+            // sun.updateMatrix();
+            //
+            // ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            // ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
+            // ligth_shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
+            //
+            // PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+            //
+            // sun.addRotation(0.015f);
+            //
+            // earth.addRotation(0.004f);
+            // earth.doOrbitalMotion(sun.getLocation());
+            // earth.addAngle();
+            //
+            // moon.doOrbitalMotion(earth.getLocation());
+            // moon.addAngle();
 
             kekes++;
 
@@ -168,41 +157,41 @@ class PositronEditor : public PositronEngine::Application
 
         virtual void initializeSpheres() override
         {
-            space.setScale(150.0f, 150.0f, 150.0f);
-
-            sun.setScale(5.0f, 5.0f, 5.0f);
-
-            earth.setOrbirRadius(20.0f);
-            earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
-            earth.setScale(2.0f, 2.0f, 2.0f);
-
-            moon.setOrbirRadius(4.0f);
-            moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
-            moon.setScale(0.5f, 0.5f, 0.5f);
-            moon.setOrbitSpeed(0.006f);
-
-            space.setVertexArrayObject();
-
-            earth.addTexture("earth.bmp");
-            earth.getTexture(0)->bind(0);
-            earth.addTexture("earth_clouds.bmp");
-            earth.getTexture(1)->bind(1);
-            earth.addTexture("earth_nightmap.bmp");
-            earth.getTexture(2)->bind(2);
-
-            sun.addTexture("sun.bmp");
-            sun.getTexture(0)->bind(0);
-
-            moon.addTexture("moon.bmp");
-            moon.getTexture(0)->bind(0);
-
-            moon.setOrbirRadius(4.0f);
-            moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
-            moon.setScale(0.5f, 0.5f, 0.5f);
-            moon.setOrbitSpeed(0.006f);
-
-            space.addTexture("stars.bmp");
-            space.getTexture(0)->bind(0);
+            // space.setScale(150.0f, 150.0f, 150.0f);
+            //
+            // sun.setScale(5.0f, 5.0f, 5.0f);
+            //
+            // earth.setOrbirRadius(20.0f);
+            // earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
+            // earth.setScale(2.0f, 2.0f, 2.0f);
+            //
+            // moon.setOrbirRadius(4.0f);
+            // moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
+            // moon.setScale(0.5f, 0.5f, 0.5f);
+            // moon.setOrbitSpeed(0.006f);
+            //
+            // space.setVertexArrayObject();
+            //
+            // earth.addTexture("earth.bmp");
+            // earth.getTexture(0)->bind(0);
+            // earth.addTexture("earth_clouds.bmp");
+            // earth.getTexture(1)->bind(1);
+            // earth.addTexture("earth_nightmap.bmp");
+            // earth.getTexture(2)->bind(2);
+            //
+            // sun.addTexture("sun.bmp");
+            // sun.getTexture(0)->bind(0);
+            //
+            // moon.addTexture("moon.bmp");
+            // moon.getTexture(0)->bind(0);
+            //
+            // moon.setOrbirRadius(4.0f);
+            // moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
+            // moon.setScale(0.5f, 0.5f, 0.5f);
+            // moon.setOrbitSpeed(0.006f);
+            //
+            // space.addTexture("stars.bmp");
+            // space.getTexture(0)->bind(0);
         }
 
         virtual void onGUIdraw() override
@@ -229,38 +218,38 @@ class PositronEditor : public PositronEngine::Application
             ImGui::Checkbox("Perspective camera mode", &is_perspective_mode);
             ImGui::End();
 
-            ImGui::Begin("light_color");
-            ImGui::ColorEdit3("light_color", sun.getLightColor());
-            //ImGui::SliderFloat("ambient_factor", &sun.()), 0.0f, 2.0f);
-            //ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
-            ImGui::End();
-            ImGui::Begin("Earth - Local transform");
-            ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", earth.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", earth.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", earth.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
-            ImGui::Begin("Moon - Local transform");
-            ImGui::SetWindowSize("Moon - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", moon.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", moon.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", moon.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
-            ImGui::Begin("Sun - Local transform");
-            ImGui::SetWindowSize("Sun - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", sun.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", sun.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", sun.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
-            ImGui::Begin("Sky - Local transform");
-            ImGui::SetWindowSize("Sky - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", space.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", space.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", space.getScale(), -100.0f, 100.0f);
-            ImGui::End();
+            // ImGui::Begin("light_color");
+            // ImGui::ColorEdit3("light_color", sun.getLightColor());
+            // //ImGui::SliderFloat("ambient_factor", &sun.()), 0.0f, 2.0f);
+            // //ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
+            // ImGui::End();
+            // ImGui::Begin("Earth - Local transform");
+            // ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
+            // ImGui::SliderFloat3("Location", earth.getLocation(), -10.0f, 10.0f);
+            // ImGui::SliderFloat3("Rotate", earth.getRotation(), -360.0f, 360.0f);
+            // ImGui::SliderFloat3("Scale", earth.getScale(), -2.0f, 2.0f);
+            // ImGui::End();
+            //
+            // ImGui::Begin("Moon - Local transform");
+            // ImGui::SetWindowSize("Moon - Local transform", ImVec2(400,100));
+            // ImGui::SliderFloat3("Location", moon.getLocation(), -10.0f, 10.0f);
+            // ImGui::SliderFloat3("Rotate", moon.getRotation(), -360.0f, 360.0f);
+            // ImGui::SliderFloat3("Scale", moon.getScale(), -2.0f, 2.0f);
+            // ImGui::End();
+            //
+            // ImGui::Begin("Sun - Local transform");
+            // ImGui::SetWindowSize("Sun - Local transform", ImVec2(400,100));
+            // ImGui::SliderFloat3("Location", sun.getLocation(), -10.0f, 10.0f);
+            // ImGui::SliderFloat3("Rotate", sun.getRotation(), -360.0f, 360.0f);
+            // ImGui::SliderFloat3("Scale", sun.getScale(), -2.0f, 2.0f);
+            // ImGui::End();
+            //
+            // ImGui::Begin("Sky - Local transform");
+            // ImGui::SetWindowSize("Sky - Local transform", ImVec2(400,100));
+            // ImGui::SliderFloat3("Location", space.getLocation(), -10.0f, 10.0f);
+            // ImGui::SliderFloat3("Rotate", space.getRotation(), -360.0f, 360.0f);
+            // ImGui::SliderFloat3("Scale", space.getScale(), -100.0f, 100.0f);
+            // ImGui::End();
         }
 };
 
