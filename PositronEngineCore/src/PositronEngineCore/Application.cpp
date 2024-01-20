@@ -18,6 +18,9 @@ namespace PositronEngine
 {
     float gamma = 0.280f;
     float exposure = 1.75f;
+    float bloom_radius = 0.657;
+    float blur_factor = 0.291;
+    float kekw = 0.112f;
     bool show = true;
     int frame = 0;
 
@@ -167,7 +170,7 @@ namespace PositronEngine
 
         space.setScale(150.0f, 150.0f, 150.0f);
 
-        sun.setScale(5.0f, 5.0f, 5.0f);
+        sun.setScale(7.0f, 7.0f, 7.0f);
 
         earth.setOrbirRadius(40.0f);
         earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
@@ -328,24 +331,22 @@ namespace PositronEngine
             sun.getTexture(0)->bind(0);
             ligth_shader_program->bind();
             sun.updateMatrix();
-
             ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
             ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
             ligth_shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
 
             PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
+
             sun.getTexture(0)->unbind(0);
 
-            sun.addRotation(0.015f);
+            sun.addRotation(0.15f);
 
             earth.addRotation(0.004f);
-            //earth.doOrbitalMotion(sun.getLocation());
-            //earth.addAngle();
+            earth.doOrbitalMotion(sun.getLocation());
+            earth.addAngle();
 
             moon.doOrbitalMotion(earth.getLocation());
             moon.addAngle();
-
-
             //onEditorUpdate();
 
             GUImodule::onWindowStartUpdate();
@@ -353,8 +354,12 @@ namespace PositronEngine
 
             ImGui::Begin("Post-processing");
             ImGui::SliderFloat("Gamma", &gamma, 0.0f, 3.0f);
-            ImGui::SliderFloat("Exposure", &exposure, 0.1f, 5.0f);
+            ImGui::SliderFloat("bloom_radius", &bloom_radius, 0.0f, 3.0f);
+            ImGui::SliderFloat("blur_factor", &blur_factor, 0.0f, 3.0f);
+            ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
+            ImGui::SliderFloat("blurDistanceFactor", &kekw, 0.0f, 1.0f);
             ImGui::End();
+
 
             ImGui::Begin("light_color");
             ImGui::ColorEdit3("light_color", sun.getLightColor());
@@ -398,6 +403,16 @@ namespace PositronEngine
             int amount = 8;
             blur_program->bind();
             blur_program->setInt("screen_texture", 0);
+            blur_program->setFloat("baseBlurRadius", bloom_radius);
+            blur_program->setFloat("baseBlurFactor", blur_factor);
+            float d = sqrtf(pow(camera.getLocation()[0] - sun.getLocation()[0] , 2) +
+                            pow(camera.getLocation()[1] - sun.getLocation()[1] , 2) +
+                            pow(camera.getLocation()[2] - sun.getLocation()[2] , 2));
+
+            LOG_INFORMATION("distance - {0}", d);
+            blur_program->setFloat("cameraDistance", d);
+            blur_program->setFloat("blurDistanceFactor", kekw);
+
 
             for(unsigned int i = 0; i < amount; i++)
             {
@@ -425,15 +440,12 @@ namespace PositronEngine
             glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-
             glBindTextureUnit(0, post_processing_texture);
             glBindTextureUnit(1, pingpongBuffer[!horizontal]);
 
             frame_buffer_program->bind();
             frame_buffer_program->setFloat("gamma", gamma);
             frame_buffer_program->setFloat("exposure", exposure);
-            frame_buffer_program->setVec2("lightPosition" ,glm::vec2(0.5f,0.5f));
-
 
             glBindVertexArray(fullscreenQuadVAO);
             RenderOpenGL::disableDepth();

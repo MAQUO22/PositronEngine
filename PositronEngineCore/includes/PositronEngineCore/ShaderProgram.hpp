@@ -26,6 +26,7 @@ namespace PositronEngine
             void setVec3(const char* name, const glm::vec3& value) const;
             void setVec2(const char* name, const glm::vec2& value) const;
             void setBool(const char* name, const int value) const;
+            void setDouble(const char* name, const double value) const;
 
         private:
             bool _is_compiled = false;

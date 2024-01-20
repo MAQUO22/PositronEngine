@@ -165,6 +165,7 @@ namespace PositronEngine
     void PositronEngine::ShaderProgram::setFloat(const char* name, const float value) const
     {
         glUniform1f(glGetUniformLocation(_id, name), value);
+
     }
 
     void PositronEngine::ShaderProgram::setBool(const char* name, const int value) const
@@ -177,5 +178,11 @@ namespace PositronEngine
             glUniform1i(glGetUniformLocation(_id, name), 0);
         }
     }
+
+    void ShaderProgram::setDouble(const char* name, const double value) const
+    {
+        glUniform1d(glGetUniformLocation(_id, name), value);
+    }
+
 
 }
