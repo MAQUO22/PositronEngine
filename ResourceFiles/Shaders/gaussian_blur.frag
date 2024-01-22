@@ -76,7 +76,7 @@ void main()
         dynamicBlurFactor = 0.7812;
     }
 
-    for(int i = 1; i < 25; i++)
+    for(int i = 1; i < 8; i++)
     {
         float offset = float(i) * dynamicBlurRadius;
 

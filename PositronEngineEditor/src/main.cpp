@@ -8,6 +8,7 @@
 #include <memory>
 #include <imgui/imgui.h>
 #include <iostream>
+#include <backends/imgui_impl_opengl3.h>
 
 int kekes = 0;
 
@@ -257,10 +258,10 @@ int main()
 {
     auto application = std::make_unique<PositronEditor>();
 
+    application->start(1920,1080,"Positron Engine Editor");
 
 
 
-    application->start(1280,720,"Positron Engine Editor");
 
 
 

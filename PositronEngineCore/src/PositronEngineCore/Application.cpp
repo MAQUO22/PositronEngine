@@ -13,6 +13,8 @@
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_glfw.h>
 
 namespace PositronEngine
 {
@@ -23,6 +25,9 @@ namespace PositronEngine
     float kekw = 0.112f;
     bool show = true;
     int frame = 0;
+
+    // Рисуем свое содержимое внутри окна ImGui
+
 
     PositronEngine::Planet space(1.0f, 36, 18, true, 3);
     PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
@@ -222,6 +227,23 @@ namespace PositronEngine
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloomTexture, 0);
 
+        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+            LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
+
+        GLuint image;
+        glGenTextures(1, &image);
+
+        // Привязываем текстуру
+        glBindTexture(GL_TEXTURE_2D, image);
+
+        // Выделяем память для текстуры
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _window->getWidth(), _window->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+        // Устанавливаем параметры фильтрации
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
         unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffers(2, attachments);
 
@@ -232,7 +254,7 @@ namespace PositronEngine
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _window->getWidth(), _window->getHeight());
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
-        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
             LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
 
@@ -256,6 +278,30 @@ namespace PositronEngine
                 LOG_CRITICAL("Ping-pong framebuffer error: {0}", fboStatus);
         }
 
+
+
+        unsigned int viewport;
+        glGenFramebuffers(1, &viewport);
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport);
+
+        GLuint resultTextureID;
+        glGenTextures(1, &resultTextureID);
+        glBindTexture(GL_TEXTURE_2D, resultTextureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, resultTextureID, 0);
+
+        unsigned int rbo_v;
+        glGenRenderbuffers(1, &rbo_v);
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo_v);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _window->getWidth(), _window->getHeight());
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo_v);
+
+        fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+            LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
 
 
         glGenVertexArrays(1, &fullscreenQuadVAO);
@@ -349,8 +395,95 @@ namespace PositronEngine
             moon.addAngle();
             //onEditorUpdate();
 
+
+            bool horizontal = true, first_iteration = true;
+            int amount = 6;
+            blur_program->bind();
+            blur_program->setInt("screen_texture", 0);
+            blur_program->setFloat("baseBlurRadius", bloom_radius);
+            blur_program->setFloat("baseBlurFactor", blur_factor);
+            float d = sqrtf(pow(camera.getLocation()[0] - sun.getLocation()[0] , 2) +
+                            pow(camera.getLocation()[1] - sun.getLocation()[1] , 2) +
+                            pow(camera.getLocation()[2] - sun.getLocation()[2] , 2));
+
+            //LOG_INFORMATION("distance - {0}", d);
+            blur_program->setFloat("cameraDistance", d);
+            blur_program->setFloat("blurDistanceFactor", kekw);
+
+
+            for(unsigned int i = 0; i < amount; i++)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+                blur_program->setBool("horizontal", horizontal);
+
+                if(first_iteration)
+                {
+                    glBindTexture(GL_TEXTURE_2D, bloomTexture);
+                    first_iteration = false;
+                }
+                else
+                {
+                    glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
+                }
+
+                glBindVertexArray(fullscreenQuadVAO);
+                RenderOpenGL::disableDepth();
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+                horizontal = !horizontal;
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, viewport);
+            glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glBindTextureUnit(0, post_processing_texture);
+            glBindTextureUnit(1, pingpongBuffer[!horizontal]);
+
+            frame_buffer_program->bind();
+            frame_buffer_program->setFloat("gamma", gamma);
+            frame_buffer_program->setFloat("exposure", exposure);
+
+
+            glBindVertexArray(fullscreenQuadVAO);
+            RenderOpenGL::disableDepth();
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+
             GUImodule::onWindowStartUpdate();
             GUImodule::ShowExampleAppDockSpace(&show);
+            ImGui::ShowDemoWindow();
+
+            ImGui::Begin("Scene");
+            if (ImGui::TreeNode("Root")) {
+                // Элемент 1
+                if (ImGui::TreeNode("Object 1")) {
+                    // Информация об объекте 1
+                    ImGui::Text("Object details go here");
+
+                    ImGui::TreePop();
+                }
+
+                // Элемент 2
+                if (ImGui::TreeNode("Object 2")) {
+                    // Информация об объекте 2
+                    ImGui::Text("Object details go here");
+
+                    ImGui::TreePop();
+                }
+
+                ImGui::TreePop();
+            }
+
+            ImGui::End();
+
+            ImGui::Begin("Viewport");
+            ImGui::Image((void*)(intptr_t)resultTextureID, ImVec2(1800.f, 900.f));
+            ImGui::End();
 
             ImGui::Begin("Post-processing");
             ImGui::SliderFloat("Gamma", &gamma, 0.0f, 3.0f);
@@ -363,7 +496,7 @@ namespace PositronEngine
 
             ImGui::Begin("light_color");
             ImGui::ColorEdit3("light_color", sun.getLightColor());
-            //ImGui::SliderFloat("ambient_factor", &sun.()), 0.0f, 2.0f);
+            //ImGui::SliderFloat("ambient_factor", sun.getAmbientFactor(), 0.0f, 2.0f);
             //ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
             ImGui::End();
             ImGui::Begin("Earth - Local transform");
@@ -394,63 +527,9 @@ namespace PositronEngine
             ImGui::SliderFloat3("Scale", space.getScale(), -100.0f, 100.0f);
             ImGui::End();
 
-
             onGUIdraw();
 
             GUImodule::onWindowUpdateDraw();
-
-            bool horizontal = true, first_iteration = true;
-            int amount = 8;
-            blur_program->bind();
-            blur_program->setInt("screen_texture", 0);
-            blur_program->setFloat("baseBlurRadius", bloom_radius);
-            blur_program->setFloat("baseBlurFactor", blur_factor);
-            float d = sqrtf(pow(camera.getLocation()[0] - sun.getLocation()[0] , 2) +
-                            pow(camera.getLocation()[1] - sun.getLocation()[1] , 2) +
-                            pow(camera.getLocation()[2] - sun.getLocation()[2] , 2));
-
-            LOG_INFORMATION("distance - {0}", d);
-            blur_program->setFloat("cameraDistance", d);
-            blur_program->setFloat("blurDistanceFactor", kekw);
-
-
-            for(unsigned int i = 0; i < amount; i++)
-            {
-                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-                blur_program->setBool("horizontal", horizontal);
-
-                if(first_iteration)
-                {
-                    glBindTexture(GL_TEXTURE_2D, bloomTexture);
-                    first_iteration = false;
-                }
-                else
-                {
-                    glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
-                }
-
-                glBindVertexArray(fullscreenQuadVAO);
-                RenderOpenGL::disableDepth();
-                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-                horizontal = !horizontal;
-            }
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            glBindTextureUnit(0, post_processing_texture);
-            glBindTextureUnit(1, pingpongBuffer[!horizontal]);
-
-            frame_buffer_program->bind();
-            frame_buffer_program->setFloat("gamma", gamma);
-            frame_buffer_program->setFloat("exposure", exposure);
-
-            glBindVertexArray(fullscreenQuadVAO);
-            RenderOpenGL::disableDepth();
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
             _window->onUpdate();
             onInputUpdate();
 
