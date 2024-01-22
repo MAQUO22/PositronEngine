@@ -333,8 +333,19 @@ namespace PositronEngine
 
         while(_is_window_alive)
         {
+            //===============================================ПРЕД_КАДР========================================================================
+
             double frame_time = RenderOpenGL::getCurrentTime() - RenderOpenGL::getRunTime();
             RenderOpenGL::setRunTime(RenderOpenGL::getCurrentTime());
+
+
+            //================================================ОБНОВЛЕНИЕ======================================================================
+
+            _window->onUpdate();
+            onInputUpdate();
+
+            //================================================БУФЕР_КАДРА_ПОСТ-ПРОЦЕССИНГА====================================================
+
 
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
             glClearColor(pow(0.0f, gamma),pow(0.0f, gamma), pow(0.0f, gamma), 1.0f);
@@ -383,17 +394,12 @@ namespace PositronEngine
 
             PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
 
-            sun.getTexture(0)->unbind(0);
 
-            sun.addRotation(0.15f);
+            //===============================================================================================================================
 
-            earth.addRotation(0.004f);
-            earth.doOrbitalMotion(sun.getLocation());
-            earth.addAngle();
 
-            moon.doOrbitalMotion(earth.getLocation());
-            moon.addAngle();
-            //onEditorUpdate();
+
+            //================================================БУФЕР_КАДРА_ДЛЯ_ПИНГ_ПОНГ_БЛЮРА================================================
 
 
             bool horizontal = true, first_iteration = true;
@@ -406,7 +412,6 @@ namespace PositronEngine
                             pow(camera.getLocation()[1] - sun.getLocation()[1] , 2) +
                             pow(camera.getLocation()[2] - sun.getLocation()[2] , 2));
 
-            //LOG_INFORMATION("distance - {0}", d);
             blur_program->setFloat("cameraDistance", d);
             blur_program->setFloat("blurDistanceFactor", kekw);
 
@@ -433,6 +438,12 @@ namespace PositronEngine
                 horizontal = !horizontal;
             }
 
+            //===============================================================================================================================
+
+
+            //================================================БУФЕР_КАДРА_ДЛЯ_ВЬЮПОРТА=======================================================
+
+
             glBindFramebuffer(GL_FRAMEBUFFER, viewport);
             glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -449,10 +460,19 @@ namespace PositronEngine
             RenderOpenGL::disableDepth();
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+            //===============================================================================================================================
+
+
+
+            //===============================================ОСНОВНОЙ_БУФЕР_КАДРА============================================================
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
+
+
+            //===============================================ПОЛЬЗОВАТЕЛЬСКИЙ+ИНТЕРФЕЙС======================================================
 
             GUImodule::onWindowStartUpdate();
             GUImodule::ShowExampleAppDockSpace(&show);
@@ -482,7 +502,8 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Viewport");
-            ImGui::Image((void*)(intptr_t)resultTextureID, ImVec2(1800.f, 900.f));
+            ImVec2 viewport_size = ImGui::GetWindowSize();
+            ImGui::Image((void*)(intptr_t)resultTextureID, viewport_size);
             ImGui::End();
 
             ImGui::Begin("Post-processing");
@@ -530,9 +551,24 @@ namespace PositronEngine
             onGUIdraw();
 
             GUImodule::onWindowUpdateDraw();
-            _window->onUpdate();
-            onInputUpdate();
 
+            //===============================================================================================================================
+
+
+            //===============================================ИЗМЕНЕНИЕ_ПОЛОЖЕНИЯ=============================================================
+
+            sun.getTexture(0)->unbind(0);
+
+            sun.addRotation(0.15f);
+
+            earth.addRotation(0.004f);
+            earth.doOrbitalMotion(sun.getLocation());
+            earth.addAngle();
+
+            moon.doOrbitalMotion(earth.getLocation());
+            moon.addAngle();
+
+            //===============================================ПОСТ_КАДР=======================================================================
             frame++;
             RenderOpenGL::postFrame(frame_time);
         }
