@@ -25,6 +25,8 @@ namespace PositronEngine
             glm::mat4 getViewMatrix();
             glm::vec3 getLocation() const { return _location; }
             glm::vec3 getRotation() const { return _rotation; }
+            glm::vec3 getDirection() const { return _direction; }
+            glm::vec3 getUp() const { return _up; }
             glm::mat4 getProjectionMatrix() const { return _projection_matrix; }
 
             void moveForward(const float delta);

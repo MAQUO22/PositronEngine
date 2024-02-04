@@ -74,6 +74,21 @@ namespace PositronEngine
         glfwSwapInterval(0);
     }
 
+    void RenderOpenGL::enableFaceCulling()
+    {
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
+    }
+
+    void RenderOpenGL::disableFaceCulling()
+    {
+        glDisable(GL_CULL_FACE);
+    }
+
+
+
     void RenderOpenGL::postFrame(double& frame_time)
     {
         _elapsed_time += frame_time;

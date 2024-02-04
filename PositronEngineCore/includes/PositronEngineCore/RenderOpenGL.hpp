@@ -34,6 +34,9 @@ namespace PositronEngine
             static void enableSync();
             static void disableSync();
 
+            static void enableFaceCulling();
+            static void disableFaceCulling();
+
             static void postFrame(double& frame_time);
 
         private:

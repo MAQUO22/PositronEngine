@@ -19,7 +19,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/RenderOpenGL.hpp
     includes/PositronEngineCore/Sphere.h
     includes/PositronEngineCore/Bmp.h
-
+    includes/PositronEngineCore/stb_image.h
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -32,6 +32,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Window.cpp
     src/PositronEngineCore/Camera.cpp
     src/PositronEngineCore/Input.cpp
+    src/PositronEngineCore/stb.cpp
     src/PositronEngineCore/Rendering/OpenGL/Texture2D.cpp
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp
     src/PositronEngineCore/Rendering/OpenGL/Sphere.cpp
