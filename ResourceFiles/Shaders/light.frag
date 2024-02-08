@@ -9,27 +9,21 @@ in vec3 esNormal;
 in vec2 texCoord;
 
 // output
-out vec4 frag_color;
+layout (location = 0) out vec4 frag_color;
+layout (location = 1) out vec4 bloom_color;
 
-void main() {
-    // Применяем эффект bloom к текстуре
-    vec4 bloom = vec4(0.0);
+void main()
+{
+    frag_color = texture(in_texture, texCoord) * vec4(light_color, 1.0);
 
-    // Применяем размытие Гаусса к bloom
-    float blurSize = 5.0; // Размер размытия
-    float sigma = 2.0; // Параметр Гауссовой функции
+    float brightness = dot(frag_color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
 
-    for (float x = -blurSize; x <= blurSize; x += 1.0) {
-        for (float y = -blurSize; y <= blurSize; y += 1.0) {
-            bloom += texture(in_texture, texCoord + vec2(x, y) / 800.0) *
-                    exp(-(x*x + y*y) / (2.0 * sigma * sigma)) / (2.0 * 3.14159 * sigma * sigma);
-        }
+    if(brightness > 0.5f)
+    {
+        bloom_color = vec4(frag_color.rgb, 1.0f);
     }
-
-    // Сложение с исходной текстурой (in_texture)
-    vec4 final_color = texture(in_texture, texCoord) + bloom;
-
-    // Настраиваемый коэффициент для усиления эффекта bloom для солнца
-    float bloomIntensity = 1.0;
-    frag_color = final_color * vec4(light_color * bloomIntensity, 1.0);
+    else
+    {
+        bloom_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
 }

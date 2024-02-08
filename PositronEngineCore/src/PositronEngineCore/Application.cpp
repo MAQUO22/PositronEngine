@@ -440,26 +440,7 @@ namespace PositronEngine
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
 
-            glDepthFunc(GL_LEQUAL);
-            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-            skybox_program->bind();
-
-            glm::mat4 view = glm::mat4(1.0f);
-            glm::mat4 projection = glm::mat4(1.0f);
-
-            view  = glm::mat4(glm::mat3(glm::lookAt(camera.getLocation(), camera.getLocation() + camera.getDirection(), camera.getUp())));
-            projection = glm::perspective(glm::radians(45.0f), (float)window_width / window_height, 0.1f, 1000.0f);
-            skybox_program->setMatrix4("view", view);
-            skybox_program->setMatrix4("projection", projection);
-
-            glBindVertexArray(skyboxVAO);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
-
-            glDepthFunc(GL_LESS);
 
             shader_program->bind();
 
@@ -490,6 +471,7 @@ namespace PositronEngine
             PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
             moon.getTexture(0)->unbind(0);
 
+            shader_program->unbind();
 
             sun.getTexture(0)->bind(0);
             ligth_shader_program->bind();
@@ -500,6 +482,28 @@ namespace PositronEngine
 
             PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
 
+            ligth_shader_program->unbind();
+
+            glDepthFunc(GL_LEQUAL);
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+            skybox_program->bind();
+
+            glm::mat4 view = glm::mat4(1.0f);
+            glm::mat4 projection = glm::mat4(1.0f);
+
+            view  = glm::mat4(glm::mat3(glm::lookAt(camera.getLocation(), camera.getLocation() + camera.getDirection(), camera.getUp())));
+            projection = glm::perspective(glm::radians(45.0f), (float)window_width / window_height, 0.1f, 1000.0f);
+            skybox_program->setMatrix4("view", view);
+            skybox_program->setMatrix4("projection", projection);
+
+            glBindVertexArray(skyboxVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+
+            glDepthFunc(GL_LESS);
 
 
             //===============================================================================================================================
@@ -579,6 +583,8 @@ namespace PositronEngine
 
 
 
+
+
             //===============================================ПОЛЬЗОВАТЕЛЬСКИЙ+ИНТЕРФЕЙС======================================================
 
             GUImodule::onWindowStartUpdate();
@@ -646,13 +652,6 @@ namespace PositronEngine
             ImGui::SliderFloat3("Location", sun.getLocation(), -10.0f, 10.0f);
             ImGui::SliderFloat3("Rotate", sun.getRotation(), -360.0f, 360.0f);
             ImGui::SliderFloat3("Scale", sun.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
-            ImGui::Begin("Sky - Local transform");
-            ImGui::SetWindowSize("Sky - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", space.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", space.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", space.getScale(), -100.0f, 100.0f);
             ImGui::End();
 
             onGUIdraw();
