@@ -7,9 +7,9 @@
 #include "PositronEngineCore/RenderOpenGL.hpp"
 #include "PositronEngineCore/Modules/GUImodule.hpp"
 #include "PositronEngineCore/ShaderProgram.hpp"
-#include "PositronEngineCore/Planet.hpp"
-#include "PositronEngineCore/Star.hpp"
 #include "PositronEngineCore/stb_image.h"
+#include "PositronEngineCore/Texture2D.hpp"
+#include "PositronEngineCore/VertexArray.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,6 +19,46 @@
 
 namespace PositronEngine
 {
+    float _location[3] = {0.0f, 0.0f, 0.0f};
+    float _rotation[3] = {0.0f, 0.0f, 0.0f};
+    float _scale[3] = {1.0f, 1.0f, 1.0f};
+
+
+    glm::mat4 _model_matrix;
+
+    void updateMatrix()
+    {
+            glm::mat4 location_matrix(1,                    0,                  0,               0,
+                                      0,                    1,                  0,               0,
+                                      0,                    0,                  1,               0,
+                                      _location[0],          _location[1],      _location[2],    1);
+
+
+            glm::mat4 _rotate_matrix_x(1,    0,                                   0,                                   0,
+                                       0,    cos(glm::radians(_rotation[0])),     sin(glm::radians(_rotation[0])),     0,
+                                       0,    -sin(glm::radians(_rotation[0])),    cos(glm::radians(_rotation[0])),     0,
+                                       0,    0,                                   0,                                   1);
+
+
+            glm::mat4 _rotate_matrix_y(cos(glm::radians(_rotation[1])),       0,      -sin(glm::radians(_rotation[1])),    0,
+                                       0,                                     1,      0,                                   0,
+                                       sin(glm::radians(_rotation[1])),       0,      cos(glm::radians(_rotation[1])),     0,
+                                       0,                                     0,      0,                                   1);
+
+
+            glm::mat4 _rotate_matrix_z(cos(glm::radians(_rotation[2])),       sin(glm::radians(_rotation[2])),     0,      0,
+                                       -sin(glm::radians(_rotation[2])),      cos(glm::radians(_rotation[2])),     0,      0,
+                                       0,                                     0,                                   1,      0,
+                                       0,                                     0,                                   0,      1);
+
+            glm::mat4x4 _scale_matrix(_scale[0],  0,              0,          0,
+                                      0,          _scale[1],      0,          0,
+                                      0,          0,              _scale[2],  0,
+                                      0,          0,              0,          1);
+
+            _model_matrix = location_matrix * _rotate_matrix_x * _rotate_matrix_y * _rotate_matrix_z * _scale_matrix;
+    }
+
     float gamma = 0.280f;
     float exposure = 1.75f;
     float bloom_radius = 0.657;
@@ -27,26 +67,94 @@ namespace PositronEngine
     bool show = true;
     int frame = 0;
 
-
-    PositronEngine::Planet space(1.0f, 36, 18, true, 3);
-    PositronEngine::Planet earth(1.0f, 36, 18, true, 3);
-    PositronEngine::Planet moon(1.0f, 36, 18, true, 3);
-    PositronEngine::Star sun(1.0f, 36, 18, true, 3);
-
-    PositronEngine::ShaderProgram* shader_program = nullptr;
-    PositronEngine::ShaderProgram* ligth_shader_program = nullptr;
-    PositronEngine::ShaderProgram* blur_program = nullptr;
-    PositronEngine::ShaderProgram* skybox_program = nullptr;
-
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
+
+    float plate_vertices[] = {
+        // Передняя грань
+        -1.0f, -1.0f,  1.0f,  // 0
+        1.0f, -1.0f,  1.0f,  // 1
+        1.0f,  1.0f,  1.0f,  // 2
+        -1.0f,  1.0f,  1.0f,  // 3
+
+        // Задняя грань
+        -1.0f, -1.0f, -1.0f,  // 4
+        1.0f, -1.0f, -1.0f,  // 5
+        1.0f,  1.0f, -1.0f,  // 6
+        -1.0f,  1.0f, -1.0f   // 7
+    };
+
+    // Индексы для каждого треугольника (задают порядок вершин для создания треугольников)
+    unsigned int plate_indices[] = {
+          // Передняя грань
+        0, 1, 2,
+        2, 3, 0,
+
+        // Задняя грань
+        4, 5, 6,
+        6, 7, 4,
+
+        // Верхняя грань
+        3, 2, 6,
+        6, 7, 3,
+
+        // Нижняя грань
+        0, 1, 5,
+        5, 4, 0,
+
+        // Правая грань
+        1, 2, 6,
+        6, 5, 1,
+
+        // Левая грань
+        0, 3, 7,
+        7, 4, 0
+    };
+
+    // Нормали для каждой вершины (в данном случае нормали считаются как перпендикулярные к плоскостям граней)
+    float plate_normals[] = {
+        // Передняя грань
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        // Задняя грань
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f
+    };
+
+    // Текстурные координаты для каждой вершины (предполагая, что текстура накладывается равномерно)
+    float plate_texCoords[] = {
+        // Передняя грань
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        // Задняя грань
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f
+    };
+
+    BufferLayout plate_layout
+    {
+        ShaderDataType::Float3,
+        ShaderDataType::Float3,
+        ShaderDataType::Float2
+    };
+
+
+
 
     float quadVertices[] =
     {
-        // Позиции           Текстурные координаты
-        -1.0f,  1.0f,        0.0f, 1.0f,
-        -1.0f, -1.0f,        0.0f, 0.0f,
-        1.0f,  1.0f,        1.0f, 1.0f,
-        1.0f, -1.0f,        1.0f, 0.0f,
+       //Позиции         Текстурные координаты
+        -1.0f,  1.0f,    0.0f, 1.0f,
+        -1.0f, -1.0f,    0.0f, 0.0f,
+         1.0f,  1.0f,    1.0f, 1.0f,
+         1.0f, -1.0f,    1.0f, 0.0f,
     };
 
 
@@ -79,14 +187,9 @@ namespace PositronEngine
         6, 2, 3
     };
 
-    ShaderProgram* frame_buffer_program = nullptr;
-
     Application::~Application()
     {
         LOG_INFORMATION("Closing application");
-        delete shader_program;
-        delete ligth_shader_program;
-        delete blur_program;
     }
 
     Application::Application()
@@ -173,71 +276,54 @@ namespace PositronEngine
             }
         );
 
-        frame_buffer_program = new ShaderProgram("post_processing.vert", "post_processing.frag");
-        if(!frame_buffer_program->isCompile())
+        ShaderProgram frame_buffer_program("post_processing.vert", "post_processing.frag");
+        if(!frame_buffer_program.isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
             return -2;
         }
 
-        blur_program = new ShaderProgram("post_processing.vert", "gaussian_blur.frag");
-        if(!frame_buffer_program->isCompile())
+        ShaderProgram blur_program("post_processing.vert", "gaussian_blur.frag");
+        if(!frame_buffer_program.isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
             return -2;
         }
 
-        shader_program = new PositronEngine::ShaderProgram("planet_shader.vert", "planet_shader.frag");
-        if(!shader_program->isCompile())
+        ShaderProgram shader_program("default.vert", "default.frag");
+        if(!shader_program.isCompile())
         {
-            return -4;
+            return -2;
         }
 
-        ligth_shader_program  = new PositronEngine::ShaderProgram("light.vert", "light.frag");
-        if(!ligth_shader_program->isCompile())
+        ShaderProgram ligth_shader_program("light.vert", "light.frag");
+        if(!ligth_shader_program.isCompile())
         {
-            return -4;
+            return -2;
         }
 
-        skybox_program = new PositronEngine::ShaderProgram("skybox.vert", "skybox.frag");
-        if(!skybox_program->isCompile())
+        ShaderProgram skybox_program("skybox.vert", "skybox.frag");
+        if(!skybox_program.isCompile())
         {
-            return -4;
+            return -2;
         }
 
-        //compileShaders();
-        //initializeSpheres();
+        VertexBuffer plate_vertexB(plate_vertices, sizeof(plate_vertices), plate_layout);
 
-        space.setScale(150.0f, 150.0f, 150.0f);
+        VertexBuffer plate_normalsB(plate_normals, sizeof(plate_normals), plate_layout);
 
-        sun.setScale(7.0f, 7.0f, 7.0f);
+        VertexBuffer plate_texCoordsB(plate_texCoords, sizeof(plate_texCoords), plate_layout);
 
-        earth.setOrbirRadius(40.0f);
-        earth.setLocation(earth.getOrbitRadius(), 0.0f, 0.0f);
-        earth.setScale(2.0f, 2.0f, 2.0f);
+        IndexBuffer plate_indicesB(plate_indices, sizeof(plate_indices));
 
-        moon.setOrbirRadius(4.0f);
-        moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
-        moon.setScale(0.5f, 0.5f, 0.5f);
-        moon.setOrbitSpeed(0.006f);
+        VertexArray plateVAO;
 
-        space.setVertexArrayObject();
+        plateVAO.addVertexBuffer(plate_vertexB);
+        plateVAO.addVertexBuffer(plate_normalsB);
+        plateVAO.addVertexBuffer(plate_texCoordsB);
+        plateVAO.setIndexBuffer(plate_indicesB);
 
-        earth.addTexture("earth.bmp");
-        earth.addTexture("earth_clouds.bmp");
-        earth.addTexture("earth_nightmap.bmp");
-
-        sun.addTexture("sun.bmp");
-
-        moon.addTexture("moon.bmp");
-
-        moon.setOrbirRadius(4.0f);
-        moon.setLocation(moon.getOrbitRadius(), 7.0f, 0.0f);
-        moon.setScale(0.5f, 0.5f, 0.5f);
-        moon.setOrbitSpeed(0.006f);
-
-        space.addTexture("stars.bmp");
-        space.getTexture(0)->bind(0);
+        Texture2D plate_texture("moon.bmp");
 
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
@@ -439,63 +525,34 @@ namespace PositronEngine
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
+            plate_texture.bind(0);
+            updateMatrix();
+            shader_program.bind();
 
+            shader_program.setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            shader_program.setVec3("light_color", glm::vec3(1.0f,1.0f,1.0f));
+            shader_program.setFloat("ambient_factor", 0.055f);
+            shader_program.setFloat("diffuse_factor", 0.8f);
+            shader_program.setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
+            shader_program.setVec3("light_position", glm::vec3(1.0f,1.0f,1.0f));
 
+            shader_program.setMatrix4("model_matrix", _model_matrix);
 
-            shader_program->bind();
-
-            shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
-            shader_program->setFloat("ambient_factor", sun.getAmbientFactor());
-            shader_program->setFloat("diffuse_factor", sun.getDiffuseFactor());
-            shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
-            shader_program->setInt("current_frame", frame);
-            shader_program->setVec3("light_position", glm::vec3(sun.getLocation()[0], sun.getLocation()[1], sun.getLocation()[2]));
-            shader_program->setBool("atphmosphere", 1);
-
-            earth.getTexture(0)->bind(0);
-            earth.getTexture(1)->bind(1);
-            earth.getTexture(2)->bind(2);
-
-            earth.updateMatrix();
-            shader_program->setMatrix4("model_matrix", earth.getModelMatrix());
-            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
-            earth.getTexture(0)->unbind(0);
-            earth.getTexture(1)->unbind(1);
-            earth.getTexture(2)->unbind(2);
-
-            shader_program->setBool("atphmosphere", 0);
-            moon.getTexture(0)->bind(0);
-            moon.updateMatrix();
-            shader_program->setMatrix4("model_matrix", moon.getModelMatrix());
-            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
-            moon.getTexture(0)->unbind(0);
-
-            shader_program->unbind();
-
-            sun.getTexture(0)->bind(0);
-            ligth_shader_program->bind();
-            sun.updateMatrix();
-            ligth_shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            ligth_shader_program->setMatrix4("model_matrix", sun.getModelMatrix());
-            ligth_shader_program->setVec3("light_color", glm::vec3(sun.getLightColor()[0], sun.getLightColor()[1], sun.getLightColor()[2]));
-
-            PositronEngine::RenderOpenGL::draw(*space.getVertexArrayObject());
-
-            ligth_shader_program->unbind();
+            RenderOpenGL::draw(plateVAO);
+            plate_texture.unbind(0);
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-            skybox_program->bind();
+            skybox_program.bind();
 
             glm::mat4 view = glm::mat4(1.0f);
             glm::mat4 projection = glm::mat4(1.0f);
 
             view  = glm::mat4(glm::mat3(glm::lookAt(camera.getLocation(), camera.getLocation() + camera.getDirection(), camera.getUp())));
             projection = glm::perspective(glm::radians(45.0f), (float)window_width / window_height, 0.1f, 1000.0f);
-            skybox_program->setMatrix4("view", view);
-            skybox_program->setMatrix4("projection", projection);
+            skybox_program.setMatrix4("view", view);
+            skybox_program.setMatrix4("projection", projection);
 
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -515,22 +572,20 @@ namespace PositronEngine
 
             bool horizontal = true, first_iteration = true;
             int amount = 6;
-            blur_program->bind();
-            blur_program->setInt("screen_texture", 0);
-            blur_program->setFloat("baseBlurRadius", bloom_radius);
-            blur_program->setFloat("baseBlurFactor", blur_factor);
-            float d = sqrtf(pow(camera.getLocation()[0] - sun.getLocation()[0] , 2) +
-                            pow(camera.getLocation()[1] - sun.getLocation()[1] , 2) +
-                            pow(camera.getLocation()[2] - sun.getLocation()[2] , 2));
+            blur_program.bind();
+            blur_program.setInt("screen_texture", 0);
+            blur_program.setFloat("baseBlurRadius", bloom_radius);
+            blur_program.setFloat("baseBlurFactor", blur_factor);
+            float d = 5.0f;
 
-            blur_program->setFloat("cameraDistance", d);
-            blur_program->setFloat("blurDistanceFactor", kekw);
+            blur_program.setFloat("cameraDistance", d);
+            blur_program.setFloat("blurDistanceFactor", kekw);
 
 
             for(unsigned int i = 0; i < amount; i++)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-                blur_program->setBool("horizontal", horizontal);
+                blur_program.setBool("horizontal", horizontal);
 
                 if(first_iteration)
                 {
@@ -562,9 +617,9 @@ namespace PositronEngine
             glBindTextureUnit(0, post_processing_texture);
             glBindTextureUnit(1, pingpongBuffer[!horizontal]);
 
-            frame_buffer_program->bind();
-            frame_buffer_program->setFloat("gamma", gamma);
-            frame_buffer_program->setFloat("exposure", exposure);
+            frame_buffer_program.bind();
+            frame_buffer_program.setFloat("gamma", gamma);
+            frame_buffer_program.setFloat("exposure", exposure);
 
 
             glBindVertexArray(fullscreenQuadVAO);
@@ -627,52 +682,11 @@ namespace PositronEngine
             ImGui::SliderFloat("blurDistanceFactor", &kekw, 0.0f, 1.0f);
             ImGui::End();
 
-
-            ImGui::Begin("light_color");
-            ImGui::ColorEdit3("light_color", sun.getLightColor());
-            //ImGui::SliderFloat("ambient_factor", sun.getAmbientFactor(), 0.0f, 2.0f);
-            //ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 5.0f);
-            ImGui::End();
-            ImGui::Begin("Earth - Local transform");
-            ImGui::SetWindowSize("Earth - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", earth.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", earth.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", earth.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
-            ImGui::Begin("Moon - Local transform");
-            ImGui::SetWindowSize("Moon - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", moon.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", moon.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", moon.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
-            ImGui::Begin("Sun - Local transform");
-            ImGui::SetWindowSize("Sun - Local transform", ImVec2(400,100));
-            ImGui::SliderFloat3("Location", sun.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("Rotate", sun.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("Scale", sun.getScale(), -2.0f, 2.0f);
-            ImGui::End();
-
             onGUIdraw();
 
             GUImodule::onWindowUpdateDraw();
 
             //===============================================================================================================================
-
-
-            //===============================================ИЗМЕНЕНИЕ_ПОЛОЖЕНИЯ=============================================================
-
-            sun.getTexture(0)->unbind(0);
-
-            sun.addRotation(0.15f);
-
-            earth.addRotation(0.004f);
-            earth.doOrbitalMotion(sun.getLocation());
-            earth.addAngle();
-
-            moon.doOrbitalMotion(earth.getLocation());
-            moon.addAngle();
 
             //===============================================ПОСТ_КАДР=======================================================================
             frame++;
