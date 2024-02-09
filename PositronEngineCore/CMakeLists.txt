@@ -18,6 +18,8 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/Sphere.h
     includes/PositronEngineCore/Bmp.h
     includes/PositronEngineCore/stb_image.h
+    includes/PositronEngineCore/GameObject.hpp
+    includes/PositronEngineCore/Primitives/CubePrimitive.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES

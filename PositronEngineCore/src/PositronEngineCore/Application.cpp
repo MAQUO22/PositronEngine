@@ -67,6 +67,24 @@ namespace PositronEngine
     bool show = true;
     int frame = 0;
 
+    ShaderProgram* frame_buffer_program = nullptr;
+    ShaderProgram* blur_program = nullptr;
+    ShaderProgram* shader_program = nullptr;
+    ShaderProgram* ligth_shader_program = nullptr;
+    ShaderProgram* skybox_program = nullptr;
+
+    VertexBuffer* plate_vertexB = nullptr;
+
+    VertexBuffer* plate_normalsB = nullptr;
+
+    VertexBuffer* plate_texCoordsB = nullptr;
+
+    IndexBuffer* plate_indicesB = nullptr;
+
+    VertexArray* plateVAO = nullptr;
+
+    Texture2D* plate_texture = nullptr;
+
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
     float plate_vertices[] = {
@@ -138,10 +156,13 @@ namespace PositronEngine
         0.0f, 1.0f
     };
 
-    BufferLayout plate_layout
+    BufferLayout float3
     {
-        ShaderDataType::Float3,
-        ShaderDataType::Float3,
+        ShaderDataType::Float3
+    };
+
+    BufferLayout float2
+    {
         ShaderDataType::Float2
     };
 
@@ -190,6 +211,19 @@ namespace PositronEngine
     Application::~Application()
     {
         LOG_INFORMATION("Closing application");
+        delete frame_buffer_program;
+        delete blur_program ;
+        delete shader_program ;
+        delete ligth_shader_program;
+        delete skybox_program;
+
+        delete plate_vertexB;
+        delete plate_normalsB;
+        delete plate_texCoordsB ;
+        delete plate_indicesB;
+        delete plateVAO;
+
+        delete plate_texture;
     }
 
     Application::Application()
@@ -276,54 +310,54 @@ namespace PositronEngine
             }
         );
 
-        ShaderProgram frame_buffer_program("post_processing.vert", "post_processing.frag");
-        if(!frame_buffer_program.isCompile())
+        ShaderProgram* frame_buffer_program = new ShaderProgram("post_processing.vert", "post_processing.frag");
+        if(!frame_buffer_program->isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
             return -2;
         }
 
-        ShaderProgram blur_program("post_processing.vert", "gaussian_blur.frag");
-        if(!frame_buffer_program.isCompile())
+        ShaderProgram* blur_program = new ShaderProgram("post_processing.vert", "gaussian_blur.frag");
+        if(!frame_buffer_program->isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
             return -2;
         }
 
-        ShaderProgram shader_program("default.vert", "default.frag");
-        if(!shader_program.isCompile())
+        ShaderProgram* shader_program = new ShaderProgram("default.vert", "default.frag");
+        if(!shader_program->isCompile())
         {
             return -2;
         }
 
-        ShaderProgram ligth_shader_program("light.vert", "light.frag");
-        if(!ligth_shader_program.isCompile())
+        ShaderProgram* ligth_shader_program = new ShaderProgram("light.vert", "light.frag");
+        if(!ligth_shader_program->isCompile())
         {
             return -2;
         }
 
-        ShaderProgram skybox_program("skybox.vert", "skybox.frag");
-        if(!skybox_program.isCompile())
+        ShaderProgram* skybox_program = new ShaderProgram("skybox.vert", "skybox.frag");
+        if(!skybox_program->isCompile())
         {
             return -2;
         }
 
-        VertexBuffer plate_vertexB(plate_vertices, sizeof(plate_vertices), plate_layout);
+        plate_vertexB = new VertexBuffer(plate_vertices, sizeof(plate_vertices), float3);
 
-        VertexBuffer plate_normalsB(plate_normals, sizeof(plate_normals), plate_layout);
+        plate_normalsB = new VertexBuffer(plate_normals, sizeof(plate_normals), float3);
 
-        VertexBuffer plate_texCoordsB(plate_texCoords, sizeof(plate_texCoords), plate_layout);
+        plate_texCoordsB = new VertexBuffer(plate_texCoords, sizeof(plate_texCoords), float2);
 
-        IndexBuffer plate_indicesB(plate_indices, sizeof(plate_indices));
+        plate_indicesB = new IndexBuffer(plate_indices, sizeof(plate_indices));
 
-        VertexArray plateVAO;
+        plateVAO = new VertexArray();
 
-        plateVAO.addVertexBuffer(plate_vertexB);
-        plateVAO.addVertexBuffer(plate_normalsB);
-        plateVAO.addVertexBuffer(plate_texCoordsB);
-        plateVAO.setIndexBuffer(plate_indicesB);
+        plateVAO->addVertexBuffer(*plate_vertexB);
+        plateVAO->addVertexBuffer(*plate_normalsB);
+        plateVAO->addVertexBuffer(*plate_texCoordsB);
+        plateVAO->setIndexBuffer(*plate_indicesB);
 
-        Texture2D plate_texture("moon.bmp");
+        plate_texture = new Texture2D("sun.bmp");
 
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
@@ -525,34 +559,34 @@ namespace PositronEngine
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
-            plate_texture.bind(0);
+            plate_texture->bind(0);
             updateMatrix();
-            shader_program.bind();
+            shader_program->bind();
 
-            shader_program.setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            shader_program.setVec3("light_color", glm::vec3(1.0f,1.0f,1.0f));
-            shader_program.setFloat("ambient_factor", 0.055f);
-            shader_program.setFloat("diffuse_factor", 0.8f);
-            shader_program.setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
-            shader_program.setVec3("light_position", glm::vec3(1.0f,1.0f,1.0f));
+            shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            shader_program->setVec3("light_color", glm::vec3(1.0f,1.0f,1.0f));
+            shader_program->setFloat("ambient_factor", 0.055f);
+            shader_program->setFloat("diffuse_factor", 0.8f);
+            shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
+            shader_program->setVec3("light_position", glm::vec3(1.0f,1.0f,1.0f));
 
-            shader_program.setMatrix4("model_matrix", _model_matrix);
+            shader_program->setMatrix4("model_matrix", _model_matrix);
 
-            RenderOpenGL::draw(plateVAO);
-            plate_texture.unbind(0);
+            RenderOpenGL::draw(*plateVAO);
+            plate_texture->unbind(0);
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-            skybox_program.bind();
+            skybox_program->bind();
 
             glm::mat4 view = glm::mat4(1.0f);
             glm::mat4 projection = glm::mat4(1.0f);
 
             view  = glm::mat4(glm::mat3(glm::lookAt(camera.getLocation(), camera.getLocation() + camera.getDirection(), camera.getUp())));
             projection = glm::perspective(glm::radians(45.0f), (float)window_width / window_height, 0.1f, 1000.0f);
-            skybox_program.setMatrix4("view", view);
-            skybox_program.setMatrix4("projection", projection);
+            skybox_program->setMatrix4("view", view);
+            skybox_program->setMatrix4("projection", projection);
 
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -572,20 +606,20 @@ namespace PositronEngine
 
             bool horizontal = true, first_iteration = true;
             int amount = 6;
-            blur_program.bind();
-            blur_program.setInt("screen_texture", 0);
-            blur_program.setFloat("baseBlurRadius", bloom_radius);
-            blur_program.setFloat("baseBlurFactor", blur_factor);
+            blur_program->bind();
+            blur_program->setInt("screen_texture", 0);
+            blur_program->setFloat("baseBlurRadius", bloom_radius);
+            blur_program->setFloat("baseBlurFactor", blur_factor);
             float d = 5.0f;
 
-            blur_program.setFloat("cameraDistance", d);
-            blur_program.setFloat("blurDistanceFactor", kekw);
+            blur_program->setFloat("cameraDistance", d);
+            blur_program->setFloat("blurDistanceFactor", kekw);
 
 
             for(unsigned int i = 0; i < amount; i++)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-                blur_program.setBool("horizontal", horizontal);
+                blur_program->setBool("horizontal", horizontal);
 
                 if(first_iteration)
                 {
@@ -617,9 +651,9 @@ namespace PositronEngine
             glBindTextureUnit(0, post_processing_texture);
             glBindTextureUnit(1, pingpongBuffer[!horizontal]);
 
-            frame_buffer_program.bind();
-            frame_buffer_program.setFloat("gamma", gamma);
-            frame_buffer_program.setFloat("exposure", exposure);
+            frame_buffer_program->bind();
+            frame_buffer_program->setFloat("gamma", gamma);
+            frame_buffer_program->setFloat("exposure", exposure);
 
 
             glBindVertexArray(fullscreenQuadVAO);
