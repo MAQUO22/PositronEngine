@@ -20,6 +20,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/stb_image.h
     includes/PositronEngineCore/GameObject.hpp
     includes/PositronEngineCore/Primitives/CubePrimitive.hpp
+    includes/PositronEngineCore/Mesh.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -42,6 +43,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
     src/PositronEngineCore/Modules/GUImodule.cpp
+    src/PositronEngineCore/Mesh.cpp
 )
 
 set(ENGINE_ALL_SOURCES

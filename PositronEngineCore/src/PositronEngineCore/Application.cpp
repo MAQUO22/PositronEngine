@@ -8,8 +8,7 @@
 #include "PositronEngineCore/Modules/GUImodule.hpp"
 #include "PositronEngineCore/ShaderProgram.hpp"
 #include "PositronEngineCore/stb_image.h"
-#include "PositronEngineCore/Texture2D.hpp"
-#include "PositronEngineCore/VertexArray.hpp"
+#include "PositronEngineCore/Mesh.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -73,101 +72,71 @@ namespace PositronEngine
     ShaderProgram* ligth_shader_program = nullptr;
     ShaderProgram* skybox_program = nullptr;
 
-    VertexBuffer* plate_vertexB = nullptr;
-
-    VertexBuffer* plate_normalsB = nullptr;
-
-    VertexBuffer* plate_texCoordsB = nullptr;
-
-    IndexBuffer* plate_indicesB = nullptr;
-
-    VertexArray* plateVAO = nullptr;
-
     Texture2D* plate_texture = nullptr;
+
+    Vertex verteces[] =
+    {
+        //    position                         normal                        UV
+
+        //FRONT
+        Vertex{glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+        Vertex{glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+        Vertex{glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
+        Vertex{glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+
+        //BACK
+        Vertex{glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+        Vertex{glm::vec3(1.0f,  1.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+        Vertex{glm::vec3(1.0f,  1.0f,  1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+        Vertex{glm::vec3(1.0f, -1.0f,  1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
+
+        //RIGHT
+        Vertex{glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+        Vertex{glm::vec3( 1.0f, 1.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+        Vertex{glm::vec3( 1.0f, 1.0f,  1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
+        Vertex{glm::vec3(-1.0f, 1.0f,  1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+
+        //LEFT
+        Vertex{glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+        Vertex{glm::vec3( 1.0f, -1.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+        Vertex{glm::vec3( 1.0f, -1.0f,  1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+        Vertex{glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
+
+        //TOP
+        Vertex{glm::vec3(-1.0f, -1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
+        Vertex{glm::vec3(-1.0f,  1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
+        Vertex{glm::vec3( 1.0f,  1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+        Vertex{glm::vec3( 1.0f, -1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+
+        // BOTTOM
+        Vertex{glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
+        Vertex{glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 1.0f)},
+        Vertex{glm::vec3( 1.0f,  1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 0.0f)},
+        Vertex{glm::vec3( 1.0f, -1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
+    };
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
-    float plate_vertices[] = {
-        // Передняя грань
-        -1.0f, -1.0f,  1.0f,  // 0
-        1.0f, -1.0f,  1.0f,  // 1
-        1.0f,  1.0f,  1.0f,  // 2
-        -1.0f,  1.0f,  1.0f,  // 3
+    GLuint plate_indices[] =
+{
+    0, 1, 2, // Первый треугольник передней грани
+    2, 3, 0, // Второй треугольник передней грани
 
-        // Задняя грань
-        -1.0f, -1.0f, -1.0f,  // 4
-        1.0f, -1.0f, -1.0f,  // 5
-        1.0f,  1.0f, -1.0f,  // 6
-        -1.0f,  1.0f, -1.0f   // 7
-    };
+    4, 5, 6, // Первый треугольник задней грани
+    6, 7, 4, // Второй треугольник задней грани
 
-    // Индексы для каждого треугольника (задают порядок вершин для создания треугольников)
-    unsigned int plate_indices[] = {
-          // Передняя грань
-        0, 1, 2,
-        2, 3, 0,
+    8, 9, 10, // Первый треугольник правой грани
+    10, 11, 8, // Второй треугольник правой грани
 
-        // Задняя грань
-        4, 5, 6,
-        6, 7, 4,
+    12, 13, 14, // Первый треугольник левой грани
+    14, 15, 12, // Второй треугольник левой грани
 
-        // Верхняя грань
-        3, 2, 6,
-        6, 7, 3,
+    16, 17, 18, // Первый треугольник верхней грани
+    18, 19, 16, // Второй треугольник верхней грани
 
-        // Нижняя грань
-        0, 1, 5,
-        5, 4, 0,
-
-        // Правая грань
-        1, 2, 6,
-        6, 5, 1,
-
-        // Левая грань
-        0, 3, 7,
-        7, 4, 0
-    };
-
-    // Нормали для каждой вершины (в данном случае нормали считаются как перпендикулярные к плоскостям граней)
-    float plate_normals[] = {
-        // Передняя грань
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-        // Задняя грань
-        0.0f, 0.0f, -1.0f,
-        0.0f, 0.0f, -1.0f,
-        0.0f, 0.0f, -1.0f,
-        0.0f, 0.0f, -1.0f
-    };
-
-    // Текстурные координаты для каждой вершины (предполагая, что текстура накладывается равномерно)
-    float plate_texCoords[] = {
-        // Передняя грань
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f,
-        // Задняя грань
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f
-    };
-
-    BufferLayout float3
-    {
-        ShaderDataType::Float3
-    };
-
-    BufferLayout float2
-    {
-        ShaderDataType::Float2
-    };
-
-
-
+    20, 21, 22, // Первый треугольник нижней грани
+    22, 23, 20  // Второй треугольник нижней грани
+};
 
     float quadVertices[] =
     {
@@ -216,12 +185,6 @@ namespace PositronEngine
         delete shader_program ;
         delete ligth_shader_program;
         delete skybox_program;
-
-        delete plate_vertexB;
-        delete plate_normalsB;
-        delete plate_texCoordsB ;
-        delete plate_indicesB;
-        delete plateVAO;
 
         delete plate_texture;
     }
@@ -342,23 +305,14 @@ namespace PositronEngine
             return -2;
         }
 
-        plate_vertexB = new VertexBuffer(plate_vertices, sizeof(plate_vertices), float3);
+        plate_texture = new Texture2D("moon.bmp");
 
-        plate_normalsB = new VertexBuffer(plate_normals, sizeof(plate_normals), float3);
+        std::vector<Vertex> verts(verteces, verteces + sizeof(verteces) / sizeof(Vertex));
+        std::vector<GLuint> ind(plate_indices, plate_indices + sizeof(plate_indices) / sizeof(GLuint));
+        //std::vector<Texture2D> tex(plate_texture, plate_texture + sizeof(plate_texture) / sizeof(Texture2D));
 
-        plate_texCoordsB = new VertexBuffer(plate_texCoords, sizeof(plate_texCoords), float2);
 
-        plate_indicesB = new IndexBuffer(plate_indices, sizeof(plate_indices));
-
-        plateVAO = new VertexArray();
-
-        plateVAO->addVertexBuffer(*plate_vertexB);
-        plateVAO->addVertexBuffer(*plate_normalsB);
-        plateVAO->addVertexBuffer(*plate_texCoordsB);
-        plateVAO->setIndexBuffer(*plate_indicesB);
-
-        plate_texture = new Texture2D("sun.bmp");
-
+        Mesh cubeMesh(verts,ind);
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -551,7 +505,6 @@ namespace PositronEngine
 
             //================================================БУФЕР_КАДРА_ПОСТ-ПРОЦЕССИНГА====================================================
 
-
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
             glClearColor(pow(0.0f, gamma),pow(0.0f, gamma), pow(0.0f, gamma), 1.0f);
             RenderOpenGL::clear();
@@ -568,12 +521,15 @@ namespace PositronEngine
             shader_program->setFloat("ambient_factor", 0.055f);
             shader_program->setFloat("diffuse_factor", 0.8f);
             shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
-            shader_program->setVec3("light_position", glm::vec3(1.0f,1.0f,1.0f));
+            shader_program->setVec3("light_position", glm::vec3(3.0f,3.0f,3.0f));
 
             shader_program->setMatrix4("model_matrix", _model_matrix);
 
-            RenderOpenGL::draw(*plateVAO);
+            //LOG_INFORMATION("Index size - {0}", cubeMesh.VAO.getIndicesCount());
+
+            RenderOpenGL::draw(*cubeMesh.VAO);
             plate_texture->unbind(0);
+            cubeMesh.VAO->unbind();
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -595,7 +551,6 @@ namespace PositronEngine
             glBindVertexArray(0);
 
             glDepthFunc(GL_LESS);
-
 
             //===============================================================================================================================
 
@@ -715,6 +670,11 @@ namespace PositronEngine
             ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
             ImGui::SliderFloat("blurDistanceFactor", &kekw, 0.0f, 1.0f);
             ImGui::End();
+
+            ImGui::Begin("Cube");
+            ImGui::SliderFloat3("scale", _scale, -3.0f, 5.0f);
+            ImGui::End();
+
 
             onGUIdraw();
 
