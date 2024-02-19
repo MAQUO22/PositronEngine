@@ -6,41 +6,64 @@ namespace PositronEngine
 {
     const std::string PATH_TO_TEXTURES = "../../ResourceFiles/Textures/";
 
-    Texture2D::Texture2D(const char* path)
+    Texture2D::Texture2D(Texture2D& texture)
     {
-        if(!_image_bmp.read((PATH_TO_TEXTURES + std::string(path)).c_str()))
-            LOG_ERROR("Texture is unloaded");
+        _id = texture._id;
+        _type = texture._type;
+        _data = texture._data;
+        texture._id = 0;
+    }
 
-        int width = _image_bmp.getWidth();
-        int height = _image_bmp.getHeight();
-        const unsigned char* data = _image_bmp.getDataRGB();
-        GLenum type = GL_UNSIGNED_BYTE;
+    Texture2D::Texture2D(const char* path, TextureType type)
+    {
+        int width, height, nrChannels;
+        unsigned char* data = stbi_load((PATH_TO_TEXTURES + std::string(path)).c_str(), &width, &height, &nrChannels, 0);
+        if(data)
+        {
+            stbi_set_flip_vertically_on_load(false);
 
-        GLenum format;
-        int bpp = _image_bmp.getBitCount();
-        if(bpp == 8)
-            format = GL_RGB8;
-        else if(bpp == 24)
-            format = GL_RGB;
+            if(type == TextureType::diffuse)
+            {
+            glGenTextures(1, &_id);
+            glBindTexture(GL_TEXTURE_2D, _id);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            }
+
+            else if(type == TextureType::specular)
+            {
+
+            }
+
+            else if(type == TextureType::normal)
+            {
+
+            }
+
+            _data = data;
+            _type = type;
+
+            stbi_image_free(data);
+        }
         else
-            format = GL_SRGB_ALPHA;
-
-        glGenTextures(1, &_id);
-
-        glBindTexture(GL_TEXTURE_2D, _id);
-
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        {
+            LOG_CRITICAL("Failed to load image from path: {0}", path);
+            stbi_image_free(data);
+        }
     }
 
     Texture2D & PositronEngine::Texture2D::operator=(Texture2D && texture) noexcept
     {
         glDeleteTextures(1, &_id);
         _id = texture._id;
-        _image_bmp = texture._image_bmp;
+        _type = texture._type;
+        _data = texture._data;
         texture._id = 0;
         return *this;
 
@@ -51,20 +74,26 @@ namespace PositronEngine
         glDeleteTextures(1, &_id);
     }
 
+    unsigned int Texture2D::getID()
+    {
+        return _id;
+    }
+
     void Texture2D::bind(const unsigned int unit) const
     {
         glBindTextureUnit(unit, _id);
     }
 
-    void Texture2D::unbind(const unsigned int unit) const
+    void Texture2D::unbind() const
     {
-        glBindTextureUnit(unit, 0);
+        glBindTextureUnit(_id, 0);
     }
 
     Texture2D::Texture2D(Texture2D && texture) noexcept
     {
         _id = texture._id;
-        _image_bmp = texture._image_bmp;
+        _type = texture._type;
+        _data = texture._data;
         texture._id = 0;
     }
 }

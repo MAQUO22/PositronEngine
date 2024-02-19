@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PositronEngineCore/GameObject.hpp"
+#include "PositronEngineCore/Mesh.hpp"
 
 namespace PositronEngine
 {
@@ -10,5 +11,6 @@ namespace PositronEngine
 
 
         private:
+
     };
 }

@@ -22,6 +22,10 @@ namespace PositronEngine
     float _rotation[3] = {0.0f, 0.0f, 0.0f};
     float _scale[3] = {1.0f, 1.0f, 1.0f};
 
+    float ambient_factor = 0.47f;
+    float diffuse_factor = 1.14f;
+
+    bool bloom_activate = false;
 
     glm::mat4 _model_matrix;
 
@@ -72,8 +76,6 @@ namespace PositronEngine
     ShaderProgram* ligth_shader_program = nullptr;
     ShaderProgram* skybox_program = nullptr;
 
-    Texture2D* plate_texture = nullptr;
-
     Vertex verteces[] =
     {
         //    position                         normal                        UV
@@ -117,7 +119,7 @@ namespace PositronEngine
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
-    GLuint plate_indices[] =
+    GLuint indices[] =
 {
     0, 1, 2, // Первый треугольник передней грани
     2, 3, 0, // Второй треугольник передней грани
@@ -158,7 +160,6 @@ namespace PositronEngine
          1.0f,   1.0f,  1.0f,
          1.0f,   1.0f, -1.0f,
         -1.0f,   1.0f, -1.0f
-
     };
 
     unsigned int skyboxIndices[] =
@@ -186,7 +187,6 @@ namespace PositronEngine
         delete ligth_shader_program;
         delete skybox_program;
 
-        delete plate_texture;
     }
 
     Application::Application()
@@ -305,14 +305,16 @@ namespace PositronEngine
             return -2;
         }
 
-        plate_texture = new Texture2D("moon.bmp");
+        Texture2D textures[]
+        {
+            Texture2D("moon.bmp", TextureType::diffuse)
+        };
 
         std::vector<Vertex> verts(verteces, verteces + sizeof(verteces) / sizeof(Vertex));
-        std::vector<GLuint> ind(plate_indices, plate_indices + sizeof(plate_indices) / sizeof(GLuint));
-        //std::vector<Texture2D> tex(plate_texture, plate_texture + sizeof(plate_texture) / sizeof(Texture2D));
+        std::vector<GLuint> ind(indices, indices + sizeof(indices) / sizeof(GLuint));
+        std::vector<Texture2D> tex(textures, textures + sizeof(textures) / sizeof(Texture2D));
 
-
-        Mesh cubeMesh(verts,ind);
+        Mesh cubeMesh(verts, ind, tex);
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -387,6 +389,8 @@ namespace PositronEngine
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glBindTexture(GL_TEXTURE_2D, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, post_processing_texture, 0);
 
@@ -410,6 +414,8 @@ namespace PositronEngine
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _window->getWidth(), _window->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffers(2, attachments);
@@ -457,6 +463,8 @@ namespace PositronEngine
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glBindTexture(GL_TEXTURE_2D, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, resultTextureID, 0);
 
@@ -512,23 +520,21 @@ namespace PositronEngine
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
-            plate_texture->bind(0);
             updateMatrix();
+            cubeMesh.textures[0].bind(0);
+
             shader_program->bind();
 
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
             shader_program->setVec3("light_color", glm::vec3(1.0f,1.0f,1.0f));
-            shader_program->setFloat("ambient_factor", 0.055f);
-            shader_program->setFloat("diffuse_factor", 0.8f);
+            shader_program->setFloat("ambient_factor", ambient_factor);
+            shader_program->setFloat("diffuse_factor", diffuse_factor);
             shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
-            shader_program->setVec3("light_position", glm::vec3(3.0f,3.0f,3.0f));
+            shader_program->setVec3("light_position", glm::vec3(-3.0f,-3.0f,-3.0f));
 
             shader_program->setMatrix4("model_matrix", _model_matrix);
 
-            //LOG_INFORMATION("Index size - {0}", cubeMesh.VAO.getIndicesCount());
-
             RenderOpenGL::draw(*cubeMesh.VAO);
-            plate_texture->unbind(0);
             cubeMesh.VAO->unbind();
 
             glDepthFunc(GL_LEQUAL);
@@ -562,13 +568,7 @@ namespace PositronEngine
             bool horizontal = true, first_iteration = true;
             int amount = 6;
             blur_program->bind();
-            blur_program->setInt("screen_texture", 0);
-            blur_program->setFloat("baseBlurRadius", bloom_radius);
-            blur_program->setFloat("baseBlurFactor", blur_factor);
-            float d = 5.0f;
-
-            blur_program->setFloat("cameraDistance", d);
-            blur_program->setFloat("blurDistanceFactor", kekw);
+            blur_program->setBool("bloom", bloom_activate);
 
 
             for(unsigned int i = 0; i < amount; i++)
@@ -664,6 +664,7 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Post-processing");
+            ImGui::Checkbox("Bloom activate", &bloom_activate);
             ImGui::SliderFloat("Gamma", &gamma, 0.0f, 3.0f);
             ImGui::SliderFloat("bloom_radius", &bloom_radius, 0.0f, 3.0f);
             ImGui::SliderFloat("blur_factor", &blur_factor, 0.0f, 3.0f);
@@ -673,6 +674,12 @@ namespace PositronEngine
 
             ImGui::Begin("Cube");
             ImGui::SliderFloat3("scale", _scale, -3.0f, 5.0f);
+            ImGui::End();
+
+
+            ImGui::Begin("Direction light");
+            ImGui::SliderFloat("ambient_factor", &ambient_factor, 0.0f, 2.0f);
+            ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 2.0f);
             ImGui::End();
 
 

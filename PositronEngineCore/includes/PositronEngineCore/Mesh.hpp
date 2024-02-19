@@ -21,13 +21,13 @@ namespace PositronEngine
         public:
             std::vector<Vertex> vertices;
             std::vector<GLuint> indices;
-            //std::vector<Texture2D> textures;
+            std::vector<Texture2D> textures;
 
             VertexArray* VAO = nullptr;
             VertexBuffer* positionB = nullptr;
             IndexBuffer* indicesB = nullptr;
 
-            Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices);
+            Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices, std::vector<Texture2D> &textures);
             Mesh() = delete;
             ~Mesh();
 
