@@ -11,12 +11,14 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/Input.hpp
     includes/PositronEngineCore/VertexArray.hpp
     includes/PositronEngineCore/VertexBuffer.hpp
+    includes/PositronEngineCore/FrameBuffer.hpp
+    includes/PositronEngineCore/RenderBuffer.hpp
     includes/PositronEngineCore/Texture2D.hpp
+    includes/PositronEngineCore/CubeMapTexture.hpp
     includes/PositronEngineCore/ShaderProgram.hpp
     includes/PositronEngineCore/IndexBuffer.hpp
     includes/PositronEngineCore/RenderOpenGL.hpp
     includes/PositronEngineCore/Sphere.h
-    includes/PositronEngineCore/Bmp.h
     includes/PositronEngineCore/stb_image.h
     includes/PositronEngineCore/GameObject.hpp
     includes/PositronEngineCore/Primitives/CubePrimitive.hpp
@@ -35,11 +37,13 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Input.cpp
     src/PositronEngineCore/stb.cpp
     src/PositronEngineCore/Rendering/OpenGL/Texture2D.cpp
+    src/PositronEngineCore/Rendering/OpenGL/CubeMapTexture.cpp
     src/PositronEngineCore/Rendering/OpenGL/ShaderProgram.cpp
     src/PositronEngineCore/Rendering/OpenGL/Sphere.cpp
-    src/PositronEngineCore/Rendering/OpenGL/Bmp.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/VertexArray.cpp
+    src/PositronEngineCore/Rendering/OpenGL/FrameBuffer.cpp
+    src/PositronEngineCore/Rendering/OpenGL/RenderBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
     src/PositronEngineCore/Modules/GUImodule.cpp

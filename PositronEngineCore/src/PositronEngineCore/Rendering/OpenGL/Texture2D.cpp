@@ -14,6 +14,19 @@ namespace PositronEngine
         texture._id = 0;
     }
 
+    Texture2D::Texture2D(const unsigned int size_x, const unsigned int size_y)
+    {
+        glGenTextures(1, &_id);
+        glBindTexture(GL_TEXTURE_2D, _id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, size_x, size_y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+
     Texture2D::Texture2D(const char* path, TextureType type)
     {
         int width, height, nrChannels;
@@ -79,12 +92,17 @@ namespace PositronEngine
         return _id;
     }
 
-    void Texture2D::bind(const unsigned int unit) const
+    void Texture2D::bind()
+    {
+        glBindTexture(GL_TEXTURE_2D, _id);
+    }
+
+    void Texture2D::bindUnit(const unsigned int unit) const
     {
         glBindTextureUnit(unit, _id);
     }
 
-    void Texture2D::unbind() const
+    void Texture2D::unbindUnit() const
     {
         glBindTextureUnit(_id, 0);
     }

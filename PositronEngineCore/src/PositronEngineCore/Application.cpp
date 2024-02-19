@@ -10,6 +10,10 @@
 #include "PositronEngineCore/stb_image.h"
 #include "PositronEngineCore/Mesh.hpp"
 
+#include "PositronEngineCore/CubeMapTexture.hpp"
+#include "PositronEngineCore/FrameBuffer.hpp"
+#include "PositronEngineCore/RenderBuffer.hpp"
+
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
@@ -341,142 +345,48 @@ namespace PositronEngine
             "../../ResourceFiles/Textures/SkyBox/Cloud/back.jpg"
         };
 
-        unsigned int cubemapTexture;
-        glGenTextures(1, &cubemapTexture);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        CubeMapTexture cubemapTexture(facesCubemap);
 
-        for (unsigned int i = 0; i < 6; i++)
-        {
-            int width, height, nrChannels;
-            unsigned char* data = stbi_load(facesCubemap[i].c_str(), &width, &height, &nrChannels, 0);
-            if(data)
-            {
-                stbi_set_flip_vertically_on_load(false);
-                glTexImage2D
-                (
-                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                    0,
-                    GL_RGB,
-                    width,
-                    height,
-                    0,
-                    GL_RGB,
-                    GL_UNSIGNED_BYTE,
-                    data
-                );
-                stbi_image_free(data);
-            }
-            else
-            {
-                LOG_CRITICAL("Failed to load image: {0}", facesCubemap[i]);
-                stbi_image_free(data);
-            }
-        }
+        FrameBuffer framebuffer;
 
+        Texture2D post_processing_texture(_window->getWidth(), _window->getHeight());
+        framebuffer.connectTexture(GL_COLOR_ATTACHMENT0, post_processing_texture.getID());
 
-        unsigned int framebuffer;
-        glGenFramebuffers(1, &framebuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        Texture2D bloomTexture(_window->getWidth(), _window->getHeight());
+        framebuffer.connectTexture(GL_COLOR_ATTACHMENT1, bloomTexture.getID());
 
-        unsigned int post_processing_texture;
-        glGenTextures(1, &post_processing_texture);
-        glBindTexture(GL_TEXTURE_2D, post_processing_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, post_processing_texture, 0);
+        FrameBuffer::checkFrameBufferErrors();
 
-        unsigned int bloomTexture;
-        glGenTextures(1, &bloomTexture);
-        glBindTexture(GL_TEXTURE_2D, bloomTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloomTexture, 0);
-
-        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-            LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
-
-        GLuint image;
-        glGenTextures(1, &image);
-        glBindTexture(GL_TEXTURE_2D, image);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _window->getWidth(), _window->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        Texture2D image(_window->getWidth(), _window->getHeight());
 
         unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffers(2, attachments);
 
+        RenderBuffer render_buffer_scene(_window->getWidth(), _window->getHeight());
 
-        unsigned int rbo;
-        glGenRenderbuffers(1, &rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _window->getWidth(), _window->getHeight());
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-        fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-            LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
-
-        unsigned int pingpongFBO[2];
-        unsigned int pingpongBuffer[2];
-        glGenFramebuffers(2, pingpongFBO);
-        glGenTextures(2, pingpongBuffer);
-        for(unsigned int i = 0; i < 2; i++)
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
-            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0);
-
-            fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-            if(fboStatus != GL_FRAMEBUFFER_COMPLETE)
-                LOG_CRITICAL("Ping-pong framebuffer error: {0}", fboStatus);
-        }
+        FrameBuffer::checkFrameBufferErrors();
 
 
+        FrameBuffer pingpongFBO;
+        Texture2D pingpongBuffer(_window->getWidth(), _window->getHeight());
+        pingpongFBO.connectTexture(GL_COLOR_ATTACHMENT0, pingpongBuffer.getID());
 
-        unsigned int viewport;
-        glGenFramebuffers(1, &viewport);
-        glBindFramebuffer(GL_FRAMEBUFFER, viewport);
+        FrameBuffer::checkFrameBufferErrors();
 
-        GLuint resultTextureID;
-        glGenTextures(1, &resultTextureID);
-        glBindTexture(GL_TEXTURE_2D, resultTextureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, _window->getWidth(), _window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, resultTextureID, 0);
+        FrameBuffer pingpongFBO1;
+        Texture2D pingpongBuffer1(_window->getWidth(), _window->getHeight());
+        pingpongFBO1.connectTexture(GL_COLOR_ATTACHMENT0, pingpongBuffer1.getID());
 
-        unsigned int rbo_v;
-        glGenRenderbuffers(1, &rbo_v);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_v);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _window->getWidth(), _window->getHeight());
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo_v);
+        FrameBuffer::checkFrameBufferErrors();
 
-        fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-            LOG_CRITICAL("Framebuffer not complete! error: {0}", fboStatus);
+        FrameBuffer viewport;
+
+        Texture2D resultTextureID(_window->getWidth(), _window->getHeight());
+        viewport.connectTexture(GL_COLOR_ATTACHMENT0, resultTextureID.getID());
+
+        RenderBuffer render_buffer_viewport(_window->getWidth(), _window->getHeight());
+
+        FrameBuffer::checkFrameBufferErrors();
 
         glGenVertexArrays(1, &fullscreenQuadVAO);
         glGenBuffers(1, &fullscreenQuadVBO);
@@ -513,7 +423,7 @@ namespace PositronEngine
 
             //================================================БУФЕР_КАДРА_ПОСТ-ПРОЦЕССИНГА====================================================
 
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            framebuffer.bind();
             glClearColor(pow(0.0f, gamma),pow(0.0f, gamma), pow(0.0f, gamma), 1.0f);
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
@@ -521,7 +431,7 @@ namespace PositronEngine
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
             updateMatrix();
-            cubeMesh.textures[0].bind(0);
+            cubeMesh.textures[0].bindUnit(0);
 
             shader_program->bind();
 
@@ -552,7 +462,7 @@ namespace PositronEngine
 
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            cubemapTexture.bind();
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
 
@@ -570,20 +480,19 @@ namespace PositronEngine
             blur_program->bind();
             blur_program->setBool("bloom", bloom_activate);
 
-
             for(unsigned int i = 0; i < amount; i++)
             {
-                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+                horizontal ? pingpongFBO1.bind() : pingpongFBO.bind();
                 blur_program->setBool("horizontal", horizontal);
 
                 if(first_iteration)
                 {
-                    glBindTexture(GL_TEXTURE_2D, bloomTexture);
+                    bloomTexture.bind();
                     first_iteration = false;
                 }
                 else
                 {
-                    glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
+                    horizontal ? pingpongBuffer.bind() : pingpongBuffer1.bind();
                 }
 
                 glBindVertexArray(fullscreenQuadVAO);
@@ -599,12 +508,12 @@ namespace PositronEngine
             //================================================БУФЕР_КАДРА_ДЛЯ_ВЬЮПОРТА=======================================================
 
 
-            glBindFramebuffer(GL_FRAMEBUFFER, viewport);
+            viewport.bind();
             glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            glBindTextureUnit(0, post_processing_texture);
-            glBindTextureUnit(1, pingpongBuffer[!horizontal]);
+            post_processing_texture.bindUnit(0);;
+            pingpongBuffer.bindUnit(1);
 
             frame_buffer_program->bind();
             frame_buffer_program->setFloat("gamma", gamma);
@@ -624,10 +533,6 @@ namespace PositronEngine
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(pow(1.0f, gamma),pow(1.0f, gamma), pow(1.0f, gamma), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-
-
-
-
 
             //===============================================ПОЛЬЗОВАТЕЛЬСКИЙ+ИНТЕРФЕЙС======================================================
 
@@ -660,7 +565,7 @@ namespace PositronEngine
 
             ImGui::Begin("Viewport");
             ImVec2 viewport_size = ImGui::GetWindowSize();
-            ImGui::Image((void*)(intptr_t)resultTextureID, viewport_size);
+            ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
             ImGui::End();
 
             ImGui::Begin("Post-processing");
