@@ -15,8 +15,11 @@ namespace PositronEngine
             VertexArray& operator=(VertexArray&& vertex_array) noexcept;
             VertexArray(VertexArray&& vertex_array) noexcept;
 
-            void addVertexBuffer(const VertexBuffer& vertex_buffer);
-            void setIndexBuffer(const IndexBuffer& index_buffer);
+            void addVertexBuffer(VertexBuffer& vertex_buffer);
+            void setIndexBuffer(IndexBuffer& index_buffer);
+
+            IndexBuffer* getIndexBuffer() { return _index_buffer; }
+            VertexBuffer* getVertexBuffer() { return _vertex_buffer; }
 
             void bind() const;
             static void unbind();
@@ -27,5 +30,7 @@ namespace PositronEngine
             unsigned int _id;
             unsigned int _elements_count;
             size_t _indices_count = 0;
+            IndexBuffer* _index_buffer = nullptr;
+            VertexBuffer* _vertex_buffer = nullptr;
     };
 }

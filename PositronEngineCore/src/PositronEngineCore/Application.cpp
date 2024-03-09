@@ -13,6 +13,8 @@
 #include "PositronEngineCore/CubeMapTexture.hpp"
 #include "PositronEngineCore/FrameBuffer.hpp"
 #include "PositronEngineCore/RenderBuffer.hpp"
+#include "PositronEngineCore/Primitives/CubePrimitive.hpp"
+#include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -22,49 +24,17 @@
 
 namespace PositronEngine
 {
-    float _location[3] = {0.0f, 0.0f, 0.0f};
-    float _rotation[3] = {0.0f, 0.0f, 0.0f};
-    float _scale[3] = {1.0f, 1.0f, 1.0f};
+    float light_color[3] = {1.0f, 1.0f, 1.0f};
+    float light_position[3] = {1.0f, 1.0f, 1.0f};
 
-    float ambient_factor = 0.47f;
+    float ambient_factor = 1.10f;
     float diffuse_factor = 1.14f;
+
+    float shininess = 32.0f;
+    float specular_factor = 0.5f;
 
     bool bloom_activate = false;
 
-    glm::mat4 _model_matrix;
-
-    void updateMatrix()
-    {
-            glm::mat4 location_matrix(1,                    0,                  0,               0,
-                                      0,                    1,                  0,               0,
-                                      0,                    0,                  1,               0,
-                                      _location[0],          _location[1],      _location[2],    1);
-
-
-            glm::mat4 _rotate_matrix_x(1,    0,                                   0,                                   0,
-                                       0,    cos(glm::radians(_rotation[0])),     sin(glm::radians(_rotation[0])),     0,
-                                       0,    -sin(glm::radians(_rotation[0])),    cos(glm::radians(_rotation[0])),     0,
-                                       0,    0,                                   0,                                   1);
-
-
-            glm::mat4 _rotate_matrix_y(cos(glm::radians(_rotation[1])),       0,      -sin(glm::radians(_rotation[1])),    0,
-                                       0,                                     1,      0,                                   0,
-                                       sin(glm::radians(_rotation[1])),       0,      cos(glm::radians(_rotation[1])),     0,
-                                       0,                                     0,      0,                                   1);
-
-
-            glm::mat4 _rotate_matrix_z(cos(glm::radians(_rotation[2])),       sin(glm::radians(_rotation[2])),     0,      0,
-                                       -sin(glm::radians(_rotation[2])),      cos(glm::radians(_rotation[2])),     0,      0,
-                                       0,                                     0,                                   1,      0,
-                                       0,                                     0,                                   0,      1);
-
-            glm::mat4x4 _scale_matrix(_scale[0],  0,              0,          0,
-                                      0,          _scale[1],      0,          0,
-                                      0,          0,              _scale[2],  0,
-                                      0,          0,              0,          1);
-
-            _model_matrix = location_matrix * _rotate_matrix_x * _rotate_matrix_y * _rotate_matrix_z * _scale_matrix;
-    }
 
     float gamma = 0.280f;
     float exposure = 1.75f;
@@ -80,69 +50,7 @@ namespace PositronEngine
     ShaderProgram* ligth_shader_program = nullptr;
     ShaderProgram* skybox_program = nullptr;
 
-    Vertex verteces[] =
-    {
-        //    position                         normal                        UV
-
-        //FRONT
-        Vertex{glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-        Vertex{glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-        Vertex{glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
-        Vertex{glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
-
-        //BACK
-        Vertex{glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-        Vertex{glm::vec3(1.0f,  1.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-        Vertex{glm::vec3(1.0f,  1.0f,  1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
-        Vertex{glm::vec3(1.0f, -1.0f,  1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
-
-        //RIGHT
-        Vertex{glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-        Vertex{glm::vec3( 1.0f, 1.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-        Vertex{glm::vec3( 1.0f, 1.0f,  1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
-        Vertex{glm::vec3(-1.0f, 1.0f,  1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
-
-        //LEFT
-        Vertex{glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-        Vertex{glm::vec3( 1.0f, -1.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-        Vertex{glm::vec3( 1.0f, -1.0f,  1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
-        Vertex{glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
-
-        //TOP
-        Vertex{glm::vec3(-1.0f, -1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
-        Vertex{glm::vec3(-1.0f,  1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
-        Vertex{glm::vec3( 1.0f,  1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-        Vertex{glm::vec3( 1.0f, -1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-
-        // BOTTOM
-        Vertex{glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
-        Vertex{glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 1.0f)},
-        Vertex{glm::vec3( 1.0f,  1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 0.0f)},
-        Vertex{glm::vec3( 1.0f, -1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
-    };
-
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
-
-    GLuint indices[] =
-{
-    0, 1, 2, // Первый треугольник передней грани
-    2, 3, 0, // Второй треугольник передней грани
-
-    4, 5, 6, // Первый треугольник задней грани
-    6, 7, 4, // Второй треугольник задней грани
-
-    8, 9, 10, // Первый треугольник правой грани
-    10, 11, 8, // Второй треугольник правой грани
-
-    12, 13, 14, // Первый треугольник левой грани
-    14, 15, 12, // Второй треугольник левой грани
-
-    16, 17, 18, // Первый треугольник верхней грани
-    18, 19, 16, // Второй треугольник верхней грани
-
-    20, 21, 22, // Первый треугольник нижней грани
-    22, 23, 20  // Второй треугольник нижней грани
-};
 
     float quadVertices[] =
     {
@@ -309,16 +217,8 @@ namespace PositronEngine
             return -2;
         }
 
-        Texture2D textures[]
-        {
-            Texture2D("moon.bmp", TextureType::diffuse)
-        };
-
-        std::vector<Vertex> verts(verteces, verteces + sizeof(verteces) / sizeof(Vertex));
-        std::vector<GLuint> ind(indices, indices + sizeof(indices) / sizeof(GLuint));
-        std::vector<Texture2D> tex(textures, textures + sizeof(textures) / sizeof(Texture2D));
-
-        Mesh cubeMesh(verts, ind, tex);
+        SpherePrimitive sphere("kekekes");
+        CubePrimitive cube("kek");
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -430,22 +330,24 @@ namespace PositronEngine
 
             camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
 
-            updateMatrix();
-            cubeMesh.textures[0].bindUnit(0);
-
             shader_program->bind();
 
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            shader_program->setVec3("light_color", glm::vec3(1.0f,1.0f,1.0f));
+            shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1] ,light_color[2]));
             shader_program->setFloat("ambient_factor", ambient_factor);
             shader_program->setFloat("diffuse_factor", diffuse_factor);
             shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
-            shader_program->setVec3("light_position", glm::vec3(-3.0f,-3.0f,-3.0f));
+            shader_program->setVec3("light_position", glm::vec3(sphere.location[0],sphere.location[1],sphere.location[2]));
+            shader_program->setFloat("shininess", shininess);
+            shader_program->setFloat("specular_factor", specular_factor);
 
-            shader_program->setMatrix4("model_matrix", _model_matrix);
+            shader_program->setMatrix4("model_matrix", cube.model_matrix);
 
-            RenderOpenGL::draw(*cubeMesh.VAO);
-            cubeMesh.VAO->unbind();
+            cube.draw();
+
+            shader_program->setMatrix4("model_matrix", sphere.model_matrix);
+
+            sphere.draw();
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -571,20 +473,29 @@ namespace PositronEngine
             ImGui::Begin("Post-processing");
             ImGui::Checkbox("Bloom activate", &bloom_activate);
             ImGui::SliderFloat("Gamma", &gamma, 0.0f, 3.0f);
-            ImGui::SliderFloat("bloom_radius", &bloom_radius, 0.0f, 3.0f);
-            ImGui::SliderFloat("blur_factor", &blur_factor, 0.0f, 3.0f);
             ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
-            ImGui::SliderFloat("blurDistanceFactor", &kekw, 0.0f, 1.0f);
             ImGui::End();
 
             ImGui::Begin("Cube");
-            ImGui::SliderFloat3("scale", _scale, -3.0f, 5.0f);
+            ImGui::SliderFloat3("location", cube.location, -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", cube.rotation, -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", cube.scale , -5.0f, 5.0f);
+            ImGui::End();
+
+            ImGui::Begin("Sphere");
+            ImGui::SliderFloat3("location", sphere.location, -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", sphere.rotation, -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", sphere.scale , -5.0f, 5.0f);
             ImGui::End();
 
 
             ImGui::Begin("Direction light");
+            ImGui::ColorEdit3("light_color", light_color);
+            ImGui::SliderFloat3("light_position", light_position, -10.0f, 10.0f);
             ImGui::SliderFloat("ambient_factor", &ambient_factor, 0.0f, 2.0f);
             ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 2.0f);
+            ImGui::SliderFloat("shininess", &shininess, 1.0f, 128.0f);
+            ImGui::SliderFloat("specular_factor", &specular_factor, 0.0f, 1.0f);
             ImGui::End();
 
 

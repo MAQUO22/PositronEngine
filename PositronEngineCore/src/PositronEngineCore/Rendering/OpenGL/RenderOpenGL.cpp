@@ -37,9 +37,11 @@ namespace PositronEngine
         glViewport(left_offset, bottom_offset, width, height);
     }
 
-    void RenderOpenGL::draw(const VertexArray& vertex_array)
+    void RenderOpenGL::draw(VertexArray& vertex_array)
     {
         vertex_array.bind();
+        vertex_array.getVertexBuffer()->bind();
+        vertex_array.getIndexBuffer()->bind();
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array.getIndicesCount()), GL_UNSIGNED_INT, nullptr);
     }
 

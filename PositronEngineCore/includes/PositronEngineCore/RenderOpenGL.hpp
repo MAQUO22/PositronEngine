@@ -19,7 +19,7 @@ namespace PositronEngine
             static void enableDepth();
             static void disableDepth();
 
-            static void draw(const VertexArray& vertex_array);
+            static void draw(VertexArray& vertex_array);
 
             static const char* getVersionOpenGL();
 

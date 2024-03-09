@@ -28,6 +28,7 @@ namespace PositronEngine
             IndexBuffer* indicesB = nullptr;
 
             Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices, std::vector<Texture2D> &textures);
+
             Mesh() = delete;
             ~Mesh();
 

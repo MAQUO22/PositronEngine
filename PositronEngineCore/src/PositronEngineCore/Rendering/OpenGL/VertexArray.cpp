@@ -14,6 +14,7 @@ namespace PositronEngine
     VertexArray::~VertexArray()
     {
         glDeleteVertexArrays(1, &_id);
+
     }
 
     VertexArray& VertexArray::operator=(VertexArray&& vertex_array) noexcept
@@ -46,10 +47,12 @@ namespace PositronEngine
         glBindVertexArray(0);
     }
 
-    void VertexArray::addVertexBuffer(const VertexBuffer& vertex_buffer)
+    void VertexArray::addVertexBuffer(VertexBuffer& vertex_buffer)
     {
         bind();
         vertex_buffer.bind();
+
+        _vertex_buffer = &vertex_buffer;
 
         for(const BufferElement current_element : vertex_buffer.getLayout().getElement())
         {
@@ -65,10 +68,11 @@ namespace PositronEngine
         }
     }
 
-    void VertexArray::setIndexBuffer(const IndexBuffer& index_buffer)
+    void VertexArray::setIndexBuffer(IndexBuffer& index_buffer)
     {
         bind();
         index_buffer.bind();
+        _index_buffer = &index_buffer;
         _indices_count = index_buffer.getCount();
     }
 }

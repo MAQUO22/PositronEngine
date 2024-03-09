@@ -5,22 +5,21 @@
 
 namespace PositronEngine
 {
-    class CubePrimitive : public GameObject
+    class SpherePrimitive : public GameObject
     {
         public:
-            CubePrimitive() = delete;
-            CubePrimitive(std::string name);
-            ~CubePrimitive();
+            SpherePrimitive() = delete;
+            SpherePrimitive(std::string name);
+            ~SpherePrimitive();
 
             void draw() override;
-
 
         private:
             std::string _name;
             Mesh* _mesh = nullptr;
-
             //Material
             //Collision
             //и т.д.
     };
 }
+

@@ -12,7 +12,9 @@ namespace PositronEngine
     {
         public:
 
-            virtual void Draw(ShaderProgram shader, Camera camera) = 0;
+            virtual void draw() = 0;
+
+            virtual ~GameObject() {}
 
             void updateModelMatrix()
             {
