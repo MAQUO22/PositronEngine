@@ -10,6 +10,7 @@ uniform float shininess;
 uniform float specular_factor;
 
 layout(binding=0) uniform sampler2D in_texture;
+layout(binding=1) uniform sampler2D specular_map;
 
 // varyings (input)
 in vec3 frag_normal;
@@ -37,8 +38,11 @@ void main() {
     vec3 specular = specular_factor * specular_value * light_color;
 
 
-    vec4 ground_color = texture(in_texture, texCoord);
-    frag_color = vec4(ambient + diffuse + specular, 1.0) * ground_color;
+    vec4 diffuse_texture = texture(in_texture, texCoord);
+    vec4 specular_texture = texture(specular_map, texCoord);
+
+    frag_color = vec4(ambient + diffuse, 1.0) * diffuse_texture + specular_texture.r * vec4(specular,1.0f);
+
 
     float brightness = dot(frag_color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
 

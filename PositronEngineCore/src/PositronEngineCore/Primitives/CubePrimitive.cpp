@@ -71,7 +71,8 @@ namespace PositronEngine
     {
          Texture2D textures[]
          {
-             Texture2D("wood.jpg", TextureType::diffuse)
+             Texture2D("wood.jpg", TextureType::diffuse),
+             Texture2D("wood_specular.jpg", TextureType::specular),
          };
 
          std::vector<Vertex> verts(verteces, verteces + sizeof(verteces) / sizeof(Vertex));
@@ -93,7 +94,9 @@ namespace PositronEngine
     {
         updateModelMatrix();
         _mesh->textures[0].bindUnit(0);
+        _mesh->textures[1].bindUnit(1);
         RenderOpenGL::draw(*_mesh->VAO);
+        _mesh->textures[1].unbindUnit();
         _mesh->textures[0].unbindUnit();
     }
 }
