@@ -19,7 +19,6 @@ namespace PositronEngine
 
             virtual int start(unsigned int window_width,unsigned int window_height, const char* window_title);
 
-            virtual bool compileShaders() {}
             virtual void initializeSpheres() {}
             virtual void onInputUpdate() {}
             virtual void onGUIdraw() {}

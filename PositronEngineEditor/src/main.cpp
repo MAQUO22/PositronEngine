@@ -35,23 +35,6 @@ class PositronEditor : public PositronEngine::Application
             // delete ligth_shader_program;
         }
 
-        virtual bool compileShaders() override
-        {
-            // shader_program = new PositronEngine::ShaderProgram("planet_shader.vert", "planet_shader.frag");
-            // if(!shader_program->isCompile())
-            // {
-            //     return -4;
-            // }
-            //
-            // ligth_shader_program  = new PositronEngine::ShaderProgram("light.vert", "light.frag");
-            // if(!ligth_shader_program->isCompile())
-            // {
-            //     return -4;
-            // }
-            //
-            // return 1;
-        }
-
         virtual void onInputUpdate() override
         {
 

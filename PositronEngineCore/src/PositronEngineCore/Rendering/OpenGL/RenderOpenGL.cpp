@@ -43,6 +43,7 @@ namespace PositronEngine
         vertex_array.getVertexBuffer()->bind();
         vertex_array.getIndexBuffer()->bind();
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(vertex_array.getIndicesCount()), GL_UNSIGNED_INT, nullptr);
+        vertex_array.unbind();
     }
 
     void RenderOpenGL::enableDepth()

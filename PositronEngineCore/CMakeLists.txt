@@ -22,6 +22,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/stb_image.h
     includes/PositronEngineCore/GameObject.hpp
     includes/PositronEngineCore/Primitives/CubePrimitive.hpp
+    includes/PositronEngineCore/Primitives/PlatePrimitive.hpp
     includes/PositronEngineCore/Primitives/SpherePrimitive.hpp
     includes/PositronEngineCore/Mesh.hpp
 )
@@ -51,6 +52,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Mesh.cpp
     src/PositronEngineCore/GameObject.cpp
     src/PositronEngineCore/Primitives/CubePrimitive.cpp
+    src/PositronEngineCore/Primitives/PlatePrimitive.cpp
     src/PositronEngineCore/Primitives/SpherePrimitive.cpp
 )
 

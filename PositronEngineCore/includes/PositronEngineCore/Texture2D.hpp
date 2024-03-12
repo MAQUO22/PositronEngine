@@ -7,7 +7,8 @@ namespace PositronEngine
     {
         diffuse,
         specular,
-        normal
+        normal,
+        height
     };
 
     class Texture2D

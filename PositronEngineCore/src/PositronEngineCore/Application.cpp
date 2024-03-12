@@ -15,6 +15,7 @@
 #include "PositronEngineCore/RenderBuffer.hpp"
 #include "PositronEngineCore/Primitives/CubePrimitive.hpp"
 #include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
+#include "PositronEngineCore/Primitives/PlatePrimitive.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -217,8 +218,9 @@ namespace PositronEngine
             return -2;
         }
 
-        SpherePrimitive sphere("kekekes");
-        CubePrimitive cube("kek");
+        SpherePrimitive sphere("sphere1");
+        CubePrimitive cube("cube1");
+        PlatePrimitive plate("plate1");
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -338,16 +340,18 @@ namespace PositronEngine
             shader_program->setFloat("diffuse_factor", diffuse_factor);
             shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
             shader_program->setVec3("light_position", glm::vec3(sphere.location[0],sphere.location[1],sphere.location[2]));
+            //shader_program->setVec3("light_position", glm::vec3(light_position[0], light_position[1], light_position[2]));
             shader_program->setFloat("shininess", shininess);
             shader_program->setFloat("specular_factor", specular_factor);
 
             shader_program->setMatrix4("model_matrix", cube.model_matrix);
-
             cube.draw();
 
             shader_program->setMatrix4("model_matrix", sphere.model_matrix);
-
             sphere.draw();
+
+            shader_program->setMatrix4("model_matrix", plate.model_matrix);
+            plate.draw();
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -488,6 +492,11 @@ namespace PositronEngine
             ImGui::SliderFloat3("scale", sphere.scale , -5.0f, 5.0f);
             ImGui::End();
 
+            ImGui::Begin("Plate");
+            ImGui::SliderFloat3("location", plate.location, -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", plate.rotation, -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", plate.scale , -5.0f, 5.0f);
+            ImGui::End();
 
             ImGui::Begin("Direction light");
             ImGui::ColorEdit3("light_color", light_color);
