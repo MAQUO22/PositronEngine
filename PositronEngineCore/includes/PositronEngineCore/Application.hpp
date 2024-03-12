@@ -19,10 +19,8 @@ namespace PositronEngine
 
             virtual int start(unsigned int window_width,unsigned int window_height, const char* window_title);
 
-            virtual void initializeSpheres() {}
             virtual void onInputUpdate() {}
             virtual void onGUIdraw() {}
-            virtual void onEditorUpdate() {}
             virtual void onMouseButtonEvent(const MouseButtonCode mouse_button, const double x, const double y, bool pressed) {}
 
 
@@ -30,10 +28,17 @@ namespace PositronEngine
 
             glm::vec2 getCurrentCursorPosition() const;
 
-            Camera camera{glm::vec3(-12, 0, 0)};
+            Camera camera { glm::vec3(-12, 0, 0) };
+
             float camera_location[3] = {0.0f, 0.0f, 3.0f};
             float camera_rotation[3] = {0.0f, 0.0f, 0.0f};
+
             float camera_speed = 0.035f;
+            float camera_FOV = 60.0f;
+            float camera_near_plane = 0.1f;
+            float camera_far_plane = 100.0f;
+
+
 
             bool is_perspective_mode = true;
 

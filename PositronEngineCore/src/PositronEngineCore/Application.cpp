@@ -116,6 +116,8 @@ namespace PositronEngine
     {
         _window = std::make_unique<Window>(window_title, window_width, window_height);
 
+        camera.setViewportSize(static_cast<float>(window_width), static_cast<float>(window_height));
+
         _event_dispatcher.addEventListener<EventMouseMoved>(
             [](EventMouseMoved& event)
             {
@@ -124,9 +126,10 @@ namespace PositronEngine
         );
 
         _event_dispatcher.addEventListener<EventWindowResized>(
-            [](EventWindowResized& event)
+            [&](EventWindowResized& event)
             {
                 LOG_INFORMATION("Event WINDOW_RESIZED is triggered. New window size is {0}x{1}", event.width, event.height);
+                camera.setViewportSize(event.width, event.height);
             }
         );
 
@@ -330,15 +333,13 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
-            camera.setProjection(is_perspective_mode ? Camera::ProjectionMode::Perspective : Camera::ProjectionMode::Orthographic);
-
             shader_program->bind();
 
             shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
             shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1] ,light_color[2]));
             shader_program->setFloat("ambient_factor", ambient_factor);
             shader_program->setFloat("diffuse_factor", diffuse_factor);
-            shader_program->setVec3("camera_position", glm::vec3(camera.getLocation()[0],camera.getLocation()[1],camera.getLocation()[2]));
+            shader_program->setVec3("camera_position", camera.getLocation());
             shader_program->setVec3("light_position", glm::vec3(sphere.location[0],sphere.location[1],sphere.location[2]));
             //shader_program->setVec3("light_position", glm::vec3(light_position[0], light_position[1], light_position[2]));
             shader_program->setFloat("shininess", shininess);
@@ -471,6 +472,7 @@ namespace PositronEngine
 
             ImGui::Begin("Viewport");
             ImVec2 viewport_size = ImGui::GetWindowSize();
+            camera.setViewportSize(viewport_size.x, viewport_size.y);
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
             ImGui::End();
 

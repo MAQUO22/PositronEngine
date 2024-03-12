@@ -1,6 +1,7 @@
 #include "PositronEngineCore/Camera.hpp"
+
 #include <glm/trigonometric.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace PositronEngine
 {
@@ -10,7 +11,6 @@ namespace PositronEngine
         updateViewMatrix();
         updateProjectionMatrix();
     }
-
 
     void Camera::setLocation(const glm::vec3& location)
     {
@@ -35,6 +35,31 @@ namespace PositronEngine
         updateProjectionMatrix();
     }
 
+    void Camera::setFarPlane(const float far)
+    {
+        _far_plane = far;
+        updateProjectionMatrix();
+    }
+
+    void Camera::setNearPlane(const float near)
+    {
+        _near_plane = near;
+        updateProjectionMatrix();
+    }
+
+    void Camera::setViewportSize(const float width , const float height)
+    {
+        _viewport_width = width;
+        _viewport_height = height;
+        updateProjectionMatrix();
+    }
+
+    void Camera::setFieldOfView(const float angle)
+    {
+        _field_of_view = angle;
+        updateProjectionMatrix();
+    }
+
     glm::mat4 Camera::getViewMatrix()
     {
         if(_update_view_matrix)
@@ -49,16 +74,9 @@ namespace PositronEngine
     {
         if(_projection_mode == ProjectionMode::Perspective)
         {
-            float r = 0.1f;
-            float t = 0.1f;
-            float f = 100.0f;
-            float n = 0.1f;
-
-           _projection_matrix = glm::mat4(n/r,      0,          0,                       0,
-                                          0,        n/t,        0,                       0,
-                                          0,        0,          (-f-n) / (f-n),          -1,
-                                          0,        0,          -2 * f * n / (f-n),      0);
+           _projection_matrix = glm::perspective(glm::radians(_field_of_view), _viewport_width / _viewport_height, _near_plane, _far_plane);
         }
+
         else
         {
             float r = 2.0f;

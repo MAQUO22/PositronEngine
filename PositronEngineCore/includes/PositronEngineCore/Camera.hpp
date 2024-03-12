@@ -22,12 +22,21 @@ namespace PositronEngine
             void setLocationAndRotation(const glm::vec3& location, const glm::vec3& rotation);
             void setProjection(const ProjectionMode projection_mode);
 
+            void setFarPlane(const float far);
+            void setNearPlane(const float near);
+            void setViewportSize(const float width, const float height);
+            void setFieldOfView(const float angle);
+
             glm::mat4 getViewMatrix();
             glm::vec3 getLocation() const { return _location; }
             glm::vec3 getRotation() const { return _rotation; }
             glm::vec3 getDirection() const { return _direction; }
             glm::vec3 getUp() const { return _up; }
             glm::mat4 getProjectionMatrix() const { return _projection_matrix; }
+
+            const float getFarPlane() { return _far_plane; }
+            const float getNearPlane() { return _near_plane; }
+            const float getFieldOfView() { return _field_of_view; }
 
             void moveForward(const float delta);
             void moveUp(const float delta);
@@ -37,6 +46,13 @@ namespace PositronEngine
         private:
             void updateViewMatrix();
             void updateProjectionMatrix();
+
+            float _far_plane { 100.0f };
+            float _near_plane { 0.1f };
+            float _viewport_width { 1920.0f };
+            float _viewport_height { 1080.0f };
+
+            float _field_of_view { 60.0f };
 
             glm::vec3 _location;
             glm::vec3 _rotation; // X - Roll, Y - Pitch, Z - Yaw
