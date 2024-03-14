@@ -12,6 +12,7 @@ out vec3 light_position;
 in DATA
 {
     vec3 frag_normal;
+    vec3 frag_position;
     vec2 texCoord;
 
     mat4 model;
@@ -23,21 +24,48 @@ in DATA
 // Default main function
 void main()
 {
-    vec3 edge0 = gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz;
-    vec3 edge1 = gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz;
+//     vec3 edge0 = gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz;
+//     vec3 edge1 = gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz;
+//
+//     vec2 deltaUV0 = data_in[1].texCoord - data_in[0].texCoord;
+//     vec2 deltaUV1 = data_in[2].texCoord - data_in[0].texCoord;
+//
+//
+//     float invDet = 1.0f / (deltaUV0.x * deltaUV1.y - deltaUV1.x * deltaUV0.y);
+//
+//     vec3 tangent = vec3(invDet * (deltaUV1.y * edge0 - deltaUV0.y * edge1));
+//     vec3 bitangent = vec3(invDet * (-deltaUV1.x * edge0 + deltaUV0.x * edge1));
+//
+// //     vec3 T = normalize(vec3(data_in[0].model * vec4(tangent, 0.0f)));
+// //     vec3 B = normalize(vec3(data_in[0].model * vec4(bitangent, 0.0f)));
+// //     vec3 N = normalize(vec3(data_in[0].model * vec4(cross(edge1, edge0), 0.0f)));
+//     vec3 T = normalize(tangent);
+//     vec3 B = normalize(bitangent);
+//     vec3 N = normalize(cross(edge1, edge0));
+//
+//     mat3 TBN = mat3(T, B, N);
+//
+//     TBN = transpose(TBN);
+
+
+    vec4 vertex0 = data_in[0].model * vec4(data_in[0].frag_position, 1.0);
+    vec4 vertex1 = data_in[1].model * vec4(data_in[1].frag_position, 1.0);
+    vec4 vertex2 = data_in[2].model * vec4(data_in[2].frag_position, 1.0);
+
+    vec3 edge0 = vertex1.xyz - vertex0.xyz;
+    vec3 edge1 = vertex2.xyz - vertex0.xyz;
 
     vec2 deltaUV0 = data_in[1].texCoord - data_in[0].texCoord;
     vec2 deltaUV1 = data_in[2].texCoord - data_in[0].texCoord;
-
 
     float invDet = 1.0f / (deltaUV0.x * deltaUV1.y - deltaUV1.x * deltaUV0.y);
 
     vec3 tangent = vec3(invDet * (deltaUV1.y * edge0 - deltaUV0.y * edge1));
     vec3 bitangent = vec3(invDet * (-deltaUV1.x * edge0 + deltaUV0.x * edge1));
 
-    vec3 T = normalize(vec3(data_in[0].model * vec4(tangent, 0.0f)));
-    vec3 B = normalize(vec3(data_in[0].model * vec4(bitangent, 0.0f)));
-    vec3 N = normalize(vec3(data_in[0].model * vec4(cross(edge1, edge0), 0.0f)));
+    vec3 T = normalize(tangent);
+    vec3 B = normalize(bitangent);
+    vec3 N = normalize(cross(edge1, edge0));
 
     mat3 TBN = mat3(T, B, N);
 
@@ -50,7 +78,7 @@ void main()
         frag_normal = data_in[i].frag_normal;
         texCoord = data_in[i].texCoord;
 
-        frag_position = TBN * gl_in[i].gl_Position.xyz;
+        frag_position = TBN * data_in[i].frag_position;
         camera_position = TBN * data_in[i].camera_position;
         light_position = TBN * data_in[i].light_position;
 

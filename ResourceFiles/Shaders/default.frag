@@ -59,11 +59,11 @@ vec4 pointLight()
 
     vec3 light_direction = normalize(light_vector);
 
-    //vec3 normal = normalize(texture(normal_map, texCoord).xyz * 2.0 - 1.0);
+    vec3 normal = normalize(texture(normal_map, texCoord).xyz * 2.0 - 1.0);
 
-    vec3 normal = normalize(frag_normal);
-    float diffuse = max(dot(normal, light_direction), 0.0f);
-    //float diffuse = normalize(light_vector.x + light_vector.y);
+    //vec3 normal = normalize(frag_normal);
+    float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
+    vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
 
     vec3 reflect_direction = reflect(-light_direction, normal);
     float specular_value = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);

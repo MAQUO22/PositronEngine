@@ -341,7 +341,6 @@ namespace PositronEngine
             shader_program->setFloat("diffuse_factor", diffuse_factor);
             shader_program->setVec3("camera_position", camera.getLocation());
             shader_program->setVec3("light_position", glm::vec3(sphere.location[0],sphere.location[1],sphere.location[2]));
-            //shader_program->setVec3("light_position", glm::vec3(light_position[0], light_position[1], light_position[2]));
             shader_program->setFloat("shininess", shininess);
             shader_program->setFloat("specular_factor", specular_factor);
 

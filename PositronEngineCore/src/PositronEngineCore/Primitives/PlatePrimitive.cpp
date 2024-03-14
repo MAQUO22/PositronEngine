@@ -27,9 +27,9 @@ namespace PositronEngine
     {
          Texture2D textures[]
          {
-             Texture2D("wood.jpg", TextureType::diffuse),
-             Texture2D("wood_specular.jpg", TextureType::specular),
-             Texture2D("wood_normal.jpg", TextureType::normal),
+             Texture2D("stones_diffuse.jpg", TextureType::diffuse),
+             Texture2D("stones_specular.jpg", TextureType::specular),
+             Texture2D("stones_normal.jpg", TextureType::normal)
          };
 
          std::vector<Vertex> verts(Plate::verteces, Plate::verteces + sizeof(Plate::verteces) / sizeof(Vertex));
