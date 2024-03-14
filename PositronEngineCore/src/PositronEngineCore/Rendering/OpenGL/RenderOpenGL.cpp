@@ -7,6 +7,42 @@
 
 namespace PositronEngine
 {
+    namespace Debug
+    {
+        const char* glSourceToString(const GLenum source)
+        {
+            switch(source)
+            {
+                case GL_DEBUG_SOURCE_API: return "GL_DEBUG_SOURCE_API";
+                case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+                case GL_DEBUG_SOURCE_SHADER_COMPILER: return "GL_DEBUG_SOURCE_SHADER_COMPILER";
+                case GL_DEBUG_SOURCE_THIRD_PARTY: return "GL_DEBUG_SOURCE_THIRD_PARTY";
+                case GL_DEBUG_SOURCE_APPLICATION: return "GL_DEBUG_SOURCE_APPLICATION";
+                case GL_DEBUG_SOURCE_OTHER: return "GL_DEBUG_SOURCE_OTHER";
+
+                default: return "UNKNOWN_DEBUG_SOURCE";
+            }
+        }
+
+        const char* glTypeToString(const GLenum type)
+        {
+            switch(type)
+            {
+                case GL_DEBUG_TYPE_ERROR: return "GL_DEBUG_TYPE_ERROR";
+                case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+                case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
+                case GL_DEBUG_TYPE_PORTABILITY: return "GL_DEBUG_TYPE_PORTABILITY";
+                case GL_DEBUG_TYPE_PERFORMANCE: return "GL_DEBUG_TYPE_PERFORMANCE";
+                case GL_DEBUG_TYPE_MARKER: return "GL_DEBUG_TYPE_MARKER";
+                case GL_DEBUG_TYPE_PUSH_GROUP: return "GL_DEBUG_TYPE_PUSH_GROUP";
+                case GL_DEBUG_TYPE_POP_GROUP: return "GL_DEBUG_TYPE_POP_GROUP";
+                case GL_DEBUG_TYPE_OTHER: return "GL_DEBUG_TYPE_OTHER";
+
+                default: return "UNKNOWN_DEBUG_TYPE";
+            }
+        }
+    };
+
     bool RenderOpenGL::initialize(GLFWwindow* window)
     {
         glfwMakeContextCurrent(window);
@@ -18,6 +54,49 @@ namespace PositronEngine
         }
 
         LOG_INFORMATION("OpenGL context is initialized(ver : {0})", RenderOpenGL::getVersionOpenGL());
+
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE);
+
+        glDebugMessageCallback([](GLenum source, GLenum type,GLuint id,
+                                  GLenum severity, GLsizei length,
+                                  const GLchar *message, const void *userParam)
+        {
+            switch(severity)
+            {
+                case GL_DEBUG_SEVERITY_HIGH:
+                    LOG_ERROR("OpenGL Error: [{0}:{1}]({2}): {3}",
+                              Debug::glSourceToString(source),
+                              Debug::glTypeToString(type),
+                              id, message);
+                    break;
+                case GL_DEBUG_SEVERITY_MEDIUM:
+                    LOG_WARNING("OpenGL Warning: [{0}:{1}]({2}: {3})",
+                                Debug::glSourceToString(source),
+                                Debug::glTypeToString(type),
+                                id, message);
+                    break;
+                case GL_DEBUG_SEVERITY_LOW:
+                    LOG_INFORMATION("OpenGL Information: [{0}:{1}]({2}: {3})",
+                                    Debug::glSourceToString(source),
+                                    Debug::glTypeToString(type),
+                                    id, message);
+                    break;
+                case GL_DEBUG_SEVERITY_NOTIFICATION:
+                    LOG_INFORMATION("OpenGL Notification: [{0}:{1}]({2}: {3})",
+                                    Debug::glSourceToString(source),
+                                    Debug::glTypeToString(type),
+                                    id, message);
+                    break;
+
+                default:
+                    LOG_CRITICAL("OpenGL Critical: [{0}:{1}]({2}: {3})",
+                                    Debug::glSourceToString(source),
+                                    Debug::glTypeToString(type),
+                                    id, message);
+            }
+        }, nullptr);
+
         return true;
     }
 

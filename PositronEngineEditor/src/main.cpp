@@ -113,14 +113,9 @@ class PositronEditor : public PositronEngine::Application
                 camera.setNearPlane(camera_near_plane);
             }
 
-            if(ImGui::SliderFloat("Camera near plane", &camera_far_plane, 1.0f, 800.0f))
+            if(ImGui::SliderFloat("Camera far plane", &camera_far_plane, 1.0f, 800.0f))
             {
                 camera.setFarPlane(camera_far_plane);
-            }
-
-            if(ImGui::SliderFloat("Camera FOV", &camera_FOV, 45.0f, 120.0f))
-            {
-                camera.setFieldOfView(camera_FOV);
             }
 
             if(ImGui::Checkbox("Perspective camera mode", &is_perspective_mode))

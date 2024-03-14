@@ -12,6 +12,7 @@ namespace PositronEngine
             ShaderProgram& operator= (const ShaderProgram&) = delete;
 
             ShaderProgram(const char* vertex_shader_file, const char* fragment_shader_file);
+            ShaderProgram(const char* vertex_shader_file, const char* fragment_shader_file, const char* geometry_shader_file);
             ~ShaderProgram();
             ShaderProgram(ShaderProgram&& shader_program);
             ShaderProgram& operator= (ShaderProgram&& shader_program);

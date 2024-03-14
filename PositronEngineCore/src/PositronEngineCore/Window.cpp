@@ -49,6 +49,8 @@ namespace PositronEngine
             return -1;
         }
 
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
         _window = glfwCreateWindow(_window_data._width, _window_data._heigth, _window_data._title.c_str(), nullptr, nullptr);
         if (!_window)
         {

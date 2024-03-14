@@ -203,7 +203,7 @@ namespace PositronEngine
             return -2;
         }
 
-        ShaderProgram* shader_program = new ShaderProgram("default.vert", "default.frag");
+        ShaderProgram* shader_program = new ShaderProgram("default.vert", "default.frag", "default.geom");
         if(!shader_program->isCompile())
         {
             return -2;
