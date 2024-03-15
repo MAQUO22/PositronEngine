@@ -28,7 +28,7 @@ namespace PositronEngine
     float light_color[3] = {1.0f, 1.0f, 1.0f};
     float light_position[3] = {1.0f, 1.0f, 1.0f};
 
-    float ambient_factor = 1.10f;
+    float ambient_factor = 0.314f;
     float diffuse_factor = 1.14f;
 
     float shininess = 32.0f;

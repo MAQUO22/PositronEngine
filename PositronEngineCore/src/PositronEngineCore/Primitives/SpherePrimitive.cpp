@@ -7,7 +7,7 @@ namespace PositronEngine
 {
     namespace Sphere
     {
-        class Sphere temp(1.0f, 36, 18);
+        class Sphere temp(1.0f, 36, 18, true, 3);
 
         std::vector<Vertex> vertices;
 

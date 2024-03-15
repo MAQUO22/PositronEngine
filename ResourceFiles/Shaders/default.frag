@@ -15,7 +15,7 @@ layout(binding=3) uniform sampler2D height_map;
 // varyings (input)
 in vec3 frag_normal;
 in vec3 frag_position;
-in vec2 texCoord;
+in vec2 tex_coord;
 in vec3 camera_position;
 in vec3 light_position;
 
@@ -29,7 +29,7 @@ vec4 directionLight()
     vec3 view_direction = normalize(camera_position - frag_position);
     vec3 ambient = ambient_factor * light_color;
 
-    vec3 normal = normalize(texture(normal_map, texCoord).xyz * 2.0 - 1.0);
+    vec3 normal = normalize(texture(normal_map, tex_coord).xyz * 2.0 - 1.0);
     //normal = normalize(frag_normal);
 
     vec3 light_direction = normalize(vec3(1.0f, 1.0f, 0.0f));
@@ -40,8 +40,8 @@ vec4 directionLight()
     float specular_value = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);
     vec3 specular = specular_factor * specular_value * light_color;
 
-    vec4 diffuse_texture = texture(in_texture, texCoord);
-    vec4 specular_texture = texture(specular_map, texCoord);
+    vec4 diffuse_texture = texture(in_texture, tex_coord);
+    vec4 specular_texture = texture(specular_map, tex_coord);
 
     return vec4(ambient + diffuse, 1.0) * diffuse_texture + specular_texture.r * vec4(specular,1.0f);
 }
@@ -59,7 +59,7 @@ vec4 pointLight()
 
     vec3 light_direction = normalize(light_vector);
 
-    vec3 normal = normalize(texture(normal_map, texCoord).xyz * 2.0 - 1.0);
+    vec3 normal = normalize(texture(normal_map, tex_coord).xyz * 2.0 - 1.0);
 
     //vec3 normal = normalize(frag_normal);
     float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
@@ -69,8 +69,8 @@ vec4 pointLight()
     float specular_value = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);
     vec3 specular = specular_factor * specular_value * light_color;
 
-    vec4 diffuse_texture = texture(in_texture, texCoord);
-    vec4 specular_texture = texture(specular_map, texCoord);
+    vec4 diffuse_texture = texture(in_texture, tex_coord);
+    vec4 specular_texture = texture(specular_map, tex_coord);
 
     return vec4(ambient + diffuse * intens, 1.0) * diffuse_texture + specular_texture.r * vec4(specular * intens,1.0f);
 }
