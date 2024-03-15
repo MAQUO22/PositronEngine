@@ -340,17 +340,17 @@ namespace PositronEngine
             shader_program->setFloat("ambient_factor", ambient_factor);
             shader_program->setFloat("diffuse_factor", diffuse_factor);
             shader_program->setVec3("camera_position", camera.getLocation());
-            shader_program->setVec3("light_position", glm::vec3(sphere.location[0],sphere.location[1],sphere.location[2]));
+            shader_program->setVec3("light_position", sphere.getLocatinVec3());
             shader_program->setFloat("shininess", shininess);
             shader_program->setFloat("specular_factor", specular_factor);
 
-            shader_program->setMatrix4("model_matrix", cube.model_matrix);
+            shader_program->setMatrix4("model_matrix", cube.getModerlMatrix());
             cube.draw();
 
-            shader_program->setMatrix4("model_matrix", sphere.model_matrix);
+            shader_program->setMatrix4("model_matrix", sphere.getModerlMatrix());
             sphere.draw();
 
-            shader_program->setMatrix4("model_matrix", plate.model_matrix);
+            shader_program->setMatrix4("model_matrix", plate.getModerlMatrix());
             plate.draw();
 
             glDepthFunc(GL_LEQUAL);
@@ -482,21 +482,21 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Cube");
-            ImGui::SliderFloat3("location", cube.location, -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", cube.rotation, -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", cube.scale , -5.0f, 5.0f);
+            ImGui::SliderFloat3("location", cube.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", cube.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", cube.getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Sphere");
-            ImGui::SliderFloat3("location", sphere.location, -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", sphere.rotation, -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", sphere.scale , -5.0f, 5.0f);
+            ImGui::SliderFloat3("location", sphere.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", sphere.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", sphere.getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Plate");
-            ImGui::SliderFloat3("location", plate.location, -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", plate.rotation, -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", plate.scale , -5.0f, 5.0f);
+            ImGui::SliderFloat3("location", plate.getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", plate.getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", plate.getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Direction light");
@@ -507,7 +507,6 @@ namespace PositronEngine
             ImGui::SliderFloat("shininess", &shininess, 1.0f, 128.0f);
             ImGui::SliderFloat("specular_factor", &specular_factor, 0.0f, 1.0f);
             ImGui::End();
-
 
             onGUIdraw();
 
