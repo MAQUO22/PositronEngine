@@ -5,14 +5,13 @@
 
 namespace PositronEngine
 {
-    class ShaderProgram;
     class Camera;
 
     class GameObject
     {
         public:
 
-            virtual void draw() = 0;
+            virtual void draw(Camera& camera) = 0;
 
             virtual ~GameObject() {}
 
@@ -26,11 +25,11 @@ namespace PositronEngine
             float* getRotation();
             float* getScale();
 
-            glm::vec3 getLocatinVec3();
+            glm::vec3 getLocationVec3();
             glm::vec3 getRotationVec3();
             glm::vec3 getScaleVec3();
 
-            glm::mat4 getModerlMatrix();
+            glm::mat4 getModelMatrix();
 
         private:
 

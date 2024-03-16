@@ -25,29 +25,17 @@
 
 namespace PositronEngine
 {
-    float light_color[3] = {1.0f, 1.0f, 1.0f};
-    float light_position[3] = {1.0f, 1.0f, 1.0f};
-
-    float ambient_factor = 0.314f;
-    float diffuse_factor = 1.14f;
-
-    float shininess = 32.0f;
-    float specular_factor = 0.5f;
 
     bool bloom_activate = false;
 
-
     float gamma = 0.280f;
     float exposure = 1.75f;
-    float bloom_radius = 0.657;
-    float blur_factor = 0.291;
-    float kekw = 0.112f;
+
     bool show = true;
     int frame = 0;
 
     ShaderProgram* frame_buffer_program = nullptr;
     ShaderProgram* blur_program = nullptr;
-    ShaderProgram* shader_program = nullptr;
     ShaderProgram* ligth_shader_program = nullptr;
     ShaderProgram* skybox_program = nullptr;
 
@@ -96,7 +84,6 @@ namespace PositronEngine
         LOG_INFORMATION("Closing application");
         delete frame_buffer_program;
         delete blur_program ;
-        delete shader_program ;
         delete ligth_shader_program;
         delete skybox_program;
 
@@ -203,12 +190,6 @@ namespace PositronEngine
             return -2;
         }
 
-        ShaderProgram* shader_program = new ShaderProgram("default.vert", "default.frag", "default.geom");
-        if(!shader_program->isCompile())
-        {
-            return -2;
-        }
-
         ShaderProgram* ligth_shader_program = new ShaderProgram("light.vert", "light.frag");
         if(!ligth_shader_program->isCompile())
         {
@@ -224,6 +205,53 @@ namespace PositronEngine
         SpherePrimitive sphere("sphere1");
         CubePrimitive cube("cube1");
         PlatePrimitive plate("plate1");
+
+        Texture2D textures_stones[]
+        {
+            Texture2D("stones_diffuse.jpg", TextureType::diffuse),
+            Texture2D("stones_specular.jpg", TextureType::specular),
+            Texture2D("stones_normal.jpg", TextureType::normal)
+        };
+
+        Texture2D textures_wood[]
+        {
+            Texture2D("wood.jpg", TextureType::diffuse),
+            Texture2D("wood_specular.jpg", TextureType::specular),
+            Texture2D("wood_normal.jpg", TextureType::normal)
+        };
+
+        Texture2D textures_stone[]
+        {
+            Texture2D("stone.jpg", TextureType::diffuse),
+            Texture2D("stone_specular.jpg", TextureType::specular),
+            Texture2D("stone_normal.jpg", TextureType::normal)
+        };
+
+
+
+        LightReactionConfig stones_config
+        {
+            0.314f,  // ambient
+            1.14f,   // diffuse
+            0.5f,   // specular
+            32.0f     // shininess
+        };
+
+        LightReactionConfig wood_config
+        {
+            0.84f,  // ambient
+            1.5f,   // diffuse
+            0.77f,   // specular
+            14.0f     // shininess
+        };
+
+        Material stones(textures_stones, stones_config);
+        Material wood(textures_wood, wood_config);
+        Material stone(textures_stone, stones_config);
+
+        cube.setMaterial(&stones);
+        plate.setMaterial(&wood);
+        sphere.setMaterial(&stone);
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -333,25 +361,11 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
-            shader_program->bind();
+            cube.draw(camera);
 
-            shader_program->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            shader_program->setVec3("light_color", glm::vec3(light_color[0], light_color[1] ,light_color[2]));
-            shader_program->setFloat("ambient_factor", ambient_factor);
-            shader_program->setFloat("diffuse_factor", diffuse_factor);
-            shader_program->setVec3("camera_position", camera.getLocation());
-            shader_program->setVec3("light_position", sphere.getLocatinVec3());
-            shader_program->setFloat("shininess", shininess);
-            shader_program->setFloat("specular_factor", specular_factor);
+            plate.draw(camera);
 
-            shader_program->setMatrix4("model_matrix", cube.getModerlMatrix());
-            cube.draw();
-
-            shader_program->setMatrix4("model_matrix", sphere.getModerlMatrix());
-            sphere.draw();
-
-            shader_program->setMatrix4("model_matrix", plate.getModerlMatrix());
-            plate.draw();
+            sphere.draw(camera);
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -500,13 +514,18 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Direction light");
-            ImGui::ColorEdit3("light_color", light_color);
-            ImGui::SliderFloat3("light_position", light_position, -10.0f, 10.0f);
-            ImGui::SliderFloat("ambient_factor", &ambient_factor, 0.0f, 2.0f);
-            ImGui::SliderFloat("diffuse_factor", &diffuse_factor, 0.0f, 2.0f);
-            ImGui::SliderFloat("shininess", &shininess, 1.0f, 128.0f);
-            ImGui::SliderFloat("specular_factor", &specular_factor, 0.0f, 1.0f);
+            //ImGui::ColorEdit3("light_color", light_color);
+            ImGui::SliderFloat3("light_position", cube.light_position, -10.0f, 10.0f);
+            ImGui::SliderFloat3("light_position", plate.light_position, -10.0f, 10.0f);
+            ImGui::SliderFloat3("light_position", sphere.light_position, -10.0f, 10.0f);
+            ImGui::SliderFloat("ambient_factor", &stones_config.ambient, 0.0f, 2.0f);
+            ImGui::SliderFloat("diffuse_factor", &stones_config.diffuse, 0.0f, 2.0f);
+            ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
+            ImGui::SliderFloat("specular_factor", &stones_config.specular, 0.0f, 1.0f);
             ImGui::End();
+
+            stones.setLightConfig(stones_config);
+            cube.setMaterial(&stones);
 
             onGUIdraw();
 

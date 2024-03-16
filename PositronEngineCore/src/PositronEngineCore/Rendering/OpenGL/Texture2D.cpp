@@ -122,6 +122,11 @@ namespace PositronEngine
         return _id;
     }
 
+    TextureType Texture2D::getTextureType()
+    {
+        return _type;
+    }
+
     void Texture2D::bind()
     {
         glBindTexture(GL_TEXTURE_2D, _id);

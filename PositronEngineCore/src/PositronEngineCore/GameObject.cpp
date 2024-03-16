@@ -72,7 +72,7 @@ namespace PositronEngine
         return _scale;
     }
 
-    glm::vec3 GameObject::getLocatinVec3()
+    glm::vec3 GameObject::getLocationVec3()
     {
         return glm::vec3(_location[0], _location[1], _location[2]);
     }
@@ -87,7 +87,7 @@ namespace PositronEngine
         return glm::vec3(_scale[0], _scale[1], _scale[2]);
     }
 
-    glm::mat4 GameObject::getModerlMatrix()
+    glm::mat4 GameObject::getModelMatrix()
     {
         return _model_matrix;
     }

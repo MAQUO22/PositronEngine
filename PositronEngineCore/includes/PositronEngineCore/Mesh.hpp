@@ -2,8 +2,9 @@
 
 #include <string>
 #include <glad/glad.h>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "PositronEngineCore/VertexArray.hpp"
-#include "PositronEngineCore/Camera.hpp"
 #include "PositronEngineCore/Texture2D.hpp"
 
 
@@ -19,18 +20,20 @@ namespace PositronEngine
     class Mesh
     {
         public:
-            std::vector<Vertex> vertices;
-            std::vector<GLuint> indices;
-            std::vector<Texture2D> textures;
-
-            VertexArray* VAO = nullptr;
-            VertexBuffer* positionB = nullptr;
-            IndexBuffer* indicesB = nullptr;
-
-            Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices, std::vector<Texture2D> &textures);
+            Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices);
 
             Mesh() = delete;
             ~Mesh();
+
+            VertexArray* getVertexArray();
+
+        private:
+            std::vector<Vertex> _vertices;
+            std::vector<GLuint> _indices;
+
+            VertexArray* _VAO = nullptr;
+            VertexBuffer* _positions_buffer = nullptr;
+            IndexBuffer* _indices_buffer = nullptr;
 
     };
 }

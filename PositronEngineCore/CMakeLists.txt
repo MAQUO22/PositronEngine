@@ -25,6 +25,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/Primitives/PlatePrimitive.hpp
     includes/PositronEngineCore/Primitives/SpherePrimitive.hpp
     includes/PositronEngineCore/Mesh.hpp
+    includes/PositronEngineCore/Material.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -50,6 +51,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
     src/PositronEngineCore/Modules/GUImodule.cpp
     src/PositronEngineCore/Mesh.cpp
+    src/PositronEngineCore/Material.cpp
     src/PositronEngineCore/GameObject.cpp
     src/PositronEngineCore/Primitives/CubePrimitive.cpp
     src/PositronEngineCore/Primitives/PlatePrimitive.cpp

@@ -48,7 +48,6 @@ vec4 directionLight()
 
 vec4 pointLight()
 {
-    vec3 view_direction = normalize(camera_position - frag_position);
     vec3 ambient = ambient_factor * light_color;
 
     vec3 light_vector = light_position - frag_position;
@@ -64,6 +63,8 @@ vec4 pointLight()
     //vec3 normal = normalize(frag_normal);
     float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
+
+    vec3 view_direction = normalize(camera_position - frag_position);
 
     vec3 reflect_direction = reflect(-light_direction, normal);
     float specular_value = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);

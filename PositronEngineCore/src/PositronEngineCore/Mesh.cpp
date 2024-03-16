@@ -9,25 +9,28 @@ namespace PositronEngine
         ShaderDataType::Float2
     };
 
-
-    Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices,  std::vector<Texture2D> &textures)
+    Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices)
     {
-        Mesh::vertices = std::move(vertices);
-        Mesh::indices = std::move(indices);
-        Mesh::textures = std::move(textures);
+        Mesh::_vertices = std::move(vertices);
+        Mesh::_indices = std::move(indices);
 
-        positionB = new VertexBuffer(Mesh::vertices.data(), Mesh::vertices.size() * sizeof(Vertex), mesh);
-        indicesB = new IndexBuffer(Mesh::indices.data(), Mesh::indices.size() * sizeof(GLuint));
+        _positions_buffer = new VertexBuffer(Mesh::_vertices.data(), Mesh::_vertices.size() * sizeof(Vertex), mesh);
+        _indices_buffer = new IndexBuffer(Mesh::_indices.data(), Mesh::_indices.size() * sizeof(GLuint));
 
-        VAO = new VertexArray();
-        VAO->addVertexBuffer(*positionB);
-        VAO->setIndexBuffer(*indicesB);
+        _VAO = new VertexArray();
+        _VAO->addVertexBuffer(*_positions_buffer);
+        _VAO->setIndexBuffer(*_indices_buffer);
     }
 
     Mesh::~Mesh()
     {
-        delete VAO;
-        delete positionB;
-        delete indicesB;
+        delete _VAO;
+        delete _positions_buffer;
+        delete _indices_buffer;
+    }
+
+    VertexArray* Mesh::getVertexArray()
+    {
+        return _VAO;
     }
 }

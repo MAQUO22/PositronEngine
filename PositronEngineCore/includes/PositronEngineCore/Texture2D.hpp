@@ -25,9 +25,13 @@ namespace PositronEngine
             ~Texture2D();
 
             unsigned int getID();
+            TextureType getTextureType();
+
             void bind();
             void bindUnit(const unsigned int unit) const;
             void unbindUnit() const;
+
+
 
         private:
             unsigned int _id = 0;

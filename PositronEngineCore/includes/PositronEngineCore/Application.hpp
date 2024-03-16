@@ -28,7 +28,7 @@ namespace PositronEngine
 
             glm::vec2 getCurrentCursorPosition() const;
 
-            Camera camera { glm::vec3(-12, 0, 0) };
+            Camera camera { glm::vec3(-5, 0, 0) };
 
             float camera_location[3] = {0.0f, 0.0f, 3.0f};
             float camera_rotation[3] = {0.0f, 0.0f, 0.0f};

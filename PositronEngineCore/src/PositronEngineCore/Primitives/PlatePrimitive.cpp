@@ -1,5 +1,7 @@
 #include "PositronEngineCore/Primitives/PlatePrimitive.hpp"
+#include "PositronEngineCore/Camera.hpp"
 #include "PositronEngineCore/RenderOpenGL.hpp"
+#include "PositronEngineCore/Log.hpp"
 
 namespace PositronEngine
 {
@@ -25,19 +27,12 @@ namespace PositronEngine
 
     PlatePrimitive::PlatePrimitive(std::string name)
     {
-         Texture2D textures[]
-         {
-             Texture2D("wood.jpg", TextureType::diffuse),
-             Texture2D("wood_specular.jpg", TextureType::specular),
-             Texture2D("wood_normal.jpg", TextureType::normal)
-         };
 
          std::vector<Vertex> verts(Plate::verteces, Plate::verteces + sizeof(Plate::verteces) / sizeof(Vertex));
          std::vector<GLuint> ind(Plate::indices, Plate::indices + sizeof(Plate::indices) / sizeof(GLuint));
-         std::vector<Texture2D> tex(textures, textures + sizeof(textures) / sizeof(Texture2D));
 
         _name = name;
-        _mesh = new Mesh(verts, ind, tex);
+        _mesh = new Mesh(verts, ind);
 
     }
 
@@ -47,16 +42,63 @@ namespace PositronEngine
         delete _mesh;
     }
 
-    void PlatePrimitive::draw()
+    void PlatePrimitive::draw(Camera& camera)
     {
-        updateModelMatrix();
-        _mesh->textures[0].bindUnit(0);
-        _mesh->textures[1].bindUnit(1);
-        _mesh->textures[2].bindUnit(2);
-        RenderOpenGL::draw(*_mesh->VAO);
-        _mesh->textures[2].unbindUnit();
-        _mesh->textures[1].unbindUnit();
-        _mesh->textures[0].unbindUnit();
+        if(_material == nullptr)
+        {
+            LOG_CRITICAL("CUBE HAS NO MATERIAL!!!");
+        }
+
+        else
+        {
+            updateModelMatrix();
+
+            _material->getShaderProgram()->bind();
+            _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+            _material->getShaderProgram()->setVec3("light_color", glm::vec3(1.0f, 1.0f ,1.0f));
+            _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
+            _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
+            _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
+            _material->getShaderProgram()->setVec3("light_position", glm::vec3(light_position[0], light_position[1], light_position[2]));
+            _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
+            _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
+
+            _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
+
+            for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
+            {
+
+                if(_material->getTexturesVector()[i].getTextureType() == TextureType::diffuse)
+                {
+                    _material->getTexturesVector()[i].bindUnit(0);
+                }
+
+                else if(_material->getTexturesVector()[i].getTextureType() == TextureType::specular)
+                {
+                    _material->getTexturesVector()[i].bindUnit(1);
+                }
+
+                else if(_material->getTexturesVector()[i].getTextureType() == TextureType::normal)
+                {
+                    _material->getTexturesVector()[i].bindUnit(2);
+                }
+            }
+
+            RenderOpenGL::draw(*_mesh->getVertexArray());
+
+            for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
+                _material->getTexturesVector()[i].unbindUnit();
+        }
+    }
+
+    Material* PlatePrimitive::getMaterial()
+    {
+        return _material;
+    }
+
+    void PlatePrimitive::setMaterial(Material* material)
+    {
+        _material = material;
     }
 }
 
