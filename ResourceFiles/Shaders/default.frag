@@ -32,7 +32,7 @@ vec4 directionLight()
     vec3 normal = normalize(texture(normal_map, tex_coord).xyz * 2.0 - 1.0);
     //normal = normalize(frag_normal);
 
-    vec3 light_direction = normalize(vec3(1.0f, 1.0f, 0.0f));
+    vec3 light_direction = normalize(-light_position);
     float diffuse_factor_modified = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diffuse_factor * light_color * diffuse_factor_modified;
 
@@ -78,7 +78,7 @@ vec4 pointLight()
 
 void main() {
 
-    frag_color = pointLight();
+    frag_color = directionLight();
 
     float brightness = dot(frag_color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
 

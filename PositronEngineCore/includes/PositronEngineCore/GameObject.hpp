@@ -6,14 +6,15 @@
 namespace PositronEngine
 {
     class Camera;
+    class LightObject;
 
     class GameObject
     {
         public:
 
-            virtual void draw(Camera& camera) = 0;
+            virtual void draw(Camera& camera, LightObject& light_object) = 0;
 
-            virtual ~GameObject() {}
+            virtual ~GameObject() = default;
 
             void updateModelMatrix();
 

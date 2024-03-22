@@ -87,7 +87,7 @@ namespace PositronEngine
     }
 
 
-    void CubePrimitive::draw(Camera& camera)
+    void CubePrimitive::draw(Camera& camera, LightObject& light_object)
     {
         if(_material == nullptr)
         {
@@ -100,11 +100,11 @@ namespace PositronEngine
 
             _material->getShaderProgram()->bind();
             _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            _material->getShaderProgram()->setVec3("light_color", glm::vec3(1.0f, 1.0f ,1.0f));
+            _material->getShaderProgram()->setVec3("light_color", light_object.getColorVec3());
             _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
             _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
             _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
-            _material->getShaderProgram()->setVec3("light_position", glm::vec3(light_position[0], light_position[1], light_position[2]));
+            _material->getShaderProgram()->setVec3("light_position", light_object.getDirectionVec3());
             _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
             _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
 

@@ -20,12 +20,18 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/RenderOpenGL.hpp
     includes/PositronEngineCore/Sphere.h
     includes/PositronEngineCore/stb_image.h
+
     includes/PositronEngineCore/GameObject.hpp
+    includes/PositronEngineCore/LightObject.hpp
+
+    includes/PositronEngineCore/Mesh.hpp
+    includes/PositronEngineCore/Material.hpp
+
     includes/PositronEngineCore/Primitives/CubePrimitive.hpp
     includes/PositronEngineCore/Primitives/PlatePrimitive.hpp
     includes/PositronEngineCore/Primitives/SpherePrimitive.hpp
-    includes/PositronEngineCore/Mesh.hpp
-    includes/PositronEngineCore/Material.hpp
+
+    includes/PositronEngineCore/LightSources/DirectionLight.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -52,10 +58,15 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Modules/GUImodule.cpp
     src/PositronEngineCore/Mesh.cpp
     src/PositronEngineCore/Material.cpp
+
     src/PositronEngineCore/GameObject.cpp
+    src/PositronEngineCore/LightObject.cpp
+
     src/PositronEngineCore/Primitives/CubePrimitive.cpp
     src/PositronEngineCore/Primitives/PlatePrimitive.cpp
     src/PositronEngineCore/Primitives/SpherePrimitive.cpp
+
+    src/PositronEngineCore/LightSources/DirectionLight.cpp
 )
 
 set(ENGINE_ALL_SOURCES

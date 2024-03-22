@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PositronEngineCore/GameObject.hpp"
+#include "PositronEngineCore/LightObject.hpp"
 #include "PositronEngineCore/Mesh.hpp"
 #include "PositronEngineCore/Material.hpp"
 
@@ -13,13 +14,11 @@ namespace PositronEngine
             PlatePrimitive(std::string name);
             ~PlatePrimitive();
 
-            void draw(Camera& camera) override;
+            void draw(Camera& camera, LightObject& light_object) override;
 
             void setMaterial(Material* material);
 
             Material* getMaterial();
-
-            float light_position[3] = {0.0f, 0.0f, 0.0f};
 
         private:
             std::string _name;

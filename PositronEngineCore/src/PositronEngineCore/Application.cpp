@@ -13,9 +13,12 @@
 #include "PositronEngineCore/CubeMapTexture.hpp"
 #include "PositronEngineCore/FrameBuffer.hpp"
 #include "PositronEngineCore/RenderBuffer.hpp"
+
 #include "PositronEngineCore/Primitives/CubePrimitive.hpp"
 #include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
 #include "PositronEngineCore/Primitives/PlatePrimitive.hpp"
+
+#include "PositronEngineCore/LightSources/DirectionLight.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -206,6 +209,8 @@ namespace PositronEngine
         CubePrimitive cube("cube1");
         PlatePrimitive plate("plate1");
 
+        DirectionLight dir_light;
+
         Texture2D textures_stones[]
         {
             Texture2D("stones_diffuse.jpg", TextureType::diffuse),
@@ -252,6 +257,11 @@ namespace PositronEngine
         cube.setMaterial(&stones);
         plate.setMaterial(&wood);
         sphere.setMaterial(&stone);
+
+        // std::vector<std::unique_ptr<GameObject>> objects;
+        // objects.push_back(std::make_unique<SpherePrimitive>(sphere));
+        // objects.push_back(std::make_unique<CubePrimitive>(cube));
+        // objects.push_back(std::make_unique<PlatePrimitive>(plate));
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -361,11 +371,17 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
-            cube.draw(camera);
 
-            plate.draw(camera);
+            // for(size_t i = 0; i < objects.size(); i++)
+            // {
+            //     objects[i]->draw(camera);
+            // }
 
-            sphere.draw(camera);
+            cube.draw(camera, dir_light);
+
+            plate.draw(camera, dir_light);
+
+            sphere.draw(camera, dir_light);
 
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -514,10 +530,8 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Direction light");
-            //ImGui::ColorEdit3("light_color", light_color);
-            ImGui::SliderFloat3("light_position", cube.light_position, -10.0f, 10.0f);
-            ImGui::SliderFloat3("light_position", plate.light_position, -10.0f, 10.0f);
-            ImGui::SliderFloat3("light_position", sphere.light_position, -10.0f, 10.0f);
+            ImGui::ColorEdit3("light_color", dir_light.getColor());
+            ImGui::SliderFloat3("light_direction", dir_light.getDirection(), -10.0f, 10.0f);
             ImGui::SliderFloat("ambient_factor", &stones_config.ambient, 0.0f, 2.0f);
             ImGui::SliderFloat("diffuse_factor", &stones_config.diffuse, 0.0f, 2.0f);
             ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
