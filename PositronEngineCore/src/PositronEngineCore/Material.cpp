@@ -9,7 +9,6 @@ namespace PositronEngine
         if(!_shader_program->isCompile())
             LOG_CRITICAL("Material not compiled!");
 
-        //_textures = std::vector<Texture2D>(textures, textures + sizeof(&textures) / sizeof(Texture2D));
         size_t num_textures = sizeof(textures) / sizeof(Texture2D);
 
         // Копируем текстуры в вектор

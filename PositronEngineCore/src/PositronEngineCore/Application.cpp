@@ -19,6 +19,7 @@
 #include "PositronEngineCore/Primitives/PlatePrimitive.hpp"
 
 #include "PositronEngineCore/LightSources/DirectionLight.hpp"
+#include "PositronEngineCore/LightSources/PointLight.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -210,6 +211,8 @@ namespace PositronEngine
         PlatePrimitive plate("plate1");
 
         DirectionLight dir_light;
+        PointLight point_light, point_light1, point_light2, point_light3, point_light4;
+
 
         Texture2D textures_stones[]
         {
@@ -377,12 +380,13 @@ namespace PositronEngine
             //     objects[i]->draw(camera);
             // }
 
-            cube.draw(camera, dir_light);
+            cube.draw(camera, dir_light, point_light);
 
-            plate.draw(camera, dir_light);
+            plate.draw(camera, dir_light, point_light);
 
-            sphere.draw(camera, dir_light);
+            sphere.draw(camera, dir_light, point_light);
 
+            LOG_INFORMATION("Point lights num - {0}", LightTypeCounter::getNumberOfPointLights());
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -536,6 +540,11 @@ namespace PositronEngine
             ImGui::SliderFloat("diffuse_factor", &stones_config.diffuse, 0.0f, 2.0f);
             ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
             ImGui::SliderFloat("specular_factor", &stones_config.specular, 0.0f, 1.0f);
+            ImGui::End();
+
+            ImGui::Begin("Point light");
+            ImGui::ColorEdit3("point_light_color", point_light.getColor());
+            ImGui::SliderFloat3("point_light_location", point_light.getLocation(), -10.0f, 10.0f);
             ImGui::End();
 
             stones.setLightConfig(stones_config);

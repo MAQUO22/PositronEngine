@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "PositronEngineCore/LightTypeCounter.hpp"
 
 namespace PositronEngine
 {
@@ -27,9 +28,17 @@ namespace PositronEngine
             virtual float* getDirection();
             virtual glm::vec3 getDirectionVec3() const;
 
-            // virtual void setLocation(const glm::vec3& location) {}
-            // virtual glm::vec3 getLocation() const { return glm::vec3(0.0f); }
+            virtual float* getLocation();
+            virtual glm::vec3 getLocationVec3() const;
 
+            virtual void setLocation(const float x, const float y, const float z);
+            virtual void setLocationVec3(const glm::vec3& location);
+
+            virtual void setConstantAttenuation(const float attenuation);
+            virtual void setLinearAttenuation(const float attenuation);
+
+            virtual float getConstantAttenuation() const;
+            virtual float getLinearAttenuation() const;
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

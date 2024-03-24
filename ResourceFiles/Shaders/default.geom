@@ -8,6 +8,7 @@ out vec3 frag_normal;
 out vec2 tex_coord;
 out vec3 camera_position;
 out vec3 light_position;
+out vec3 light_direction;
 
 in DATA
 {
@@ -19,6 +20,7 @@ in DATA
 
     vec3 camera_position;
     vec3 light_position;
+    vec3 light_direction;
 } data_in[];
 
 void main()
@@ -56,6 +58,7 @@ void main()
         frag_position = TBN * gl_in[i].gl_Position.xyz;
         camera_position = TBN * data_in[i].camera_position;
         light_position = TBN * data_in[i].light_position;
+        light_direction = TBN * data_in[i].light_direction;
 
         EmitVertex();
     }

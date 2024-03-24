@@ -12,7 +12,7 @@ namespace PositronEngine
     {
         public:
 
-            virtual void draw(Camera& camera, LightObject& light_object) = 0;
+            virtual void draw(Camera& camera, LightObject& direction_light, LightObject& point_light) = 0;
 
             virtual ~GameObject() = default;
 

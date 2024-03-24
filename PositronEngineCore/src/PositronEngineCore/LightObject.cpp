@@ -30,10 +30,7 @@ namespace PositronEngine
         return _intensity;
     }
 
-    void LightObject::setDirection(const float x, const float y, const float z)
-    {
-        // Пустая реализация метода
-    }
+    void LightObject::setDirection(const float x, const float y, const float z) {}
 
     void LightObject::setDirectionVec3(const glm::vec3& direction) {}
 
@@ -46,6 +43,26 @@ namespace PositronEngine
     {
         return glm::vec3(0.0f);
     }
+
+
+    float* LightObject::getLocation()
+    {
+        return nullptr;
+    }
+
+    glm::vec3 LightObject::getLocationVec3() const
+    {
+        return glm::vec3(0.0f);
+    }
+
+    void LightObject::setLocation(const float x, const float y, const float z) {}
+    void LightObject::setLocationVec3(const glm::vec3& location) {}
+
+    void LightObject::setConstantAttenuation(const float attenuation) {}
+    void LightObject::setLinearAttenuation(const float attenuation) {}
+
+    float LightObject::getConstantAttenuation() const { return 0.0f; }
+    float LightObject::getLinearAttenuation() const { return 0.0f; }
 
     void LightObject::draw(Camera& camera) {}
 

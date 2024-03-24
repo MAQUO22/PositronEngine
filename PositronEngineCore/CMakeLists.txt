@@ -31,7 +31,9 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/Primitives/PlatePrimitive.hpp
     includes/PositronEngineCore/Primitives/SpherePrimitive.hpp
 
+    includes/PositronEngineCore/LightTypeCounter.hpp
     includes/PositronEngineCore/LightSources/DirectionLight.hpp
+    includes/PositronEngineCore/LightSources/PointLight.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -56,6 +58,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
     src/PositronEngineCore/Modules/GUImodule.cpp
+
     src/PositronEngineCore/Mesh.cpp
     src/PositronEngineCore/Material.cpp
 
@@ -66,7 +69,9 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Primitives/PlatePrimitive.cpp
     src/PositronEngineCore/Primitives/SpherePrimitive.cpp
 
+    src/PositronEngineCore/LightTypeCounter.cpp
     src/PositronEngineCore/LightSources/DirectionLight.cpp
+    src/PositronEngineCore/LightSources/PointLight.cpp
 )
 
 set(ENGINE_ALL_SOURCES

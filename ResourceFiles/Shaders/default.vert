@@ -3,6 +3,7 @@
 // uniforms
 uniform mat4 model_matrix;
 uniform mat4 view_projection_matrix;
+uniform vec3 light_direction;
 uniform vec3 light_position;
 uniform vec3 camera_position;
 
@@ -21,6 +22,7 @@ out DATA
 
     vec3 camera_position;
     vec3 light_position;
+    vec3 light_direction;
 
 } data_out;
 
@@ -36,5 +38,6 @@ void main()
 
     data_out.camera_position = camera_position;
     data_out.light_position = light_position;
+    data_out.light_direction = light_direction;
 
 }
