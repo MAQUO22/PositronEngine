@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/mat4x4.hpp>
+#include <vector>
+#include <memory>
 #include <glm/trigonometric.hpp>
 
 namespace PositronEngine
@@ -12,7 +14,7 @@ namespace PositronEngine
     {
         public:
 
-            virtual void draw(Camera& camera, LightObject& direction_light, LightObject& point_light) = 0;
+            virtual void draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights) = 0;
 
             virtual ~GameObject() = default;
 

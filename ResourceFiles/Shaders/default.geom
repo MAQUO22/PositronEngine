@@ -1,5 +1,7 @@
 #version 460 core
 
+#define MAX_LIGHT_SOURCES 5
+
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
@@ -7,8 +9,10 @@ out vec3 frag_position;
 out vec3 frag_normal;
 out vec2 tex_coord;
 out vec3 camera_position;
-out vec3 light_position;
 out vec3 light_direction;
+
+out vec3 point_light_positions[MAX_LIGHT_SOURCES];
+out vec3 point_light_colors[MAX_LIGHT_SOURCES];
 
 in DATA
 {
@@ -19,8 +23,12 @@ in DATA
     mat4 model_matrix;
 
     vec3 camera_position;
-    vec3 light_position;
+
     vec3 light_direction;
+
+    int number_of_point_lights;
+    vec3 point_light_positions[MAX_LIGHT_SOURCES];
+    vec3 point_light_colors[MAX_LIGHT_SOURCES];
 } data_in[];
 
 void main()
@@ -57,8 +65,12 @@ void main()
 
         frag_position = TBN * gl_in[i].gl_Position.xyz;
         camera_position = TBN * data_in[i].camera_position;
-        light_position = TBN * data_in[i].light_position;
         light_direction = TBN * data_in[i].light_direction;
+
+        for (int j = 0; j < data_in[0].number_of_point_lights; j++) {
+            point_light_positions[j] = TBN * data_in[i].point_light_positions[j];
+            point_light_colors[j] = data_in[i].point_light_colors[j];
+        }
 
         EmitVertex();
     }

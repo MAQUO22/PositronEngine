@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PositronEngineCore/LightObject.hpp"
+#include "PositronEngineCore/Mesh.hpp"
+#include "PositronEngineCore/Material.hpp"
 
 namespace PositronEngine
 {
@@ -28,5 +30,7 @@ namespace PositronEngine
             float _location[3] {0.0f, 0.0f, 0.0f};
             float _constantAttenuation {0.05};
             float _linearAttenuation {0.01};
+            Mesh* _mesh = nullptr;
+            Material* _material = nullptr;
     };
 }

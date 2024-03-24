@@ -58,7 +58,7 @@ namespace PositronEngine
         delete _mesh;
     }
 
-    void SpherePrimitive::draw(Camera& camera, LightObject& direction_light, LightObject& point_light)
+    void SpherePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)
     {
         if(_material == nullptr)
         {
@@ -78,8 +78,17 @@ namespace PositronEngine
             _material->getShaderProgram()->setVec3("light_direction", direction_light.getDirectionVec3());
             _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
             _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
-
             _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
+
+            _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
+
+            for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+            {
+                std::string uniform_color = "point_light_colors[" + std::to_string(i) + "]";
+                std::string uniform_position = "point_light_positions[" + std::to_string(i) + "]";
+                _material->getShaderProgram()->setVec3(uniform_color.c_str(), point_lights[i]->getColorVec3());
+                _material->getShaderProgram()->setVec3(uniform_position.c_str(), point_lights[i]->getLocationVec3());
+            }
 
             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
             {

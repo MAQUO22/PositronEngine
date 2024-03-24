@@ -14,7 +14,7 @@ namespace PositronEngine
             SpherePrimitive(std::string name);
             ~SpherePrimitive();
 
-            void draw(Camera& camera, LightObject& direction_light, LightObject& point_light) override;
+            void draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights) override;
 
             void setMaterial(Material* material);
             Material* getMaterial();

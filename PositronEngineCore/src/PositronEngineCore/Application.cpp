@@ -40,7 +40,6 @@ namespace PositronEngine
 
     ShaderProgram* frame_buffer_program = nullptr;
     ShaderProgram* blur_program = nullptr;
-    ShaderProgram* ligth_shader_program = nullptr;
     ShaderProgram* skybox_program = nullptr;
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
@@ -88,7 +87,6 @@ namespace PositronEngine
         LOG_INFORMATION("Closing application");
         delete frame_buffer_program;
         delete blur_program ;
-        delete ligth_shader_program;
         delete skybox_program;
 
     }
@@ -194,12 +192,6 @@ namespace PositronEngine
             return -2;
         }
 
-        ShaderProgram* ligth_shader_program = new ShaderProgram("light.vert", "light.frag");
-        if(!ligth_shader_program->isCompile())
-        {
-            return -2;
-        }
-
         ShaderProgram* skybox_program = new ShaderProgram("skybox.vert", "skybox.frag");
         if(!skybox_program->isCompile())
         {
@@ -211,7 +203,7 @@ namespace PositronEngine
         PlatePrimitive plate("plate1");
 
         DirectionLight dir_light;
-        PointLight point_light, point_light1, point_light2, point_light3, point_light4;
+        PointLight point_light, point_light1, point_light2;
 
 
         Texture2D textures_stones[]
@@ -234,8 +226,6 @@ namespace PositronEngine
             Texture2D("stone_specular.jpg", TextureType::specular),
             Texture2D("stone_normal.jpg", TextureType::normal)
         };
-
-
 
         LightReactionConfig stones_config
         {
@@ -261,10 +251,15 @@ namespace PositronEngine
         plate.setMaterial(&wood);
         sphere.setMaterial(&stone);
 
-        // std::vector<std::unique_ptr<GameObject>> objects;
-        // objects.push_back(std::make_unique<SpherePrimitive>(sphere));
-        // objects.push_back(std::make_unique<CubePrimitive>(cube));
-        // objects.push_back(std::make_unique<PlatePrimitive>(plate));
+        std::vector<std::unique_ptr<GameObject>> objects;
+        objects.push_back(std::make_unique<SpherePrimitive>(sphere));
+        objects.push_back(std::make_unique<CubePrimitive>(cube));
+        objects.push_back(std::make_unique<PlatePrimitive>(plate));
+
+        std::vector<std::unique_ptr<LightObject>> light_objects;
+        light_objects.push_back(std::make_unique<PointLight>(point_light));
+        light_objects.push_back(std::make_unique<PointLight>(point_light1));
+        light_objects.push_back(std::make_unique<PointLight>(point_light2));
 
         unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
         glGenVertexArrays(1, &skyboxVAO);
@@ -375,18 +370,11 @@ namespace PositronEngine
             RenderOpenGL::enableDepth();
 
 
-            // for(size_t i = 0; i < objects.size(); i++)
-            // {
-            //     objects[i]->draw(camera);
-            // }
+            for(size_t i = 0; i < objects.size(); i++)
+            {
+                objects[i]->draw(camera, dir_light, light_objects);
+            }
 
-            cube.draw(camera, dir_light, point_light);
-
-            plate.draw(camera, dir_light, point_light);
-
-            sphere.draw(camera, dir_light, point_light);
-
-            LOG_INFORMATION("Point lights num - {0}", LightTypeCounter::getNumberOfPointLights());
             glDepthFunc(GL_LEQUAL);
             glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -516,21 +504,21 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Cube");
-            ImGui::SliderFloat3("location", cube.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", cube.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", cube.getScale() , -5.0f, 5.0f);
+            ImGui::SliderFloat3("location", objects[0]->getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", objects[0]->getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", objects[0]->getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Sphere");
-            ImGui::SliderFloat3("location", sphere.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", sphere.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", sphere.getScale() , -5.0f, 5.0f);
+            ImGui::SliderFloat3("location", objects[1]->getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", objects[1]->getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", objects[1]->getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Plate");
-            ImGui::SliderFloat3("location", plate.getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", plate.getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", plate.getScale() , -5.0f, 5.0f);
+            ImGui::SliderFloat3("location", objects[2]->getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", objects[2]->getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", objects[2]->getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Direction light");
@@ -543,8 +531,12 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Point light");
-            ImGui::ColorEdit3("point_light_color", point_light.getColor());
-            ImGui::SliderFloat3("point_light_location", point_light.getLocation(), -10.0f, 10.0f);
+            ImGui::ColorEdit3("point_light_color 1", light_objects[0]->getColor());
+            ImGui::SliderFloat3("point_light_location 1", light_objects[0]->getLocation(), -10.0f, 10.0f);
+            ImGui::ColorEdit3("point_light_color 2", light_objects[1]->getColor());
+            ImGui::SliderFloat3("point_light_location 2", light_objects[1]->getLocation(), -10.0f, 10.0f);
+            ImGui::ColorEdit3("point_light_color 3", light_objects[2]->getColor());
+            ImGui::SliderFloat3("point_light_location 3", light_objects[2]->getLocation(), -10.0f, 10.0f);
             ImGui::End();
 
             stones.setLightConfig(stones_config);

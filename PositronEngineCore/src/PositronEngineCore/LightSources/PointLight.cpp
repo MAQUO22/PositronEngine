@@ -5,6 +5,7 @@ namespace PositronEngine
     PointLight::PointLight()
     {
         LightTypeCounter::incrementPointLightCount();
+
     }
 
     PointLight::~PointLight()
