@@ -31,6 +31,7 @@ namespace PositronEngine
 {
 
     bool bloom_activate = false;
+    bool draw_without_mesh = false;
 
     float gamma = 0.280f;
     float exposure = 1.75f;
@@ -208,31 +209,23 @@ namespace PositronEngine
         PointLight point_light, point_light1, point_light2;
 
 
-        Texture2D textures_stones[]
-        {
-            Texture2D("stones_diffuse.jpg", TextureType::diffuse),
-            Texture2D("stones_specular.jpg", TextureType::specular),
-            Texture2D("stones_normal.jpg", TextureType::normal)
-        };
+        std::vector<Texture2D> textures_stones;
+        textures_stones.push_back(Texture2D("stones_diffuse.jpg", TextureType::diffuse));
+        textures_stones.push_back(Texture2D("stones_specular.jpg", TextureType::specular));
+        textures_stones.push_back(Texture2D("stones_normal.jpg", TextureType::normal));
 
-        Texture2D textures_wood[]
-        {
-            Texture2D("wood.jpg", TextureType::diffuse),
-            Texture2D("wood_specular.jpg", TextureType::specular),
-            Texture2D("wood_normal.jpg", TextureType::normal)
-        };
+        std::vector<Texture2D> textures_wood;
+        textures_wood.push_back(Texture2D("wood.jpg", TextureType::diffuse));
+        textures_wood.push_back(Texture2D("wood_specular.jpg", TextureType::specular));
+        textures_wood.push_back(Texture2D("wood_normal.jpg", TextureType::normal));
 
-        Texture2D textures_stone[]
-        {
-            Texture2D("stone.jpg", TextureType::diffuse),
-            Texture2D("stone_specular.jpg", TextureType::specular),
-            Texture2D("stone_normal.jpg", TextureType::normal)
-        };
+        std::vector<Texture2D> textures_stone;
+        textures_stone.push_back(Texture2D("stone.jpg", TextureType::diffuse));
+        textures_stone.push_back(Texture2D("stone_specular.jpg", TextureType::specular));
+        textures_stone.push_back(Texture2D("stone_normal.jpg", TextureType::normal));
 
-        Texture2D textures_light[]
-        {
 
-        };
+        std::vector<Texture2D> textures_light;
 
         LightReactionConfig stones_config
         {
@@ -382,10 +375,21 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
-            for(size_t i = 0; i < light_objects.size(); i++)
+            if(draw_without_mesh)
             {
-                light_objects[i]->draw(camera);
+                for(size_t i = 0; i < light_objects.size(); i++)
+                {
+                    light_objects[i]->drawWithoutMesh(camera);
+                }
             }
+            else
+            {
+                for(size_t i = 0; i < light_objects.size(); i++)
+                {
+                    light_objects[i]->draw(camera);
+                }
+            }
+
 
             for(size_t i = 0; i < objects.size(); i++)
             {
@@ -446,6 +450,7 @@ namespace PositronEngine
 
                 horizontal = !horizontal;
             }
+
 
             //===============================================================================================================================
 
@@ -512,6 +517,7 @@ namespace PositronEngine
             ImVec2 viewport_size = ImGui::GetWindowSize();
             camera.setViewportSize(viewport_size.x, viewport_size.y);
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
+            //ImGui::Image((void*)(intptr_t)bloomTexture.getID(), viewport_size);
             ImGui::End();
 
             ImGui::Begin("Post-processing");
@@ -521,15 +527,15 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Cube");
-            ImGui::SliderFloat3("location", objects[0]->getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", objects[0]->getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", objects[0]->getScale() , -5.0f, 5.0f);
-            ImGui::End();
-
-            ImGui::Begin("Sphere");
             ImGui::SliderFloat3("location", objects[1]->getLocation(), -10.0f, 10.0f);
             ImGui::SliderFloat3("rotation", objects[1]->getRotation(), -360.0f, 360.0f);
             ImGui::SliderFloat3("scale", objects[1]->getScale() , -5.0f, 5.0f);
+            ImGui::End();
+
+            ImGui::Begin("Sphere");
+            ImGui::SliderFloat3("location", objects[0]->getLocation(), -10.0f, 10.0f);
+            ImGui::SliderFloat3("rotation", objects[0]->getRotation(), -360.0f, 360.0f);
+            ImGui::SliderFloat3("scale", objects[0]->getScale() , -5.0f, 5.0f);
             ImGui::End();
 
             ImGui::Begin("Plate");
@@ -548,6 +554,7 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Point light");
+            ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);
             ImGui::ColorEdit3("point_light_color 1", light_objects[0]->getColor());
             ImGui::SliderFloat3("point_light_location 1", light_objects[0]->getLocation(), -10.0f, 10.0f);
             ImGui::ColorEdit3("point_light_color 2", light_objects[1]->getColor());

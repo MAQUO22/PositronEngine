@@ -6,9 +6,6 @@ out vec4 FragColor;
 layout(binding = 0) uniform sampler2D image;
 layout(binding = 1) uniform sampler2D bloomTexture;
 
-
-uniform float bloom_intensity;
-uniform float bloom_threshold;
 uniform float gamma;
 uniform float exposure;
 

@@ -92,5 +92,7 @@ namespace PositronEngine
 
         for(size_t i = 0; i < _light_material->getTexturesVector().size(); i++)
             _light_material->getTexturesVector()[i].unbindUnit();
-        }
+    }
+
+    void PointLight::drawWithoutMesh(Camera& camera) { }
 }

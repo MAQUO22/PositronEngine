@@ -18,6 +18,8 @@ namespace PositronEngine
 
 
             void draw(Camera& camera) override;
+            void drawWithoutMesh(Camera& camera) override;
+
         private:
 
             float _direction[3] {1.0f, 0.0f, 1.0f};

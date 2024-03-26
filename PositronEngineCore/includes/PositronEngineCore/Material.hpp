@@ -20,7 +20,7 @@ namespace PositronEngine
         public:
             Material() = delete;
 
-            Material(Texture2D* textures,LightReactionConfig light_config);
+            Material(std::vector<Texture2D>& textures,LightReactionConfig light_config);
             ~Material();
 
             ShaderProgram* getShaderProgram();

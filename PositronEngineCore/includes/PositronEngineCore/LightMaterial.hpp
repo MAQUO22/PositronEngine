@@ -14,7 +14,7 @@ namespace PositronEngine
         public:
             LightMaterial() = delete;
 
-            LightMaterial(Texture2D* textures);
+            LightMaterial(std::vector<Texture2D>& textures);
             ~LightMaterial();
 
             ShaderProgram* getShaderProgram();

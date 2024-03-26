@@ -26,6 +26,7 @@ namespace PositronEngine
             float getLinearAttenuation() const override;
 
             void draw(Camera& camera) override;
+            void drawWithoutMesh(Camera& camera) override;
 
             void setLightMaterial(LightMaterial* light_material);
 

@@ -11,6 +11,7 @@ namespace PositronEngine
     {
         public:
             virtual void draw(Camera& camera) = 0;
+            virtual void drawWithoutMesh(Camera& camera) = 0;
 
             virtual ~LightObject() = default;
 

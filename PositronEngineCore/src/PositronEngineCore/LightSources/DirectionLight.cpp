@@ -32,4 +32,6 @@ namespace PositronEngine
     }
 
     void DirectionLight::draw(Camera& camera) {}
+
+    void DirectionLight::drawWithoutMesh(Camera& camera) {}
 }

@@ -3,16 +3,13 @@
 
 namespace PositronEngine
 {
-    Material::Material(Texture2D* textures,LightReactionConfig light_config)
+    Material::Material(std::vector<Texture2D>& textures,LightReactionConfig light_config)
     {
         _shader_program = new ShaderProgram("default.vert", "default.frag", "default.geom");
         if(!_shader_program->isCompile())
             LOG_CRITICAL("Material not compiled!");
 
-        size_t num_textures = sizeof(textures) / sizeof(Texture2D);
-
-        // Копируем текстуры в вектор
-        _textures = std::vector<Texture2D>(textures, textures + 3);
+        _textures = std::move(textures);
         _light_config = light_config;
 
     }
