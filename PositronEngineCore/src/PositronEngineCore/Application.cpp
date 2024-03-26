@@ -203,6 +203,8 @@ namespace PositronEngine
         PlatePrimitive plate("plate1");
 
         DirectionLight dir_light;
+
+
         PointLight point_light, point_light1, point_light2;
 
 
@@ -227,6 +229,11 @@ namespace PositronEngine
             Texture2D("stone_normal.jpg", TextureType::normal)
         };
 
+        Texture2D textures_light[]
+        {
+
+        };
+
         LightReactionConfig stones_config
         {
             0.314f,  // ambient
@@ -247,9 +254,15 @@ namespace PositronEngine
         Material wood(textures_wood, wood_config);
         Material stone(textures_stone, stones_config);
 
+        LightMaterial light_material(textures_light);
+
         cube.setMaterial(&stones);
         plate.setMaterial(&wood);
         sphere.setMaterial(&stone);
+
+        point_light.setLightMaterial(&light_material);
+        point_light1.setLightMaterial(&light_material);
+        point_light2.setLightMaterial(&light_material);
 
         std::vector<std::unique_ptr<GameObject>> objects;
         objects.push_back(std::make_unique<SpherePrimitive>(sphere));
@@ -369,6 +382,10 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
+            for(size_t i = 0; i < light_objects.size(); i++)
+            {
+                light_objects[i]->draw(camera);
+            }
 
             for(size_t i = 0; i < objects.size(); i++)
             {

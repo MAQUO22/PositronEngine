@@ -1,11 +1,14 @@
 #include "PositronEngineCore/LightSources/PointLight.hpp"
+#include "PositronEngineCore/Camera.hpp"
+#include "PositronEngineCore/RenderOpenGL.hpp"
+#include "PositronEngineCore/Log.hpp"
 
 namespace PositronEngine
 {
     PointLight::PointLight()
     {
         LightTypeCounter::incrementPointLightCount();
-
+        _sphere.setScale(0.25f, 0.25f, 0.25f);
     }
 
     PointLight::~PointLight()
@@ -57,5 +60,37 @@ namespace PositronEngine
         return _constantAttenuation;
     }
 
-    void PointLight::draw(Camera& camera) {}
+    void PointLight::setLightMaterial(LightMaterial* light_material)
+    {
+        _light_material = light_material;
+    }
+
+    void PointLight::draw(Camera& camera)
+    {
+
+        _sphere.setLocation(_location[0],_location[1],_location[2]);
+        _sphere.updateModelMatrix();
+
+        _light_material->getShaderProgram()->bind();
+        _light_material->getShaderProgram()->setVec3("light_color", this->getColorVec3());
+        _light_material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+
+        _light_material->getShaderProgram()->setMatrix4("model_matrix", _sphere.getModelMatrix());
+
+        _light_material->getShaderProgram()->setBool("textureAvailable", _light_material->getTexturesVector().size());
+
+        for(size_t i = 0; i < _light_material->getTexturesVector().size(); i++)
+        {
+
+            if(_light_material->getTexturesVector()[i].getTextureType() == TextureType::diffuse)
+            {
+                _light_material->getTexturesVector()[i].bindUnit(0);
+            }
+        }
+
+        RenderOpenGL::draw(*_sphere.getMesh()->getVertexArray());
+
+        for(size_t i = 0; i < _light_material->getTexturesVector().size(); i++)
+            _light_material->getTexturesVector()[i].unbindUnit();
+        }
 }

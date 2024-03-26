@@ -19,6 +19,8 @@ namespace PositronEngine
             void setMaterial(Material* material);
             Material* getMaterial();
 
+            Mesh* getMesh();
+
         private:
             std::string _name;
             Mesh* _mesh = nullptr;

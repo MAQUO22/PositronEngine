@@ -1,8 +1,9 @@
 #pragma once
 
 #include "PositronEngineCore/LightObject.hpp"
-#include "PositronEngineCore/Mesh.hpp"
-#include "PositronEngineCore/Material.hpp"
+#include "PositronEngineCore/LightMaterial.hpp"
+
+#include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
 
 namespace PositronEngine
 {
@@ -26,11 +27,13 @@ namespace PositronEngine
 
             void draw(Camera& camera) override;
 
+            void setLightMaterial(LightMaterial* light_material);
+
         private:
             float _location[3] {0.0f, 0.0f, 0.0f};
             float _constantAttenuation {0.05};
             float _linearAttenuation {0.01};
-            Mesh* _mesh = nullptr;
-            Material* _material = nullptr;
+            LightMaterial* _light_material = nullptr;
+            SpherePrimitive _sphere {""};
     };
 }

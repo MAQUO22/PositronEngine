@@ -125,5 +125,10 @@ namespace PositronEngine
     {
         _material = material;
     }
+
+    Mesh* SpherePrimitive::getMesh()
+    {
+        return _mesh;
+    }
 }
 

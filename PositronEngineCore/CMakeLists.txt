@@ -26,6 +26,7 @@ set(ENGINE_PUBLIC_INCLUDES
 
     includes/PositronEngineCore/Mesh.hpp
     includes/PositronEngineCore/Material.hpp
+    includes/PositronEngineCore/LightMaterial.hpp
 
     includes/PositronEngineCore/Primitives/CubePrimitive.hpp
     includes/PositronEngineCore/Primitives/PlatePrimitive.hpp
@@ -61,6 +62,7 @@ set(ENGINE_PRIVATE_SOURSES
 
     src/PositronEngineCore/Mesh.cpp
     src/PositronEngineCore/Material.cpp
+    src/PositronEngineCore/LightMaterial.cpp
 
     src/PositronEngineCore/GameObject.cpp
     src/PositronEngineCore/LightObject.cpp
@@ -114,7 +116,14 @@ target_include_directories(ImGUI PUBLIC ../submodules/imgui)
 
 target_link_libraries(ImGUI PRIVATE glad glfw)
 target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE ImGUI)
-target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE GL)
+
+if(WIN32)
+    target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE opengl32)
+elseif(UNIX)
+    target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE GL)
+else()
+    target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE GL)
+endif()
 
 target_include_directories(${ENGINE_PROJECT_NAME} PUBLIC includes)
 target_include_directories(${ENGINE_PROJECT_NAME} PRIVATE src)
