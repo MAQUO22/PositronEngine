@@ -105,6 +105,11 @@ namespace PositronEngine
         return _material;
     }
 
+    std::string PlatePrimitive::getName()
+    {
+        return _name;
+    }
+
     void PlatePrimitive::setMaterial(Material* material)
     {
         _material = material;

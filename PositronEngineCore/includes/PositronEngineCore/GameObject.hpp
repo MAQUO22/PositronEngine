@@ -9,6 +9,7 @@ namespace PositronEngine
 {
     class Camera;
     class LightObject;
+    class Material;
 
     class GameObject
     {
@@ -28,11 +29,15 @@ namespace PositronEngine
             float* getRotation();
             float* getScale();
 
+            virtual std::string getName();
+
             glm::vec3 getLocationVec3();
             glm::vec3 getRotationVec3();
             glm::vec3 getScaleVec3();
 
             glm::mat4 getModelMatrix();
+
+            virtual void setMaterial(Material* material);
 
         private:
 

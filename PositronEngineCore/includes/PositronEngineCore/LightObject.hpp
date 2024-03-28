@@ -6,6 +6,7 @@
 namespace PositronEngine
 {
     class Camera;
+    class LightMaterial;
 
     class LightObject
     {
@@ -40,6 +41,8 @@ namespace PositronEngine
 
             virtual float getConstantAttenuation() const;
             virtual float getLinearAttenuation() const;
+
+            virtual void setLightMaterial(LightMaterial* light_material);
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

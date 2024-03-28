@@ -126,6 +126,11 @@ namespace PositronEngine
         _material = material;
     }
 
+    std::string SpherePrimitive::getName()
+    {
+        return _name;
+    }
+
     Mesh* SpherePrimitive::getMesh()
     {
         return _mesh;

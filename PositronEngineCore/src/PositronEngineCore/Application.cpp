@@ -11,6 +11,8 @@
 #include "PositronEngineCore/Mesh.hpp"
 
 #include "PositronEngineCore/CubeMapTexture.hpp"
+#include "PositronEngineCore/CubeMap.hpp"
+
 #include "PositronEngineCore/FrameBuffer.hpp"
 #include "PositronEngineCore/RenderBuffer.hpp"
 
@@ -32,6 +34,7 @@ namespace PositronEngine
 
     bool bloom_activate = false;
     bool draw_without_mesh = false;
+    bool draw_skybox = true;
 
     float gamma = 0.280f;
     float exposure = 1.75f;
@@ -41,7 +44,7 @@ namespace PositronEngine
 
     ShaderProgram* frame_buffer_program = nullptr;
     ShaderProgram* blur_program = nullptr;
-    ShaderProgram* skybox_program = nullptr;
+    ShaderProgram* wtf = nullptr;
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
@@ -54,42 +57,11 @@ namespace PositronEngine
          1.0f, -1.0f,    1.0f, 0.0f,
     };
 
-
-    float skyboxVertices[] =
-    {
-        -1.0f,  -1.0f,  1.0f,
-         1.0f,  -1.0f,  1.0f,
-         1.0f,  -1.0f, -1.0f,
-        -1.0f,  -1.0f, -1.0f,
-        -1.0f,   1.0f,  1.0f,
-         1.0f,   1.0f,  1.0f,
-         1.0f,   1.0f, -1.0f,
-        -1.0f,   1.0f, -1.0f
-    };
-
-    unsigned int skyboxIndices[] =
-    {
-        1, 2, 6,
-        6, 5, 1,
-        0, 4, 7,
-        7, 3, 0,
-        4, 5, 6,
-        6, 7, 4,
-        0, 3, 2,
-        2, 1, 0,
-        0, 1, 5,
-        5, 4, 0,
-        3, 7, 6,
-        6, 2, 3
-    };
-
     Application::~Application()
     {
         LOG_INFORMATION("Closing application");
         delete frame_buffer_program;
         delete blur_program ;
-        delete skybox_program;
-
     }
 
     Application::Application()
@@ -193,12 +165,6 @@ namespace PositronEngine
             return -2;
         }
 
-        ShaderProgram* skybox_program = new ShaderProgram("skybox.vert", "skybox.frag");
-        if(!skybox_program->isCompile())
-        {
-            return -2;
-        }
-
         SpherePrimitive sphere("sphere1");
         CubePrimitive cube("cube1");
         PlatePrimitive plate("plate1");
@@ -267,21 +233,6 @@ namespace PositronEngine
         light_objects.push_back(std::make_unique<PointLight>(point_light1));
         light_objects.push_back(std::make_unique<PointLight>(point_light2));
 
-        unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
-        glGenVertexArrays(1, &skyboxVAO);
-        glGenBuffers(1, &skyboxVBO);
-        glGenBuffers(1, &skyboxEBO);
-        glBindVertexArray(skyboxVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
         std::string facesCubemap[6] =
         {
             "../../ResourceFiles/Textures/SkyBox/Cloud/right.jpg",
@@ -293,6 +244,8 @@ namespace PositronEngine
         };
 
         CubeMapTexture cubemapTexture(facesCubemap);
+
+        CubeMap skybox(&cubemapTexture);
 
         FrameBuffer framebuffer;
 
@@ -396,26 +349,10 @@ namespace PositronEngine
                 objects[i]->draw(camera, dir_light, light_objects);
             }
 
-            glDepthFunc(GL_LEQUAL);
-            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-            skybox_program->bind();
-
-            glm::mat4 view = glm::mat4(1.0f);
-            glm::mat4 projection = glm::mat4(1.0f);
-
-            view  = glm::mat4(glm::mat3(glm::lookAt(camera.getLocation(), camera.getLocation() + camera.getDirection(), camera.getUp())));
-            projection = glm::perspective(glm::radians(45.0f), (float)window_width / window_height, 0.1f, 1000.0f);
-            skybox_program->setMatrix4("view", view);
-            skybox_program->setMatrix4("projection", projection);
-
-            glBindVertexArray(skyboxVAO);
-            glActiveTexture(GL_TEXTURE0);
-            cubemapTexture.bind();
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
-
-            glDepthFunc(GL_LESS);
+            if(draw_skybox)
+            {
+                skybox.draw(camera, window_width, window_height);
+            }
 
             //===============================================================================================================================
 
@@ -517,7 +454,6 @@ namespace PositronEngine
             ImVec2 viewport_size = ImGui::GetWindowSize();
             camera.setViewportSize(viewport_size.x, viewport_size.y);
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
-            //ImGui::Image((void*)(intptr_t)bloomTexture.getID(), viewport_size);
             ImGui::End();
 
             ImGui::Begin("Post-processing");
@@ -526,22 +462,48 @@ namespace PositronEngine
             ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
             ImGui::End();
 
-            ImGui::Begin("Cube");
-            ImGui::SliderFloat3("location", objects[1]->getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", objects[1]->getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", objects[1]->getScale() , -5.0f, 5.0f);
-            ImGui::End();
+            ImGui::Begin("Primitives");
+            if(ImGui::Button("Add Cube"))
+            {
+                objects.push_back(std::make_unique<CubePrimitive>("cube_butt"));
+                objects[objects.size() - 1]->setMaterial(&stone);
+            }
+            ImGui::SameLine();
 
-            ImGui::Begin("Sphere");
-            ImGui::SliderFloat3("location", objects[0]->getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", objects[0]->getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", objects[0]->getScale() , -5.0f, 5.0f);
-            ImGui::End();
+            if(ImGui::Button("Add Sphere"))
+            {
+                objects.push_back(std::make_unique<SpherePrimitive>("sphere_butt"));
+                objects[objects.size() - 1]->setMaterial(&stone);
+            }
+            ImGui::SameLine();
 
-            ImGui::Begin("Plate");
-            ImGui::SliderFloat3("location", objects[2]->getLocation(), -10.0f, 10.0f);
-            ImGui::SliderFloat3("rotation", objects[2]->getRotation(), -360.0f, 360.0f);
-            ImGui::SliderFloat3("scale", objects[2]->getScale() , -5.0f, 5.0f);
+            if(ImGui::Button("Add Plate"))
+            {
+                objects.push_back(std::make_unique<PlatePrimitive>("plate_butt"));
+                objects[objects.size() - 1]->setMaterial(&stone);
+            }
+            ImGui::SameLine();
+
+            ImGui::Checkbox("Draw SkyBox", &draw_skybox);
+
+            ImGui::Spacing();
+
+            for(size_t i = 0; i < objects.size(); i++)
+            {
+                char label_location[64];
+                char label_rotation[64];
+                char label_scale[64];
+                snprintf(label_location, 64, "%s_location", objects[i]->getName().c_str());
+                snprintf(label_rotation, 64, "%s_rotation", objects[i]->getName().c_str());
+                snprintf(label_scale, 64, "%s_scale", objects[i]->getName().c_str());
+
+
+                ImGui::SliderFloat3(label_location, objects[i]->getLocation(), -10.0f, 10.0f);
+                ImGui::SliderFloat3(label_rotation, objects[i]->getRotation(), -360.0f, 360.0f);
+                ImGui::SliderFloat3(label_scale, objects[i]->getScale() , -5.0f, 5.0f);
+                ImGui::Spacing();
+            }
+
             ImGui::End();
 
             ImGui::Begin("Direction light");
@@ -555,12 +517,30 @@ namespace PositronEngine
 
             ImGui::Begin("Point light");
             ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);
-            ImGui::ColorEdit3("point_light_color 1", light_objects[0]->getColor());
-            ImGui::SliderFloat3("point_light_location 1", light_objects[0]->getLocation(), -10.0f, 10.0f);
-            ImGui::ColorEdit3("point_light_color 2", light_objects[1]->getColor());
-            ImGui::SliderFloat3("point_light_location 2", light_objects[1]->getLocation(), -10.0f, 10.0f);
-            ImGui::ColorEdit3("point_light_color 3", light_objects[2]->getColor());
-            ImGui::SliderFloat3("point_light_location 3", light_objects[2]->getLocation(), -10.0f, 10.0f);
+
+
+            if(ImGui::Button("Add Point Light"))
+            {
+                light_objects.push_back(std::make_unique<PointLight>());
+                light_objects[light_objects.size() - 1]->setLightMaterial(&light_material);
+            }
+            ImGui::Spacing();
+
+            for(size_t i = 0; i < light_objects.size(); i++)
+            {
+                char label_color[64];
+                char label_location[64];
+                snprintf(label_color, 64, "point_light_color %d", i + 1);
+                snprintf(label_location, 64, "point_light_location %d", i + 1);
+
+
+                ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f);
+                ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
+
+
+                ImGui::Spacing();
+            }
+
             ImGui::End();
 
             stones.setLightConfig(stones_config);

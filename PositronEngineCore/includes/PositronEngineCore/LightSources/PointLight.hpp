@@ -28,7 +28,7 @@ namespace PositronEngine
             void draw(Camera& camera) override;
             void drawWithoutMesh(Camera& camera) override;
 
-            void setLightMaterial(LightMaterial* light_material);
+            void setLightMaterial(LightMaterial* light_material) override;
 
         private:
             float _location[3] {0.0f, 0.0f, 0.0f};

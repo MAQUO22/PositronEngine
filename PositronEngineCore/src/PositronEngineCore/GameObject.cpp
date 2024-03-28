@@ -1,4 +1,5 @@
 #include "PositronEngineCore/GameObject.hpp"
+#include <string>
 
 namespace PositronEngine
 {
@@ -57,6 +58,8 @@ namespace PositronEngine
         _scale[2] = z;
     }
 
+    void GameObject::setMaterial(Material* material) {}
+
     float* GameObject::getLocation()
     {
         return _location;
@@ -90,6 +93,12 @@ namespace PositronEngine
     glm::mat4 GameObject::getModelMatrix()
     {
         return _model_matrix;
+    }
+
+    std::string GameObject::getName()
+    {
+        std::string emp = "";
+        return emp;
     }
 
 }

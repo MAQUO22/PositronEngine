@@ -10,6 +10,7 @@
 
 namespace PositronEngine
 {
+    struct BufferLayoutl;
     struct Vertex
     {
         glm::vec3 position;

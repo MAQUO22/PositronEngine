@@ -152,6 +152,11 @@ namespace PositronEngine
         return _material;
     }
 
+    std::string CubePrimitive::getName()
+    {
+        return _name;
+    }
+
     void CubePrimitive::setMaterial(Material* material)
     {
         _material = material;
