@@ -171,10 +171,6 @@ namespace PositronEngine
 
         DirectionLight dir_light;
 
-
-        PointLight point_light, point_light1, point_light2;
-
-
         std::vector<Texture2D> textures_stones;
         textures_stones.push_back(Texture2D("stones_diffuse.jpg", TextureType::diffuse));
         textures_stones.push_back(Texture2D("stones_specular.jpg", TextureType::specular));
@@ -216,22 +212,26 @@ namespace PositronEngine
         LightMaterial light_material(textures_light);
 
         cube.setMaterial(&stones);
-        plate.setMaterial(&wood);
-        sphere.setMaterial(&stone);
+        plate.setMaterial(&stones);
+        sphere.setMaterial(&wood);
 
-        point_light.setLightMaterial(&light_material);
-        point_light1.setLightMaterial(&light_material);
-        point_light2.setLightMaterial(&light_material);
 
         std::vector<std::unique_ptr<GameObject>> objects;
-        objects.push_back(std::make_unique<SpherePrimitive>(sphere));
+        objects.push_back(std::make_unique<SpherePrimitive>(std::move(sphere)));
+
         objects.push_back(std::make_unique<CubePrimitive>(cube));
         objects.push_back(std::make_unique<PlatePrimitive>(plate));
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
-        light_objects.push_back(std::make_unique<PointLight>(point_light));
-        light_objects.push_back(std::make_unique<PointLight>(point_light1));
-        light_objects.push_back(std::make_unique<PointLight>(point_light2));
+        light_objects.emplace_back(std::make_unique<PointLight>("point1"));
+        light_objects.emplace_back(std::make_unique<PointLight>("point2"));
+
+        for(int i = 0; i < light_objects.size(); i++)
+        {
+            if(light_objects[i])
+                light_objects[i]->setLightMaterial(&light_material);
+        }
+
 
         std::string facesCubemap[6] =
         {
@@ -521,7 +521,7 @@ namespace PositronEngine
 
             if(ImGui::Button("Add Point Light"))
             {
-                light_objects.push_back(std::make_unique<PointLight>());
+                light_objects.push_back(std::make_unique<PointLight>("point_butt"));
                 light_objects[light_objects.size() - 1]->setLightMaterial(&light_material);
             }
             ImGui::Spacing();
@@ -556,6 +556,15 @@ namespace PositronEngine
             frame++;
             RenderOpenGL::postFrame(frame_time);
         }
+
+
+        for(size_t i = 0; i < light_objects.size(); i++)
+        {
+
+        }
+
+        for(size_t i = 0; i < objects.size(); i++)
+
         _window = nullptr;
         return 0;
     }

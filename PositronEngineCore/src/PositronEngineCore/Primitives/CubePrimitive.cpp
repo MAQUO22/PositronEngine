@@ -83,7 +83,7 @@ namespace PositronEngine
     CubePrimitive::~CubePrimitive()
     {
         _name = "";
-        delete _mesh;
+        //delete _mesh;
     }
 
 
@@ -93,7 +93,6 @@ namespace PositronEngine
         {
             LOG_CRITICAL("CUBE HAS NO MATERIAL!!!");
         }
-
         else
         {
             updateModelMatrix();
@@ -150,6 +149,11 @@ namespace PositronEngine
     Material* CubePrimitive::getMaterial()
     {
         return _material;
+    }
+
+    Mesh* CubePrimitive::getMesh()
+    {
+        return _mesh;
     }
 
     std::string CubePrimitive::getName()

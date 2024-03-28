@@ -19,6 +19,8 @@ namespace PositronEngine
             void setMaterial(Material* material) override;
 
             Material* getMaterial();
+            Mesh* getMesh();
+
             std::string getName() override;
 
         private:

@@ -4,13 +4,15 @@
 #include "PositronEngineCore/LightMaterial.hpp"
 
 #include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
+#include "PositronEngineCore/Primitives/CubePrimitive.hpp"
 
 namespace PositronEngine
 {
     class PointLight : public LightObject
     {
         public:
-            PointLight();
+            PointLight() = delete;
+            PointLight(std::string name);
             ~PointLight();
 
             float* getLocation() override;
@@ -34,7 +36,8 @@ namespace PositronEngine
             float _location[3] {0.0f, 0.0f, 0.0f};
             float _constantAttenuation {0.05};
             float _linearAttenuation {0.01};
+            std::string _name;
             LightMaterial* _light_material = nullptr;
-            SpherePrimitive _sphere {""};
+            CubePrimitive* _cube = nullptr;
     };
 }

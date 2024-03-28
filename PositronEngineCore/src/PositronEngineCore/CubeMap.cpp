@@ -55,7 +55,7 @@ namespace PositronEngine
 
     CubeMap::~CubeMap()
     {
-        delete _cube_map_texture;
+        //delete _cube_map_texture;
         delete _shader_program;
         delete _mesh;
     }

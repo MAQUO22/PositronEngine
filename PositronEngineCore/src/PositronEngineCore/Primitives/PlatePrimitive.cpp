@@ -39,7 +39,7 @@ namespace PositronEngine
     PlatePrimitive::~PlatePrimitive()
     {
         _name = "";
-        delete _mesh;
+        //delete _mesh;
     }
 
     void PlatePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)

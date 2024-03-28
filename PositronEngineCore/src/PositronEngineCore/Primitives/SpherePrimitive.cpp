@@ -1,19 +1,13 @@
 #include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
-#include "PositronEngineCore/Sphere.h"
 #include "PositronEngineCore/Camera.hpp"
 #include "PositronEngineCore/RenderOpenGL.hpp"
 #include "PositronEngineCore/Log.hpp"
 
 namespace PositronEngine
 {
-    namespace Sphere
+    namespace SphereMesh
     {
-        class Sphere temp(1.0f, 36, 18, true, 3);
-
-        std::vector<Vertex> vertices;
-
-
-        void floatToVertex(std::vector<Vertex>& vertices)
+        void floatToVertex(std::vector<Vertex>& vertices, Sphere& temp)
         {
             const float* sphereVerticesPtr = temp.getVertices();
             const float* sphereNormalsPtr = temp.getNormals();
@@ -29,7 +23,7 @@ namespace PositronEngine
             std::vector<float> sphereTexCoords(sphereTexCoordsPtr, sphereTexCoordsPtr + numTexCoords * 2);
 
             for (size_t i = 0, j = 0; i < sphereVertices.size(); i += 3, j += 2) {
-                vertices.push_back(Vertex{
+                vertices.emplace_back(Vertex{
                     glm::vec3(sphereVertices[i], sphereVertices[i + 1], sphereVertices[i + 2]), // позиция
                     glm::vec3(sphereNormals[i], sphereNormals[i + 1], sphereNormals[i + 2]),    // нормаль
                     glm::vec2(sphereTexCoords[j], sphereTexCoords[j + 1])                       // текстурные координаты
@@ -41,21 +35,22 @@ namespace PositronEngine
 
     SpherePrimitive::SpherePrimitive(std::string name)
     {
-        Sphere::floatToVertex(Sphere::vertices);
-
+        std::vector<Vertex> vertices;
         std::vector<GLuint> ind;
-        for(size_t i = 0; i < Sphere::temp.getIndexCount(); i++)
-            ind.push_back(Sphere::temp.getIndices()[i]);
+        _sphere = new Sphere(1.0f, 72, 36, true, 3);
+
+        SphereMesh::floatToVertex(vertices, *_sphere);
+        std::copy(_sphere->getIndices(), _sphere->getIndices() + _sphere->getIndexCount(), std::back_inserter(ind));
 
         _name = name;
-        _mesh = new Mesh(Sphere::vertices, ind);
-
+        _mesh = new Mesh(vertices, ind);
     }
 
     SpherePrimitive::~SpherePrimitive()
     {
         _name = "";
-        delete _mesh;
+        //delete _sphere;
+        //delete _mesh;
     }
 
     void SpherePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)
@@ -64,7 +59,6 @@ namespace PositronEngine
         {
             LOG_CRITICAL("CUBE HAS NO MATERIAL!!!");
         }
-
         else
         {
             updateModelMatrix();

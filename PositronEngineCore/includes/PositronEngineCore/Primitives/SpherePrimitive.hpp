@@ -4,6 +4,7 @@
 #include "PositronEngineCore/LightObject.hpp"
 #include "PositronEngineCore/Mesh.hpp"
 #include "PositronEngineCore/Material.hpp"
+#include "PositronEngineCore/Sphere.h"
 
 namespace PositronEngine
 {
@@ -24,8 +25,10 @@ namespace PositronEngine
 
         private:
             std::string _name;
+            Sphere* _sphere = nullptr;
             Mesh* _mesh = nullptr;
             Material* _material = nullptr;
+
             //Material
             //Collision
             //и т.д.

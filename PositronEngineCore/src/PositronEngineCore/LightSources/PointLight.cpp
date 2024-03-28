@@ -5,15 +5,19 @@
 
 namespace PositronEngine
 {
-    PointLight::PointLight()
+    PointLight::PointLight(std::string name)
     {
         LightTypeCounter::incrementPointLightCount();
-        _sphere.setScale(0.25f, 0.25f, 0.25f);
+        _name = name;
+        _cube = new CubePrimitive(_name);
+        _cube->setScale(0.25f, 0.25f, 0.25f);
     }
 
     PointLight::~PointLight()
     {
         LightTypeCounter::decrementPointLightCount();
+        //delete _light_material;
+        delete _cube;
     }
 
     float* PointLight::getLocation()
@@ -68,14 +72,14 @@ namespace PositronEngine
     void PointLight::draw(Camera& camera)
     {
 
-        _sphere.setLocation(_location[0],_location[1],_location[2]);
-        _sphere.updateModelMatrix();
+        _cube->setLocation(_location[0], _location[1], _location[2]);
+        _cube->updateModelMatrix();
 
         _light_material->getShaderProgram()->bind();
         _light_material->getShaderProgram()->setVec3("light_color", this->getColorVec3());
         _light_material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
 
-        _light_material->getShaderProgram()->setMatrix4("model_matrix", _sphere.getModelMatrix());
+        _light_material->getShaderProgram()->setMatrix4("model_matrix", _cube->getModelMatrix());
 
         _light_material->getShaderProgram()->setBool("textureAvailable", _light_material->getTexturesVector().size());
 
@@ -88,10 +92,11 @@ namespace PositronEngine
             }
         }
 
-        RenderOpenGL::draw(*_sphere.getMesh()->getVertexArray());
+        RenderOpenGL::draw(*_cube->getMesh()->getVertexArray());
 
         for(size_t i = 0; i < _light_material->getTexturesVector().size(); i++)
             _light_material->getTexturesVector()[i].unbindUnit();
+
     }
 
     void PointLight::drawWithoutMesh(Camera& camera) { }

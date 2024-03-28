@@ -9,7 +9,7 @@ namespace PositronEngine
         ShaderDataType::Float2
     };
 
-    Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices)
+    Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices)
     {
         Mesh::_vertices = std::move(vertices);
         Mesh::_indices = std::move(indices);
