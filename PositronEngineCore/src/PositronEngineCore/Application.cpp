@@ -44,7 +44,7 @@ namespace PositronEngine
 
     ShaderProgram* frame_buffer_program = nullptr;
     ShaderProgram* blur_program = nullptr;
-    ShaderProgram* wtf = nullptr;
+    
 
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
@@ -83,7 +83,7 @@ namespace PositronEngine
         _event_dispatcher.addEventListener<EventMouseMoved>(
             [](EventMouseMoved& event)
             {
-                //LOG_INFORMATION("Event MOUSE_MOVE is triggered. New mouse position is x:{0},y{1}", event.x, event.y);
+                LOG_INFORMATION("Event MOUSE_MOVE is triggered. New mouse position is x:{0},y{1}", event.x, event.y);
             }
         );
 
@@ -429,17 +429,13 @@ namespace PositronEngine
 
             ImGui::Begin("Scene");
             if (ImGui::TreeNode("Root")) {
-                // Элемент 1
                 if (ImGui::TreeNode("Object 1")) {
-                    // Информация об объекте 1
                     ImGui::Text("Object details go here");
 
                     ImGui::TreePop();
                 }
 
-                // Элемент 2
                 if (ImGui::TreeNode("Object 2")) {
-                    // Информация об объекте 2
                     ImGui::Text("Object details go here");
 
                     ImGui::TreePop();
@@ -503,7 +499,7 @@ namespace PositronEngine
                 ImGui::SliderFloat3(label_scale, objects[i]->getScale() , -5.0f, 5.0f);
                 ImGui::Spacing();
             }
-
+            
             ImGui::End();
 
             ImGui::Begin("Direction light");
@@ -547,7 +543,6 @@ namespace PositronEngine
             cube.setMaterial(&stones);
 
             onGUIdraw();
-
             GUImodule::onWindowUpdateDraw();
 
             //===============================================================================================================================
@@ -556,15 +551,6 @@ namespace PositronEngine
             frame++;
             RenderOpenGL::postFrame(frame_time);
         }
-
-
-        for(size_t i = 0; i < light_objects.size(); i++)
-        {
-
-        }
-
-        for(size_t i = 0; i < objects.size(); i++)
-
         _window = nullptr;
         return 0;
     }

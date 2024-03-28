@@ -3,8 +3,11 @@ cmake_minimum_required(VERSION 3.12)
 set(EDITOR_PROJECT_NAME PositronEngineEditor)
 
 # Добавляем опцию компиляции -fsanitize=address
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+if(UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+endif()
+
 
 add_executable(${EDITOR_PROJECT_NAME}
     src/main.cpp

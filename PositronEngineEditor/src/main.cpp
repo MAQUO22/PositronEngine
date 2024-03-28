@@ -130,7 +130,7 @@ class PositronEditor : public PositronEngine::Application
 int main()
 {
     auto application = std::make_unique<PositronEditor>();
-
+    
     application->start(1920,1080,"Positron Engine Editor");
 
 

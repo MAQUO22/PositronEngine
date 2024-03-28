@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <glm/trigonometric.hpp>
+#include <string>
 
 namespace PositronEngine
 {

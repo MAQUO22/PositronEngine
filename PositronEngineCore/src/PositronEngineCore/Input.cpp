@@ -2,7 +2,7 @@
 
 namespace PositronEngine
 {
-    bool Input::_keys_pressed[static_cast<int>(MouseButtonCode::MOUSE_BUTTON_LAST) + 1] = {};
+    bool Input::_keys_pressed[static_cast<int>(KeyCode::KEY_LAST) + 1] = {};
     bool Input::_mouse_buttons_pressed[static_cast<int>(MouseButtonCode::MOUSE_BUTTON_LAST) + 1] = {};
 
     bool Input::isKeyPressed(const KeyCode key_code)
