@@ -39,14 +39,14 @@ namespace PositronEngine
 
     CubeMap::CubeMap(CubeMapTexture& cube_map_texture)
     {
-        _cube_map_texture = &cube_map_texture;
+        _cube_map_texture = std::make_unique<CubeMapTexture>(cube_map_texture);
 
         std::vector<Vertex> verts(CubeMapMesh::verteces, CubeMapMesh::verteces + sizeof(CubeMapMesh::verteces) / sizeof(Vertex));
         std::vector<GLuint> ind(CubeMapMesh::indices, CubeMapMesh::indices + sizeof(CubeMapMesh::indices) / sizeof(GLuint));
 
-        _mesh = new Mesh(verts, ind);
+        _mesh = std::make_unique<Mesh>(verts, ind);
 
-        _shader_program = new ShaderProgram("skybox.vert", "skybox.frag");
+        _shader_program = std::make_shared<ShaderProgram>("skybox.vert", "skybox.frag");
 
         if(!_shader_program->isCompile())
         {
@@ -54,16 +54,9 @@ namespace PositronEngine
         }
     }
 
-    CubeMap::~CubeMap()
+    std::unique_ptr<CubeMapTexture> CubeMap::getCubeMapTexture()
     {
-        //delete _cube_map_texture;
-        delete _shader_program;
-        delete _mesh;
-    }
-
-    CubeMapTexture* CubeMap::getCubeMapTexture()
-    {
-        return _cube_map_texture;
+        return std::move(_cube_map_texture);
     }
 
     void CubeMap::draw(Camera& camera)

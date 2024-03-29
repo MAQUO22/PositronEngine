@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <memory>
 #include "PositronEngineCore/LightTypeCounter.hpp"
 
 namespace PositronEngine
@@ -42,7 +43,7 @@ namespace PositronEngine
             virtual float getConstantAttenuation() const;
             virtual float getLinearAttenuation() const;
 
-            virtual void setLightMaterial(LightMaterial* light_material);
+            virtual void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material);
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

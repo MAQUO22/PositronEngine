@@ -6,6 +6,7 @@
 #include "PositronEngineCore/ShaderProgram.hpp"
 
 #include <vector>
+#include <memory>
 
 namespace PositronEngine
 {
@@ -14,14 +15,14 @@ namespace PositronEngine
         public:
             CubeMap() = delete;
             CubeMap(CubeMapTexture& cube_map_texture);
-            ~CubeMap();
+            ~CubeMap() = default;
 
-            CubeMapTexture* getCubeMapTexture();
+            std::unique_ptr<CubeMapTexture> getCubeMapTexture();
             void draw(Camera& camera);
 
         private:
-            CubeMapTexture* _cube_map_texture = nullptr;
-            Mesh* _mesh = nullptr;
-            ShaderProgram* _shader_program = nullptr;
+            std::unique_ptr<CubeMapTexture> _cube_map_texture;
+            std::unique_ptr<Mesh> _mesh;
+            std::shared_ptr<ShaderProgram> _shader_program;
     };
 }

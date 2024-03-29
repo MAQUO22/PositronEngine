@@ -5,7 +5,7 @@ namespace PositronEngine
 {
     Material::Material(std::vector<Texture2D>& textures,LightReactionConfig light_config)
     {
-        _shader_program = new ShaderProgram("default.vert", "default.frag", "default.geom");
+        _shader_program = std::make_shared<ShaderProgram>("default.vert", "default.frag", "default.geom");
         if(!_shader_program->isCompile())
             LOG_CRITICAL("Material not compiled!");
 
@@ -14,7 +14,7 @@ namespace PositronEngine
 
     }
 
-    ShaderProgram* Material::getShaderProgram()
+    std::shared_ptr<ShaderProgram> Material::getShaderProgram()
     {
         return _shader_program;
     }
@@ -32,10 +32,5 @@ namespace PositronEngine
     void Material::setLightConfig(LightReactionConfig& config)
     {
         _light_config = config;
-    }
-
-    Material::~Material()
-    {
-        delete _shader_program;
     }
 }

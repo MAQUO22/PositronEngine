@@ -13,21 +13,25 @@ namespace PositronEngine
         public:
             SpherePrimitive() = delete;
             SpherePrimitive(std::string name);
-            ~SpherePrimitive();
+            ~SpherePrimitive() = default;
+
+            SpherePrimitive(const SpherePrimitive&);
+            SpherePrimitive& operator=(const SpherePrimitive&);
 
             void draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights) override;
 
-            void setMaterial(Material* material) override;
-            Material* getMaterial();
+            void setMaterial(const std::shared_ptr<Material>& material) override;
 
-            Mesh* getMesh();
+            std::shared_ptr<Material> getMaterial();
+            std::shared_ptr<Mesh> getMesh();
+
             std::string getName() override;
 
         private:
             std::string _name;
-            Sphere* _sphere = nullptr;
-            Mesh* _mesh = nullptr;
-            Material* _material = nullptr;
+            std::unique_ptr<Sphere> _sphere;
+            std::shared_ptr<Mesh> _mesh;
+            std::shared_ptr<Material> _material;
 
             //Material
             //Collision

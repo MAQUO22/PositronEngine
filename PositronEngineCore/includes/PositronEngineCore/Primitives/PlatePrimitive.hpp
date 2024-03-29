@@ -12,19 +12,24 @@ namespace PositronEngine
         public:
             PlatePrimitive() = delete;
             PlatePrimitive(std::string name);
-            ~PlatePrimitive();
+            ~PlatePrimitive() = default;
+
+            PlatePrimitive(const PlatePrimitive&);
+            PlatePrimitive& operator=(const PlatePrimitive&);
 
             void draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights) override;
 
-            void setMaterial(Material* material) override;
+            void setMaterial(const std::shared_ptr<Material>& material) override;
 
-            Material* getMaterial();
+            std::shared_ptr<Material> getMaterial();
+            std::unique_ptr<Mesh> getMesh();
+
             std::string getName() override;
 
         private:
             std::string _name;
-            Mesh* _mesh = nullptr;
-            Material* _material = nullptr;
+            std::unique_ptr<Mesh> _mesh;
+            std::shared_ptr<Material> _material;
 
             //Material
             //Collision

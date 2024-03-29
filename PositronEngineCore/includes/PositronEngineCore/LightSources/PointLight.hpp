@@ -2,9 +2,8 @@
 
 #include "PositronEngineCore/LightObject.hpp"
 #include "PositronEngineCore/LightMaterial.hpp"
-
-#include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
 #include "PositronEngineCore/Primitives/CubePrimitive.hpp"
+
 
 namespace PositronEngine
 {
@@ -13,7 +12,7 @@ namespace PositronEngine
         public:
             PointLight() = delete;
             PointLight(std::string name);
-            ~PointLight();
+            ~PointLight() = default;
 
             float* getLocation() override;
             glm::vec3 getLocationVec3() const override;
@@ -30,14 +29,14 @@ namespace PositronEngine
             void draw(Camera& camera) override;
             void drawWithoutMesh(Camera& camera) override;
 
-            void setLightMaterial(LightMaterial* light_material) override;
+            void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) override;
 
         private:
             float _location[3] {0.0f, 0.0f, 0.0f};
             float _constantAttenuation {0.05};
             float _linearAttenuation {0.01};
             std::string _name;
-            LightMaterial* _light_material = nullptr;
-            CubePrimitive* _cube = nullptr;
+            std::shared_ptr<LightMaterial> _light_material;
+            std::shared_ptr<CubePrimitive> _cube;
     };
 }

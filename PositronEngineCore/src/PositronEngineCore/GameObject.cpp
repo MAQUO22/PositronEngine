@@ -58,7 +58,7 @@ namespace PositronEngine
         _scale[2] = z;
     }
 
-    void GameObject::setMaterial(Material* material) {}
+    void GameObject::setMaterial(const std::shared_ptr<Material>& material) {}
 
     float* GameObject::getLocation()
     {

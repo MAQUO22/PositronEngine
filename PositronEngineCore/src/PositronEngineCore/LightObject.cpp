@@ -65,7 +65,7 @@ namespace PositronEngine
     float LightObject::getLinearAttenuation() const { return 0.0f; }
 
     void LightObject::draw(Camera& camera) {}
-    void LightObject::setLightMaterial(LightMaterial* light_material) {}
+    void LightObject::setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) {}
 
     void LightObject::drawWithoutMesh(Camera& camera) {}
 

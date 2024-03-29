@@ -43,10 +43,6 @@ namespace PositronEngine
     bool show = true;
     int frame = 0;
 
-    ShaderProgram* frame_buffer_program = nullptr;
-    ShaderProgram* blur_program = nullptr;
-    
-
     GLuint fullscreenQuadVAO, fullscreenQuadVBO;
 
     float quadVertices[] =
@@ -61,8 +57,6 @@ namespace PositronEngine
     Application::~Application()
     {
         LOG_INFORMATION("Closing application");
-        delete frame_buffer_program;
-        delete blur_program ;
     }
 
     Application::Application()
@@ -152,14 +146,14 @@ namespace PositronEngine
             }
         );
 
-        ShaderProgram* frame_buffer_program = new ShaderProgram("post_processing.vert", "post_processing.frag");
+        std::shared_ptr<ShaderProgram> frame_buffer_program = std::make_shared<ShaderProgram>("post_processing.vert", "post_processing.frag");
         if(!frame_buffer_program->isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
             return -2;
         }
 
-        ShaderProgram* blur_program = new ShaderProgram("post_processing.vert", "gaussian_blur.frag");
+        std::shared_ptr<ShaderProgram> blur_program = std::make_shared<ShaderProgram>("post_processing.vert", "gaussian_blur.frag");
         if(!frame_buffer_program->isCompile())
         {
             LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
@@ -206,22 +200,22 @@ namespace PositronEngine
             14.0f     // shininess
         };
 
-        Material stones(textures_stones, stones_config);
-        Material wood(textures_wood, wood_config);
-        Material stone(textures_stone, stones_config);
+        std::shared_ptr<Material> stones = std::make_shared<Material>(textures_stones, stones_config);
+        std::shared_ptr<Material> wood = std::make_shared<Material>(textures_wood, wood_config);
+        std::shared_ptr<Material> stone = std::make_shared<Material>(textures_stone, stones_config);
 
-        LightMaterial light_material(textures_light);
+        std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
-        cube.setMaterial(&stones);
-        plate.setMaterial(&stones);
-        sphere.setMaterial(&wood);
+        cube.setMaterial(stones);
+        plate.setMaterial(wood);
+        sphere.setMaterial(stone);
 
 
         std::vector<std::unique_ptr<GameObject>> objects;
         objects.push_back(std::make_unique<SpherePrimitive>(std::move(sphere)));
+        objects.push_back(std::make_unique<CubePrimitive>(std::move(cube)));
+        objects.push_back(std::make_unique<PlatePrimitive>(std::move(plate)));
 
-        objects.push_back(std::make_unique<CubePrimitive>(cube));
-        objects.push_back(std::make_unique<PlatePrimitive>(plate));
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
         light_objects.emplace_back(std::make_unique<PointLight>("point1"));
@@ -230,7 +224,7 @@ namespace PositronEngine
         for(int i = 0; i < light_objects.size(); i++)
         {
             if(light_objects[i])
-                light_objects[i]->setLightMaterial(&light_material);
+                light_objects[i]->setLightMaterial(light_material);
         }
 
 
@@ -344,10 +338,12 @@ namespace PositronEngine
                 }
             }
 
-
             for(size_t i = 0; i < objects.size(); i++)
             {
-                objects[i]->draw(camera, dir_light, light_objects);
+                if(stone)
+                {
+                    objects[i]->draw(camera, dir_light, light_objects);
+                }
             }
 
             if(draw_skybox)
@@ -360,7 +356,6 @@ namespace PositronEngine
 
 
             //================================================БУФЕР_КАДРА_ДЛЯ_ПИНГ_ПОНГ_БЛЮРА================================================
-
 
             bool horizontal = true, first_iteration = true;
             int amount = 6;
@@ -463,21 +458,21 @@ namespace PositronEngine
             if(ImGui::Button("Add Cube"))
             {
                 objects.push_back(std::make_unique<CubePrimitive>("cube_butt"));
-                objects[objects.size() - 1]->setMaterial(&stone);
+                objects[objects.size() - 1]->setMaterial(stone);
             }
             ImGui::SameLine();
 
             if(ImGui::Button("Add Sphere"))
             {
                 objects.push_back(std::make_unique<SpherePrimitive>("sphere_butt"));
-                objects[objects.size() - 1]->setMaterial(&stone);
+                objects[objects.size() - 1]->setMaterial(stone);
             }
             ImGui::SameLine();
 
             if(ImGui::Button("Add Plate"))
             {
                 objects.push_back(std::make_unique<PlatePrimitive>("plate_butt"));
-                objects[objects.size() - 1]->setMaterial(&stone);
+                objects[objects.size() - 1]->setMaterial(stone);
             }
             ImGui::SameLine();
 
@@ -520,7 +515,7 @@ namespace PositronEngine
                 if(light_objects.size() < max_point_lights)
                 {
                     light_objects.push_back(std::make_unique<PointLight>("point_butt"));
-                    light_objects[light_objects.size() - 1]->setLightMaterial(&light_material);
+                    light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
                 }
             }
             ImGui::Spacing();
@@ -542,8 +537,8 @@ namespace PositronEngine
 
             ImGui::End();
 
-            stones.setLightConfig(stones_config);
-            cube.setMaterial(&stones);
+            stones->setLightConfig(stones_config);
+            //cube.setMaterial(stones);
 
             onGUIdraw();
             GUImodule::onWindowUpdateDraw();

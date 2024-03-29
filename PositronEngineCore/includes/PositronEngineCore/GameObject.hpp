@@ -38,7 +38,7 @@ namespace PositronEngine
 
             glm::mat4 getModelMatrix();
 
-            virtual void setMaterial(Material* material);
+            virtual void setMaterial(const std::shared_ptr<Material>& material);
 
         private:
 

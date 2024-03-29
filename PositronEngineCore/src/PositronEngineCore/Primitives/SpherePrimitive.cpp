@@ -37,20 +37,34 @@ namespace PositronEngine
     {
         std::vector<Vertex> vertices;
         std::vector<GLuint> ind;
-        _sphere = new Sphere(1.0f, 144, 72, true, 3);
+        _sphere = std::make_unique<Sphere>(1.0f, 144, 72, true, 3);
 
         SphereMesh::floatToVertex(vertices, *_sphere);
         std::copy(_sphere->getIndices(), _sphere->getIndices() + _sphere->getIndexCount(), std::back_inserter(ind));
 
         _name = name;
-        _mesh = new Mesh(vertices, ind);
+        _mesh = std::make_shared<Mesh>(vertices, ind);
     }
 
-    SpherePrimitive::~SpherePrimitive()
+    SpherePrimitive::SpherePrimitive(const SpherePrimitive& other)
+    : _name(other._name),
+      _sphere(std::make_unique<Sphere>(*other._sphere)),
+      _mesh(other._mesh),
+      _material(other._material)
     {
-        _name = "";
-        delete _sphere;
-        delete _mesh;
+
+    }
+
+    SpherePrimitive& SpherePrimitive::operator=(const SpherePrimitive& other)
+    {
+        if (this != &other)
+        {
+            _name = other._name;
+            _sphere = std::make_unique<Sphere>(*other._sphere);
+            _mesh = other._mesh;
+            _material = other._material;
+        }
+        return *this;
     }
 
     void SpherePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)
@@ -63,25 +77,32 @@ namespace PositronEngine
         {
             updateModelMatrix();
 
-            _material->getShaderProgram()->bind();
-            _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            _material->getShaderProgram()->setVec3("direction_light_color", direction_light.getColorVec3());
-            _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
-            _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
-            _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
-            _material->getShaderProgram()->setVec3("light_direction", direction_light.getDirectionVec3());
-            _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
-            _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
-            _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
-
-            _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
-
-            for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+            if(_material->getShaderProgram())
             {
-                std::string uniform_color = "point_light_colors[" + std::to_string(i) + "]";
-                std::string uniform_position = "point_light_positions[" + std::to_string(i) + "]";
-                _material->getShaderProgram()->setVec3(uniform_color.c_str(), point_lights[i]->getColorVec3());
-                _material->getShaderProgram()->setVec3(uniform_position.c_str(), point_lights[i]->getLocationVec3());
+                _material->getShaderProgram()->bind();
+                _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+                _material->getShaderProgram()->setVec3("direction_light_color", direction_light.getColorVec3());
+                _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
+                _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
+                _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
+                _material->getShaderProgram()->setVec3("light_direction", direction_light.getDirectionVec3());
+                _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
+                _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
+                _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
+
+                _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
+
+                for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+                {
+                    std::string uniform_color = "point_light_colors[" + std::to_string(i) + "]";
+                    std::string uniform_position = "point_light_positions[" + std::to_string(i) + "]";
+                    _material->getShaderProgram()->setVec3(uniform_color.c_str(), point_lights[i]->getColorVec3());
+                    _material->getShaderProgram()->setVec3(uniform_position.c_str(), point_lights[i]->getLocationVec3());
+                }
+            }
+            else
+            {
+                LOG_CRITICAL("Sphere POINTER IS NULL");
             }
 
             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
@@ -110,12 +131,17 @@ namespace PositronEngine
         }
     }
 
-    Material* SpherePrimitive::getMaterial()
+    std::shared_ptr<Material> SpherePrimitive::getMaterial()
     {
         return _material;
     }
 
-    void SpherePrimitive::setMaterial(Material* material)
+    std::shared_ptr<Mesh> SpherePrimitive::getMesh()
+    {
+        return _mesh;
+    }
+
+    void SpherePrimitive::setMaterial(const std::shared_ptr<Material>& material)
     {
         _material = material;
     }
@@ -123,11 +149,6 @@ namespace PositronEngine
     std::string SpherePrimitive::getName()
     {
         return _name;
-    }
-
-    Mesh* SpherePrimitive::getMesh()
-    {
-        return _mesh;
     }
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
+#include <memory>
 
 namespace PositronEngine
 {
@@ -15,11 +16,11 @@ namespace PositronEngine
             VertexArray& operator=(VertexArray&& vertex_array) noexcept;
             VertexArray(VertexArray&& vertex_array) noexcept;
 
-            void addVertexBuffer(VertexBuffer& vertex_buffer);
-            void setIndexBuffer(IndexBuffer& index_buffer);
+            void addVertexBuffer(std::shared_ptr<VertexBuffer>& vertex_buffer);
+            void setIndexBuffer(std::shared_ptr<IndexBuffer>& _index_buffer);
 
-            IndexBuffer* getIndexBuffer() { return _index_buffer; }
-            VertexBuffer* getVertexBuffer() { return _vertex_buffer; }
+            std::shared_ptr<IndexBuffer> getIndexBuffer() { return _index_buffer; }
+            std::shared_ptr<VertexBuffer> getVertexBuffer() { return _vertex_buffer; }
 
             void bind() const;
             static void unbind();
@@ -30,7 +31,7 @@ namespace PositronEngine
             unsigned int _id;
             unsigned int _elements_count;
             size_t _indices_count = 0;
-            IndexBuffer* _index_buffer = nullptr;
-            VertexBuffer* _vertex_buffer = nullptr;
+            std::shared_ptr<IndexBuffer> _index_buffer;
+            std::shared_ptr<VertexBuffer> _vertex_buffer;
     };
 }

@@ -23,18 +23,21 @@ namespace PositronEngine
         public:
             Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices);
 
-            Mesh() = delete;
+            Mesh(Mesh& other);
+            Mesh& operator=(Mesh& other);
+
+            Mesh();
             ~Mesh();
 
-            VertexArray* getVertexArray();
+            std::shared_ptr<VertexArray> getVertexArray();
 
         private:
             std::vector<Vertex> _vertices;
             std::vector<GLuint> _indices;
 
-            VertexArray* _VAO = nullptr;
-            VertexBuffer* _positions_buffer = nullptr;
-            IndexBuffer* _indices_buffer = nullptr;
+            std::shared_ptr<VertexArray> _VAO;
+            std::shared_ptr<VertexBuffer> _positions_buffer;
+            std::shared_ptr<IndexBuffer> _indices_buffer;
 
     };
 }

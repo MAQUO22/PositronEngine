@@ -32,14 +32,26 @@ namespace PositronEngine
          std::vector<GLuint> ind(Plate::indices, Plate::indices + sizeof(Plate::indices) / sizeof(GLuint));
 
         _name = name;
-        _mesh = new Mesh(verts, ind);
+        _mesh = std::make_unique<Mesh>(verts, ind);
 
     }
 
-    PlatePrimitive::~PlatePrimitive()
+    PlatePrimitive::PlatePrimitive(const PlatePrimitive& other)
+    : _name(other._name),
+      _mesh(std::make_unique<Mesh>(*other._mesh)),
+      _material(other._material)
     {
-        _name = "";
-        //delete _mesh;
+    }
+
+    PlatePrimitive& PlatePrimitive::operator=(const PlatePrimitive& other)
+    {
+        if (this != &other)
+        {
+            _name = other._name;
+            _mesh = std::make_unique<Mesh>(*other._mesh);
+            _material = other._material;
+        }
+        return *this;
     }
 
     void PlatePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)
@@ -53,25 +65,28 @@ namespace PositronEngine
         {
             updateModelMatrix();
 
-            _material->getShaderProgram()->bind();
-            _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-            _material->getShaderProgram()->setVec3("direction_light_color", direction_light.getColorVec3());
-            _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
-            _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
-            _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
-            _material->getShaderProgram()->setVec3("light_direction", direction_light.getDirectionVec3());
-            _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
-            _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
-            _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
-
-            _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
-
-            for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+            if(_material->getShaderProgram())
             {
-                std::string uniform_color = "point_light_colors[" + std::to_string(i) + "]";
-                std::string uniform_position = "point_light_positions[" + std::to_string(i) + "]";
-                _material->getShaderProgram()->setVec3(uniform_color.c_str(), point_lights[i]->getColorVec3());
-                _material->getShaderProgram()->setVec3(uniform_position.c_str(), point_lights[i]->getLocationVec3());
+                _material->getShaderProgram()->bind();
+                _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
+                _material->getShaderProgram()->setVec3("direction_light_color", direction_light.getColorVec3());
+                _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
+                _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
+                _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
+                _material->getShaderProgram()->setVec3("light_direction", direction_light.getDirectionVec3());
+                _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
+                _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
+                _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
+
+                _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
+
+                for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+                {
+                    std::string uniform_color = "point_light_colors[" + std::to_string(i) + "]";
+                    std::string uniform_position = "point_light_positions[" + std::to_string(i) + "]";
+                    _material->getShaderProgram()->setVec3(uniform_color.c_str(), point_lights[i]->getColorVec3());
+                    _material->getShaderProgram()->setVec3(uniform_position.c_str(), point_lights[i]->getLocationVec3());
+                }
             }
 
             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
@@ -100,9 +115,14 @@ namespace PositronEngine
         }
     }
 
-    Material* PlatePrimitive::getMaterial()
+    std::shared_ptr<Material> PlatePrimitive::getMaterial()
     {
         return _material;
+    }
+
+    std::unique_ptr<Mesh> PlatePrimitive::getMesh()
+    {
+        return std::move(_mesh);
     }
 
     std::string PlatePrimitive::getName()
@@ -110,7 +130,7 @@ namespace PositronEngine
         return _name;
     }
 
-    void PlatePrimitive::setMaterial(Material* material)
+    void PlatePrimitive::setMaterial(const std::shared_ptr<Material>& material)
     {
         _material = material;
     }
