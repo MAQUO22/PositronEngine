@@ -37,7 +37,7 @@ namespace PositronEngine
     {
         std::vector<Vertex> vertices;
         std::vector<GLuint> ind;
-        _sphere = new Sphere(1.0f, 72, 36, true, 3);
+        _sphere = new Sphere(1.0f, 144, 72, true, 3);
 
         SphereMesh::floatToVertex(vertices, *_sphere);
         std::copy(_sphere->getIndices(), _sphere->getIndices() + _sphere->getIndexCount(), std::back_inserter(ind));
@@ -49,8 +49,8 @@ namespace PositronEngine
     SpherePrimitive::~SpherePrimitive()
     {
         _name = "";
-        //delete _sphere;
-        //delete _mesh;
+        delete _sphere;
+        delete _mesh;
     }
 
     void SpherePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)

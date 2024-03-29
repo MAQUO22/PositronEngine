@@ -6,7 +6,7 @@ namespace PositronEngine
 {
     namespace CubeMapMesh
     {
-       Vertex verteces[] =
+        Vertex verteces[] =
         {
             //position
             Vertex{glm::vec3(-1.0f,  -1.0f,  1.0f)},
@@ -37,9 +37,9 @@ namespace PositronEngine
         };
     }
 
-    CubeMap::CubeMap(CubeMapTexture* cube_map_texture)
+    CubeMap::CubeMap(CubeMapTexture& cube_map_texture)
     {
-        _cube_map_texture = cube_map_texture;
+        _cube_map_texture = &cube_map_texture;
 
         std::vector<Vertex> verts(CubeMapMesh::verteces, CubeMapMesh::verteces + sizeof(CubeMapMesh::verteces) / sizeof(Vertex));
         std::vector<GLuint> ind(CubeMapMesh::indices, CubeMapMesh::indices + sizeof(CubeMapMesh::indices) / sizeof(GLuint));
@@ -47,6 +47,7 @@ namespace PositronEngine
         _mesh = new Mesh(verts, ind);
 
         _shader_program = new ShaderProgram("skybox.vert", "skybox.frag");
+
         if(!_shader_program->isCompile())
         {
             LOG_CRITICAL("SKYBOX SHADER PROGRAM IS NOT COMPILED!!!");
@@ -65,7 +66,7 @@ namespace PositronEngine
         return _cube_map_texture;
     }
 
-    void CubeMap::draw(Camera& camera, float window_width, float window_height)
+    void CubeMap::draw(Camera& camera)
     {
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -76,7 +77,8 @@ namespace PositronEngine
         glm::mat4 projection = glm::mat4(1.0f);
 
         view = glm::mat4(glm::mat3(glm::lookAt(camera.getLocation(), camera.getLocation() + camera.getDirection(), camera.getUp())));
-        projection = glm::perspective(glm::radians(45.0f), (float)window_width / window_height, 0.1f, 1000.0f);
+        projection = glm::perspective(glm::radians(camera.getFieldOfView()), camera.getAspectRatio(), camera.getNearPlane(), camera.getFarPlane());
+
         _shader_program->setMatrix4("view", view);
         _shader_program->setMatrix4("projection", projection);
 

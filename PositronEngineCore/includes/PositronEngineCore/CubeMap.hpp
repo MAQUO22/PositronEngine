@@ -13,11 +13,11 @@ namespace PositronEngine
     {
         public:
             CubeMap() = delete;
-            CubeMap(CubeMapTexture* cube_map_texture);
+            CubeMap(CubeMapTexture& cube_map_texture);
             ~CubeMap();
 
             CubeMapTexture* getCubeMapTexture();
-            void draw(Camera& camera, float window_width, float window_height);
+            void draw(Camera& camera);
 
         private:
             CubeMapTexture* _cube_map_texture = nullptr;

@@ -37,6 +37,7 @@ namespace PositronEngine
             const float getFarPlane() { return _far_plane; }
             const float getNearPlane() { return _near_plane; }
             const float getFieldOfView() { return _field_of_view; }
+            const float getAspectRatio() { return _viewport_width/ _viewport_height; }
 
             void moveForward(const float delta);
             void moveUp(const float delta);

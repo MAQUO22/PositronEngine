@@ -32,6 +32,7 @@
 namespace PositronEngine
 {
 
+    int max_point_lights = 5;
     bool bloom_activate = false;
     bool draw_without_mesh = false;
     bool draw_skybox = true;
@@ -83,7 +84,7 @@ namespace PositronEngine
         _event_dispatcher.addEventListener<EventMouseMoved>(
             [](EventMouseMoved& event)
             {
-                LOG_INFORMATION("Event MOUSE_MOVE is triggered. New mouse position is x:{0},y{1}", event.x, event.y);
+                //LOG_INFORMATION("Event MOUSE_MOVE is triggered. New mouse position is x:{0},y{1}", event.x, event.y);
             }
         );
 
@@ -245,7 +246,7 @@ namespace PositronEngine
 
         CubeMapTexture cubemapTexture(facesCubemap);
 
-        CubeMap skybox(&cubemapTexture);
+        CubeMap skybox(cubemapTexture);
 
         FrameBuffer framebuffer;
 
@@ -351,7 +352,7 @@ namespace PositronEngine
 
             if(draw_skybox)
             {
-                skybox.draw(camera, window_width, window_height);
+                skybox.draw(camera);
             }
 
             //===============================================================================================================================
@@ -514,11 +515,13 @@ namespace PositronEngine
             ImGui::Begin("Point light");
             ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);
 
-
             if(ImGui::Button("Add Point Light"))
             {
-                light_objects.push_back(std::make_unique<PointLight>("point_butt"));
-                light_objects[light_objects.size() - 1]->setLightMaterial(&light_material);
+                if(light_objects.size() < max_point_lights)
+                {
+                    light_objects.push_back(std::make_unique<PointLight>("point_butt"));
+                    light_objects[light_objects.size() - 1]->setLightMaterial(&light_material);
+                }
             }
             ImGui::Spacing();
 

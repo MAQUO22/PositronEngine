@@ -15,7 +15,7 @@ namespace PositronEngine
         Mesh::_indices = std::move(indices);
 
         _positions_buffer = new VertexBuffer(Mesh::_vertices.data(), Mesh::_vertices.size() * sizeof(Vertex), mesh);
-        _indices_buffer = new IndexBuffer(Mesh::_indices.data(), Mesh::_indices.size() * sizeof(GLuint));
+        _indices_buffer = new IndexBuffer(Mesh::_indices.data(), Mesh::_indices.size());
 
         _VAO = new VertexArray();
         _VAO->addVertexBuffer(*_positions_buffer);

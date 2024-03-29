@@ -101,7 +101,7 @@ class PositronEditor : public PositronEngine::Application
             {
                 camera.setRotation(glm::vec3(camera_rotation[0], camera_rotation[1], camera_rotation[2]));
             }
-            ImGui::SliderFloat("Speed", &camera_speed, 0.05f, 20.0f);
+            ImGui::SliderFloat("Speed", &camera_speed, 0.05f, 0.50f);
 
             if(ImGui::SliderFloat("Camera FOV", &camera_FOV, 45.0f, 120.0f))
             {
