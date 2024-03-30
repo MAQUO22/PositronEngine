@@ -5,6 +5,10 @@
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
+
+uniform int number_of_point_lights;
+uniform int number_of_spot_lights;
+
 out vec3 frag_position;
 out vec3 frag_normal;
 out vec2 tex_coord;
@@ -12,7 +16,9 @@ out vec3 camera_position;
 out vec3 light_direction;
 
 out vec3 point_light_positions[MAX_LIGHT_SOURCES];
-out vec3 point_light_colors[MAX_LIGHT_SOURCES];
+
+out vec3 spot_light_positions[MAX_LIGHT_SOURCES];
+out vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 
 in DATA
 {
@@ -26,9 +32,10 @@ in DATA
 
     vec3 light_direction;
 
-    int number_of_point_lights;
     vec3 point_light_positions[MAX_LIGHT_SOURCES];
-    vec3 point_light_colors[MAX_LIGHT_SOURCES];
+
+    vec3 spot_light_positions[MAX_LIGHT_SOURCES];
+    vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 } data_in[];
 
 void main()
@@ -67,9 +74,13 @@ void main()
         camera_position = TBN * data_in[i].camera_position;
         light_direction = TBN * data_in[i].light_direction;
 
-        for (int j = 0; j < data_in[0].number_of_point_lights; j++) {
+        for (int j = 0; j < number_of_point_lights; j++) {
             point_light_positions[j] = TBN * data_in[i].point_light_positions[j];
-            point_light_colors[j] = data_in[i].point_light_colors[j];
+        }
+
+        for (int j = 0; j < number_of_spot_lights; j++) {
+            spot_light_positions[j] = TBN * data_in[i].spot_light_positions[j];
+            spot_light_direction[j] = data_in[i].spot_light_direction[j];
         }
 
         EmitVertex();

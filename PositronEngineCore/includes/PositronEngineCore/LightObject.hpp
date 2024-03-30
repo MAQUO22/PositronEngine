@@ -9,6 +9,13 @@ namespace PositronEngine
     class Camera;
     class LightMaterial;
 
+    enum class LightType
+    {
+        direction,
+        point,
+        spot
+    };
+
     class LightObject
     {
         public:
@@ -40,10 +47,23 @@ namespace PositronEngine
             virtual void setConstantAttenuation(const float attenuation);
             virtual void setLinearAttenuation(const float attenuation);
 
-            virtual float getConstantAttenuation() const;
-            virtual float getLinearAttenuation() const;
+            virtual float* getPtrConstantAttenuation();
+            virtual float* getPtrLinearAttenuation();
+
+            virtual float getConstantAttenuation();
+            virtual float getLinearAttenuation();
+
+            virtual void setOuterCone(const float outer_cone);
+            virtual float* getPtrOuterCone();
+            virtual float getOuterCone();
+
+            virtual void setInnerCone(const float inner_cone);
+            virtual float* getPtrInnerCone();
+            virtual float getInnerCone();
 
             virtual void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material);
+
+            virtual LightType getLightType() ;
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

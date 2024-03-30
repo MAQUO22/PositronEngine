@@ -67,7 +67,7 @@ namespace PositronEngine
         return *this;
     }
 
-    void SpherePrimitive::draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights)
+    void SpherePrimitive::draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources)
     {
         if(_material == nullptr)
         {
@@ -80,29 +80,68 @@ namespace PositronEngine
             if(_material->getShaderProgram())
             {
                 _material->getShaderProgram()->bind();
+
                 _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-                _material->getShaderProgram()->setVec3("direction_light_color", direction_light.getColorVec3());
+                _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
+                _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
+
                 _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
                 _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
-                _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
-                _material->getShaderProgram()->setVec3("light_direction", direction_light.getDirectionVec3());
                 _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
                 _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
-                _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
 
                 _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
+                _material->getShaderProgram()->setInt("number_of_spot_lights", LightTypeCounter::getNumberOfSpotLights());
 
-                for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+                if(light_sources.size() != 0)
                 {
-                    std::string uniform_color = "point_light_colors[" + std::to_string(i) + "]";
-                    std::string uniform_position = "point_light_positions[" + std::to_string(i) + "]";
-                    _material->getShaderProgram()->setVec3(uniform_color.c_str(), point_lights[i]->getColorVec3());
-                    _material->getShaderProgram()->setVec3(uniform_position.c_str(), point_lights[i]->getLocationVec3());
+                    for(size_t i = 0, p = 0, s = 0; i < light_sources.size(); i++)
+                    {
+                        if(light_sources[i]->getLightType() == LightType::point)
+                        {
+                            if(p < LightTypeCounter::getNumberOfPointLights())
+                            {
+                                std::string uniform_color = "point_light_colors[" + std::to_string(p) + "]";
+                                std::string uniform_position = "point_light_positions[" + std::to_string(p) + "]";
+                                std::string uniform_constant_attenuation = "constant_attenuation[" + std::to_string(p) + "]";
+                                std::string uniform_linear_attenuation= "linear_attenuation[" + std::to_string(p) + "]";
+
+                                _material->getShaderProgram()->setVec3(uniform_color.c_str(), light_sources[i]->getColorVec3());
+                                _material->getShaderProgram()->setVec3(uniform_position.c_str(), light_sources[i]->getLocationVec3());
+                                _material->getShaderProgram()->setFloat(uniform_constant_attenuation.c_str(),
+                                                                        light_sources[i]->getConstantAttenuation());
+                                _material->getShaderProgram()->setFloat(uniform_linear_attenuation.c_str(),
+                                                                        light_sources[i]->getLinearAttenuation());
+
+                                p++;
+                            }
+                        }
+                        else if(light_sources[i]->getLightType() == LightType::spot)
+                        {
+                            if(s < LightTypeCounter::getNumberOfSpotLights())
+                            {
+                                std::string uniform_color = "spot_light_colors[" + std::to_string(s) + "]";
+                                std::string uniform_position = "spot_light_positions[" + std::to_string(s) + "]";
+                                std::string uniform_direction = "spot_light_direction[" + std::to_string(s) + "]";
+                                std::string uniform_outer_cone = "outer_cone[" + std::to_string(s) + "]";
+                                std::string uniform_inner_cone = "inner_cone[" + std::to_string(s) + "]";
+
+                                _material->getShaderProgram()->setVec3(uniform_color.c_str(), light_sources[i]->getColorVec3());
+                                _material->getShaderProgram()->setVec3(uniform_position.c_str(), light_sources[i]->getLocationVec3());
+                                _material->getShaderProgram()->setVec3(uniform_direction.c_str(), light_sources[i]->getDirectionVec3());
+                                _material->getShaderProgram()->setFloat(uniform_outer_cone.c_str(), light_sources[i]->getOuterCone());
+                                _material->getShaderProgram()->setFloat(uniform_inner_cone.c_str(), light_sources[i]->getInnerCone());
+
+                                s++;
+                            }
+                        }
+                        else
+                        {
+                            _material->getShaderProgram()->setVec3("direction_light_color", light_sources[i]->getColorVec3());
+                            _material->getShaderProgram()->setVec3("light_direction", light_sources[i]->getDirectionVec3());
+                        }
+                    }
                 }
-            }
-            else
-            {
-                LOG_CRITICAL("Sphere POINTER IS NULL");
             }
 
             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)

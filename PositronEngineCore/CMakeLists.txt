@@ -36,6 +36,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/LightTypeCounter.hpp
     includes/PositronEngineCore/LightSources/DirectionLight.hpp
     includes/PositronEngineCore/LightSources/PointLight.hpp
+    includes/PositronEngineCore/LightSources/SpotLight.hpp
 )
 
 set(ENGINE_PRIVATE_INCLUDES
@@ -76,6 +77,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/LightTypeCounter.cpp
     src/PositronEngineCore/LightSources/DirectionLight.cpp
     src/PositronEngineCore/LightSources/PointLight.cpp
+    src/PositronEngineCore/LightSources/SpotLight.cpp
 )
 
 set(ENGINE_ALL_SOURCES

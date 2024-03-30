@@ -16,7 +16,7 @@ namespace PositronEngine
     {
         public:
 
-            virtual void draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights) = 0;
+            virtual void draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources) = 0;
 
             virtual ~GameObject() = default;
 

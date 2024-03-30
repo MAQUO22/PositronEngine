@@ -8,7 +8,7 @@ namespace PositronEngine
     {
         public:
             DirectionLight();
-            ~DirectionLight();
+            ~DirectionLight() = default;
 
             void setDirection(const float x, const float y, const float z) override;
             void setDirectionVec3(const glm::vec3& direction) override;
@@ -20,8 +20,10 @@ namespace PositronEngine
             void draw(Camera& camera) override;
             void drawWithoutMesh(Camera& camera) override;
 
-        private:
+            LightType getLightType() override;
 
+        private:
             float _direction[3] {1.0f, 0.0f, 1.0f};
+            LightType _type;
     };
 }

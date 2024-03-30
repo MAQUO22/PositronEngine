@@ -7,10 +7,15 @@ uniform mat4 model_matrix;
 uniform mat4 view_projection_matrix;
 uniform vec3 camera_position;
 
-uniform int number_of_point_lights;
 uniform vec3 light_direction;
+
+uniform int number_of_point_lights;
+uniform int number_of_spot_lights;
+
 uniform vec3 point_light_positions[MAX_LIGHT_SOURCES];
-uniform vec3 point_light_colors[MAX_LIGHT_SOURCES];
+
+uniform vec3 spot_light_positions[MAX_LIGHT_SOURCES];
+uniform vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 
 
 // vertex attribs (input)
@@ -29,10 +34,11 @@ out DATA
     vec3 camera_position;
 
     vec3 light_direction;
-    int number_of_point_lights;
-    vec3 point_light_positions[MAX_LIGHT_SOURCES];
-    vec3 point_light_colors[MAX_LIGHT_SOURCES];
 
+    vec3 point_light_positions[MAX_LIGHT_SOURCES];
+
+    vec3 spot_light_positions[MAX_LIGHT_SOURCES];
+    vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 } data_out;
 
 void main()
@@ -48,12 +54,15 @@ void main()
     data_out.camera_position = camera_position;
     data_out.light_direction = light_direction;
 
-    data_out.number_of_point_lights = number_of_point_lights;
-
     for(int i = 0; i < number_of_point_lights; i++)
     {
         data_out.point_light_positions[i] = point_light_positions[i];
-        data_out.point_light_colors[i] = point_light_colors[i];
+    }
+
+    for(int j = 0; j < number_of_spot_lights; j++)
+    {
+        data_out.spot_light_positions[j] = spot_light_positions[j];
+        data_out.spot_light_direction[j] = spot_light_direction[j];
     }
 
 }

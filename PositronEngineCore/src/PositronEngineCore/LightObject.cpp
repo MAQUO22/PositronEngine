@@ -61,8 +61,21 @@ namespace PositronEngine
     void LightObject::setConstantAttenuation(const float attenuation) {}
     void LightObject::setLinearAttenuation(const float attenuation) {}
 
-    float LightObject::getConstantAttenuation() const { return 0.0f; }
-    float LightObject::getLinearAttenuation() const { return 0.0f; }
+    float* LightObject::getPtrConstantAttenuation() { return nullptr; }
+    float* LightObject::getPtrLinearAttenuation() { return nullptr; }
+
+    float LightObject::getConstantAttenuation() { return 0.0f; }
+    float LightObject::getLinearAttenuation() { return 0.0f; }
+
+    void LightObject::setOuterCone(const float outer_cone) {}
+    float* LightObject::getPtrOuterCone() { return nullptr; }
+    float LightObject::getOuterCone() { return 0.0f; }
+
+    void LightObject::setInnerCone(const float inner_cone) {}
+    float* LightObject::getPtrInnerCone() { return nullptr; }
+    float LightObject::getInnerCone() { return 0.0f; }
+
+    LightType LightObject::getLightType() {};
 
     void LightObject::draw(Camera& camera) {}
     void LightObject::setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) {}

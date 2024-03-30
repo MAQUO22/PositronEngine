@@ -17,7 +17,7 @@ namespace PositronEngine
             CubePrimitive(const CubePrimitive&);
             CubePrimitive& operator=(const CubePrimitive&);
 
-            void draw(Camera& camera, LightObject& direction_light, std::vector<std::unique_ptr<LightObject>>& point_lights) override;
+            void draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources) override;
 
             void setMaterial(const std::shared_ptr<Material>& material) override;
 

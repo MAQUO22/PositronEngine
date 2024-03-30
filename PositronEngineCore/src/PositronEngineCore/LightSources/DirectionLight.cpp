@@ -3,9 +3,11 @@
 
 namespace PositronEngine
 {
-    DirectionLight::DirectionLight() {}
+    DirectionLight::DirectionLight()
+    {
+        _type = LightType::direction;
+    }
 
-    DirectionLight::~DirectionLight() {}
 
     void DirectionLight::setDirection(const float x, const float y, const float z)
     {
@@ -29,6 +31,11 @@ namespace PositronEngine
     glm::vec3 DirectionLight::getDirectionVec3() const
     {
         return glm::vec3(_direction[0], _direction[1], _direction[2]);
+    }
+
+    LightType DirectionLight::getLightType()
+    {
+        return _type;
     }
 
     void DirectionLight::draw(Camera& camera) {}

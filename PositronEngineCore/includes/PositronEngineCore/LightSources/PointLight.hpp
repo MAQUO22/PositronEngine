@@ -12,7 +12,7 @@ namespace PositronEngine
         public:
             PointLight() = delete;
             PointLight(std::string name);
-            ~PointLight() = default;
+            ~PointLight();
 
             float* getLocation() override;
             glm::vec3 getLocationVec3() const override;
@@ -23,20 +23,27 @@ namespace PositronEngine
             void setConstantAttenuation(const float attenuation) override;
             void setLinearAttenuation(const float attenuation) override;
 
-            float getConstantAttenuation() const override;
-            float getLinearAttenuation() const override;
+            float* getPtrConstantAttenuation() override;
+            float getConstantAttenuation() override;
+            float* getPtrLinearAttenuation() override;
+            float getLinearAttenuation() override;
 
             void draw(Camera& camera) override;
             void drawWithoutMesh(Camera& camera) override;
 
             void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) override;
 
+            LightType getLightType() override;
+
         private:
             float _location[3] {0.0f, 0.0f, 0.0f};
             float _constantAttenuation {0.05};
             float _linearAttenuation {0.01};
             std::string _name;
+            LightType _type;
+
             std::shared_ptr<LightMaterial> _light_material;
             std::shared_ptr<CubePrimitive> _cube;
+
     };
 }

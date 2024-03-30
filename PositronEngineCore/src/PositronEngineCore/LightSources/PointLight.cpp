@@ -8,9 +8,16 @@ namespace PositronEngine
     PointLight::PointLight(std::string name)
     {
         LightTypeCounter::incrementPointLightCount();
+        _type = LightType::point;
         _name = name;
+
         _cube = std::make_shared<CubePrimitive>(_name);
         _cube->setScale(0.25f, 0.25f, 0.25f);
+    }
+
+    PointLight::~PointLight()
+    {
+        LightTypeCounter::decrementPointLightCount();
     }
 
     float* PointLight::getLocation()
@@ -47,14 +54,24 @@ namespace PositronEngine
         _linearAttenuation = attenuation;
     }
 
-    float PointLight::getConstantAttenuation() const
+    float* PointLight::getPtrConstantAttenuation()
+    {
+        return &_constantAttenuation;
+    }
+
+    float PointLight::getConstantAttenuation()
     {
         return _constantAttenuation;
     }
 
-    float PointLight::getLinearAttenuation() const
+    float* PointLight::getPtrLinearAttenuation()
     {
-        return _constantAttenuation;
+        return &_linearAttenuation;
+    }
+
+    float PointLight::getLinearAttenuation()
+    {
+        return _linearAttenuation;
     }
 
     void PointLight::setLightMaterial(const std::shared_ptr<LightMaterial>& light_material)
@@ -62,6 +79,10 @@ namespace PositronEngine
         _light_material = light_material;
     }
 
+    LightType PointLight::getLightType()
+    {
+        return _type;
+    }
     void PointLight::draw(Camera& camera)
     {
 

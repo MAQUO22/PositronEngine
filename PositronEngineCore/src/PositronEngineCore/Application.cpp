@@ -22,6 +22,7 @@
 
 #include "PositronEngineCore/LightSources/DirectionLight.hpp"
 #include "PositronEngineCore/LightSources/PointLight.hpp"
+#include "PositronEngineCore/LightSources/SpotLight.hpp"
 
 #include <imgui/imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -32,7 +33,7 @@
 namespace PositronEngine
 {
 
-    int max_point_lights = 5;
+    int max_light_sources_for_type = 5;
     bool bloom_activate = false;
     bool draw_without_mesh = false;
     bool draw_skybox = true;
@@ -218,8 +219,11 @@ namespace PositronEngine
 
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
+        light_objects.emplace_back(std::make_unique<DirectionLight>());
         light_objects.emplace_back(std::make_unique<PointLight>("point1"));
-        light_objects.emplace_back(std::make_unique<PointLight>("point2"));
+        // light_objects.emplace_back(std::make_unique<PointLight>("point2"));
+        light_objects.emplace_back(std::make_unique<SpotLight>("spot1"));
+        // light_objects.emplace_back(std::make_unique<SpotLight>("spot2"));
 
         for(int i = 0; i < light_objects.size(); i++)
         {
@@ -323,6 +327,9 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
+
+            LOG_INFORMATION("SpotLight count - {0}, PointLigh count {1}",
+                            LightTypeCounter::getNumberOfSpotLights(), LightTypeCounter::getNumberOfPointLights());
             if(draw_without_mesh)
             {
                 for(size_t i = 0; i < light_objects.size(); i++)
@@ -342,7 +349,7 @@ namespace PositronEngine
             {
                 if(stone)
                 {
-                    objects[i]->draw(camera, dir_light, light_objects);
+                    objects[i]->draw(camera, light_objects);
                 }
             }
 
@@ -485,9 +492,9 @@ namespace PositronEngine
                 char label_location[64];
                 char label_rotation[64];
                 char label_scale[64];
-                snprintf(label_location, 64, "%s_location", objects[i]->getName().c_str());
-                snprintf(label_rotation, 64, "%s_rotation", objects[i]->getName().c_str());
-                snprintf(label_scale, 64, "%s_scale", objects[i]->getName().c_str());
+                snprintf(label_location, 64, "%s_LOCATION", objects[i]->getName().c_str());
+                snprintf(label_rotation, 64, "%s_ROTATION", objects[i]->getName().c_str());
+                snprintf(label_scale, 64, "%s_SCALE", objects[i]->getName().c_str());
 
 
                 ImGui::SliderFloat3(label_location, objects[i]->getLocation(), -10.0f, 10.0f);
@@ -498,44 +505,107 @@ namespace PositronEngine
             
             ImGui::End();
 
-            ImGui::Begin("Direction light");
-            ImGui::ColorEdit3("light_color", dir_light.getColor());
-            ImGui::SliderFloat3("light_direction", dir_light.getDirection(), -10.0f, 10.0f);
+            ImGui::Begin("Material");
             ImGui::SliderFloat("ambient_factor", &stones_config.ambient, 0.0f, 2.0f);
             ImGui::SliderFloat("diffuse_factor", &stones_config.diffuse, 0.0f, 2.0f);
             ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
             ImGui::SliderFloat("specular_factor", &stones_config.specular, 0.0f, 1.0f);
             ImGui::End();
 
-            ImGui::Begin("Point light");
+
+
+
+
+
+            ImGui::Begin("Light Sources");
             ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);
 
             if(ImGui::Button("Add Point Light"))
             {
-                if(light_objects.size() < max_point_lights)
+                if(LightTypeCounter::getNumberOfPointLights() < max_light_sources_for_type)
                 {
                     light_objects.push_back(std::make_unique<PointLight>("point_butt"));
                     light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
                 }
             }
+            ImGui::SameLine();
+
+            if(ImGui::Button("Add Spot Light"))
+            {
+                if(LightTypeCounter::getNumberOfSpotLights() < max_light_sources_for_type)
+                {
+                    light_objects.push_back(std::make_unique<SpotLight>("spot_butt"));
+                    light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
+                }
+            }
+
             ImGui::Spacing();
+
 
             for(size_t i = 0; i < light_objects.size(); i++)
             {
                 char label_color[64];
                 char label_location[64];
-                snprintf(label_color, 64, "point_light_color %d", i + 1);
-                snprintf(label_location, 64, "point_light_location %d", i + 1);
+                char label_direction[64];
+
+                if(light_objects[i]->getLightType() == LightType::point)
+                {
+
+                    char label_const_attenation[64];
+                    char label_linear_attenation[64];
+
+                    snprintf(label_color, 64, "POINT_LIGHT_COLOR %d", i + 1);
+                    snprintf(label_location, 64, "POINT_LIGHT_LOCATION %d", i + 1);
+                    snprintf(label_const_attenation, 64, "POINT_LIGHT_CONST_ATTENATION %d", i + 1);
+                    snprintf(label_linear_attenation, 64, "POINT_LIGHT_LINEAR_ATTENATION %d", i + 1);
+
+                    ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
+                    ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f);
+                    ImGui::SliderFloat(label_linear_attenation, light_objects[i]->getPtrLinearAttenuation() ,0.0f, 0.3f);
+                    ImGui::SliderFloat(label_const_attenation, light_objects[i]->getPtrConstantAttenuation() ,0.0f, 0.3f);
 
 
-                ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f);
-                ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
+                    ImGui::Spacing();
+                }
+                else if(light_objects[i]->getLightType() == LightType::spot)
+                {
+                    char label_outer_cone[64];
+                    char label_inner_cone[64];
+
+                    snprintf(label_color, 64, "SPOT_LIGHT_COLOR %d", i + 1);
+                    snprintf(label_location, 64, "SPOT_LIGHT_LOCATION %d", i + 1);
+                    snprintf(label_direction, 64, "SPOT_LIGHT_DIRECTION %d", i + 1);
+                    snprintf(label_outer_cone, 64, "SPOT_LIGHT_OUTER_CONE %d", i + 1);
+                    snprintf(label_inner_cone, 64, "SPOT_LIGHT_INNER_CONE %d", i + 1);
 
 
-                ImGui::Spacing();
+                    ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
+                    ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f);
+                    ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f);
+                    ImGui::SliderFloat(label_inner_cone, light_objects[i]->getPtrInnerCone(), light_objects[i]->getOuterCone(), 2.0f);
+                    ImGui::SliderFloat(label_outer_cone, light_objects[i]->getPtrOuterCone(), 0.0f, light_objects[i]->getInnerCone());
+
+                    ImGui::Spacing();
+                }
+                else
+                {
+                    snprintf(label_direction, 64, "DIRECT_LIGHT_DIRECTION");
+                    snprintf(label_color, 64, "DIRECT_LIGHT_COLOR");
+
+                    ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
+                    ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f);
+                    ImGui::Spacing();
+                }
             }
 
             ImGui::End();
+
+
+
+
+
+
+
 
             stones->setLightConfig(stones_config);
             //cube.setMaterial(stones);
