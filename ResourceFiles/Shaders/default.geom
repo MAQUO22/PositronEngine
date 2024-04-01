@@ -13,12 +13,13 @@ out vec3 frag_position;
 out vec3 frag_normal;
 out vec2 tex_coord;
 out vec3 camera_position;
-out vec3 light_direction;
 
 out vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
 out vec3 spot_light_positions[MAX_LIGHT_SOURCES];
 out vec3 spot_light_direction[MAX_LIGHT_SOURCES];
+
+out vec4 frag_position_light;
 
 in DATA
 {
@@ -30,12 +31,12 @@ in DATA
 
     vec3 camera_position;
 
-    vec3 light_direction;
-
     vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
     vec3 spot_light_positions[MAX_LIGHT_SOURCES];
     vec3 spot_light_direction[MAX_LIGHT_SOURCES];
+
+    vec4 frag_position_light;
 } data_in[];
 
 void main()
@@ -72,7 +73,7 @@ void main()
 
         frag_position = TBN * gl_in[i].gl_Position.xyz;
         camera_position = TBN * data_in[i].camera_position;
-        light_direction = TBN * data_in[i].light_direction;
+        frag_position_light = data_in[i].frag_position_light;
 
         for (int j = 0; j < number_of_point_lights; j++) {
             point_light_positions[j] = TBN * data_in[i].point_light_positions[j];
@@ -80,7 +81,7 @@ void main()
 
         for (int j = 0; j < number_of_spot_lights; j++) {
             spot_light_positions[j] = TBN * data_in[i].spot_light_positions[j];
-            spot_light_direction[j] = data_in[i].spot_light_direction[j];
+            spot_light_direction[j] = TBN * data_in[i].spot_light_direction[j];
         }
 
         EmitVertex();

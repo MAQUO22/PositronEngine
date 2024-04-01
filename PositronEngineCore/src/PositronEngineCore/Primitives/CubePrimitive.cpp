@@ -207,6 +207,17 @@ namespace PositronEngine
         }
     }
 
+    void CubePrimitive::draw(std::shared_ptr<ShaderProgram>& shader_program,Camera& camera, glm::mat4 view)
+    {
+        updateModelMatrix();
+
+        shader_program->bind();
+        shader_program->setMatrix4("lightSpaceMatrix", view);
+        shader_program->setMatrix4("model", getModelMatrix());
+
+        RenderOpenGL::draw(*_mesh->getVertexArray());
+    }
+
     std::shared_ptr<Material> CubePrimitive::getMaterial()
     {
         return _material;

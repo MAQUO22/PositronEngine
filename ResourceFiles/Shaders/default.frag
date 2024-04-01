@@ -3,6 +3,7 @@
 #define MAX_LIGHT_SOURCES 5
 // uniforms
 uniform vec3 direction_light_color;
+uniform vec3 light_direction;
 
 uniform float ambient_factor;
 uniform float diffuse_factor;
@@ -24,19 +25,20 @@ uniform float inner_cone[MAX_LIGHT_SOURCES];
 layout(binding=0) uniform sampler2D in_texture;
 layout(binding=1) uniform sampler2D specular_map;
 layout(binding=2) uniform sampler2D normal_map;
-layout(binding=3) uniform sampler2D height_map;
+layout(binding=3) uniform sampler2D shadow_map;
 
 // varyings (input)
 in vec3 frag_normal;
 in vec3 frag_position;
 in vec2 tex_coord;
 in vec3 camera_position;
-in vec3 light_direction;
 
 in vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
 in vec3 spot_light_positions[MAX_LIGHT_SOURCES];
 in vec3 spot_light_direction[MAX_LIGHT_SOURCES];
+
+in vec4 frag_position_light;
 
 // output
 layout (location = 0) out vec4 frag_color;
@@ -45,20 +47,51 @@ layout (location = 1) out vec4 bloom_color;
 
 vec4 directionLight(vec3 light_direction, vec3 direction_light_color, vec4 diffuse_texture, vec4 specular_texture)
 {
+
     vec3 view_direction = normalize(camera_position - frag_position);
 
     vec3 normal = normalize(texture(normal_map, tex_coord).xyz * 2.0 - 1.0);
     //normal = normalize(frag_normal);
 
     vec3 _light_direction = normalize(-light_direction);
-    float diffuse_factor_modified = max(dot(normal, _light_direction), 0.0);
+    float diffuse_factor_modified = max(dot(normal, _light_direction), 0.0f);
     vec3 diffuse = diffuse_factor * direction_light_color * diffuse_factor_modified;
 
     vec3 reflect_direction = reflect(-_light_direction, normal);
     float specular_value = pow(max(dot(view_direction, reflect_direction), 0.0), shininess);
     vec3 specular = specular_factor * specular_value * direction_light_color;
 
-    return vec4(ambient_factor + diffuse, 1.0) * diffuse_texture + specular_texture.r * vec4(specular,1.0f);
+
+    float shadow = 0.0f;
+    // Sets lightCoords to cull space
+    vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
+    if(lightCoords.z <= 1.0f)
+    {
+        // Get from [-1, 1] range to [0, 1] range just like the shadow map
+        lightCoords = (lightCoords + 1.0f) / 2.0f;
+        float currentDepth = lightCoords.z;
+        // Prevents shadow acne
+        float bias = max(0.025f * (1.0f - dot(normal, _light_direction)), 0.0005f);
+
+        // Smoothens out the shadows
+        int sampleRadius = 2;
+        vec2 pixelSize = 1.0 / textureSize(shadow_map, 0);
+        for(int y = -sampleRadius; y <= sampleRadius; y++)
+        {
+            for(int x = -sampleRadius; x <= sampleRadius; x++)
+            {
+                float closestDepth = texture(shadow_map, lightCoords.xy + vec2(x, y) * pixelSize).r;
+                if (currentDepth > closestDepth + bias)
+                    shadow += 1.0f;
+            }
+        }
+        // Get average shadow
+        shadow /= pow((sampleRadius * 2 + 1), 2);
+
+    }
+
+    return vec4(ambient_factor + diffuse * (1.0f - shadow) , 1.0) * diffuse_texture + specular_texture.r * vec4(specular * (1.0f - shadow),1.0f);
+
 }
 
 vec4 pointLight(vec3 light_position, vec3 point_light_color, float constant_attenuation,

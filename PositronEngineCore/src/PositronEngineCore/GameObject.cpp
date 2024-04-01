@@ -60,6 +60,8 @@ namespace PositronEngine
 
     void GameObject::setMaterial(const std::shared_ptr<Material>& material) {}
 
+    std::shared_ptr<Material> GameObject::getMaterial() { return nullptr; }
+
     float* GameObject::getLocation()
     {
         return _location;

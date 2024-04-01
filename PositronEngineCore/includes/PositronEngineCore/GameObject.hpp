@@ -11,12 +11,14 @@ namespace PositronEngine
     class Camera;
     class LightObject;
     class Material;
+    class ShaderProgram;
 
     class GameObject
     {
         public:
 
             virtual void draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources) = 0;
+            virtual void draw(std::shared_ptr<ShaderProgram>& shader_program,Camera& camera, glm::mat4 view) = 0;
 
             virtual ~GameObject() = default;
 
@@ -39,6 +41,7 @@ namespace PositronEngine
             glm::mat4 getModelMatrix();
 
             virtual void setMaterial(const std::shared_ptr<Material>& material);
+            virtual std::shared_ptr<Material> getMaterial();
 
         private:
 

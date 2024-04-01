@@ -157,7 +157,14 @@ namespace PositronEngine
         std::shared_ptr<ShaderProgram> blur_program = std::make_shared<ShaderProgram>("post_processing.vert", "gaussian_blur.frag");
         if(!frame_buffer_program->isCompile())
         {
-            LOG_CRITICAL("FRAME BUFFER PROGRAM IS NOT COMPILED!");
+            LOG_CRITICAL("BLUR PROGRAM IS NOT COMPILED!");
+            return -2;
+        }
+
+        std::shared_ptr<ShaderProgram> shadow_map_program = std::make_shared<ShaderProgram>("shadow_map.vert", "shadow_map.frag");
+        if(!shadow_map_program->isCompile())
+        {
+            LOG_CRITICAL("SHADOW PROGRAM IS NOT COMPILED!");
             return -2;
         }
 
@@ -290,7 +297,32 @@ namespace PositronEngine
         Texture2D resultTextureID(_window->getWidth(), _window->getHeight());
         viewport.connectTexture(GL_COLOR_ATTACHMENT0, resultTextureID.getID());
 
-        RenderBuffer render_buffer_viewport(_window->getWidth(), _window->getHeight());
+        unsigned int shadowMapFBO;
+        glGenFramebuffers(1, &shadowMapFBO);
+
+        // Texture for Shadow Map FBO
+        unsigned int shadowMapWidth = 1024, shadowMapHeight = 1024;
+        unsigned int shadowMap;
+        glGenTextures(1, &shadowMap);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        // Prevents darkness outside the frustrum
+        // float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        // glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
+        // Needed since we don't touch the color buffer
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        glm::mat4 tempLight;
 
         FrameBuffer::checkFrameBufferErrors();
 
@@ -327,7 +359,35 @@ namespace PositronEngine
             _window->onUpdate();
             onInputUpdate();
 
+            //================================================SHADOW_MAP======================================================================
+
+            glEnable(GL_DEPTH_TEST);
+
+            glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+            glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            for(size_t i = 0; i < objects.size(); i++)
+            {
+
+                glm::vec3 lightDirection = light_objects[0]->getDirectionVec3();
+                glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f); // Центр вашей сцены или другая подходящая точка
+
+                glm::vec3 lightPosition = center - 10.0f * lightDirection; // 10.0f - произвольный коэффициент, чтобы позиция была достаточно далеко
+
+                glm::mat4 viewMatrix = glm::lookAt(lightPosition, center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 100.0f);
+
+                glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+
+                objects[i]->draw(shadow_map_program, camera,lightSpaceMatrix);
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
             //================================================БУФЕР_КАДРА_ПОСТ-ПРОЦЕССИНГА====================================================
+            glViewport(0, 0, _window->getWidth(), _window->getHeight());
 
             framebuffer.bind();
             glClearColor(pow(0.0f, gamma),pow(0.0f, gamma), pow(0.0f, gamma), 1.0f);
@@ -351,10 +411,22 @@ namespace PositronEngine
 
             for(size_t i = 0; i < objects.size(); i++)
             {
-                if(stone)
-                {
-                    objects[i]->draw(camera, light_objects);
-                }
+                glm::vec3 lightDirection = light_objects[0]->getDirectionVec3();
+                glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
+
+                glm::vec3 lightPosition = center - 10.0f * lightDirection;
+
+                glm::mat4 viewMatrix = glm::lookAt(lightPosition, center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 100.0f);
+
+                glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+
+                objects[i]->getMaterial()->getShaderProgram()->bind();
+                objects[i]->getMaterial()->getShaderProgram()->setMatrix4("light_space_matrix", lightSpaceMatrix);
+                glBindTextureUnit(3, shadowMap);
+                objects[i]->draw(camera, light_objects);
+
             }
 
             if(draw_skybox)
@@ -421,7 +493,6 @@ namespace PositronEngine
             //===============================================================================================================================
 
 
-
             //===============================================ОСНОВНОЙ_БУФЕР_КАДРА============================================================
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -457,6 +528,12 @@ namespace PositronEngine
             ImVec2 viewport_size = ImGui::GetWindowSize();
             camera.setViewportSize(viewport_size.x, viewport_size.y);
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
+            //ImGui::Image((void*)(intptr_t)shadowMap, viewport_size);
+            ImGui::End();
+
+            ImGui::Begin("ShadowMap");
+            ImGui::SetWindowSize(ImVec2(1280,720));
+            ImGui::Image((void*)(intptr_t)shadowMap, ImVec2(2048,2048));
             ImGui::End();
 
             ImGui::Begin("Post-processing");
