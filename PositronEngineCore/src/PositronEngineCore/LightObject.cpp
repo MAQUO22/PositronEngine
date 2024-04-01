@@ -75,7 +75,7 @@ namespace PositronEngine
     float* LightObject::getPtrInnerCone() { return nullptr; }
     float LightObject::getInnerCone() { return 0.0f; }
 
-    LightType LightObject::getLightType() {};
+    LightType LightObject::getLightType() { return LightType::unknown; };
 
     void LightObject::draw(Camera& camera) {}
     void LightObject::setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) {}

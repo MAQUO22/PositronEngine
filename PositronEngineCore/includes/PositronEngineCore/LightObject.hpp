@@ -13,7 +13,8 @@ namespace PositronEngine
     {
         direction,
         point,
-        spot
+        spot,
+        unknown
     };
 
     class LightObject

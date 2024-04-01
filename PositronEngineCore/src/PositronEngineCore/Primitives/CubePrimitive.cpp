@@ -168,10 +168,14 @@ namespace PositronEngine
                                 s++;
                             }
                         }
-                        else
+                        else if(light_sources[i]->getLightType() == LightType::direction)
                         {
                             _material->getShaderProgram()->setVec3("direction_light_color", light_sources[i]->getColorVec3());
                             _material->getShaderProgram()->setVec3("light_direction", light_sources[i]->getDirectionVec3());
+                        }
+                        else
+                        {
+                            LOG_CRITICAL("LIGHT TYPE IS UNKNOWN!!");
                         }
                     }
                 }

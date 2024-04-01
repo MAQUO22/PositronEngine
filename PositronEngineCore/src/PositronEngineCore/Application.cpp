@@ -214,8 +214,15 @@ namespace PositronEngine
 
         std::vector<std::unique_ptr<GameObject>> objects;
         objects.push_back(std::make_unique<SpherePrimitive>(std::move(sphere)));
+        objects[0]->setLocation(-2.5, -2.1, 0.0);
+
         objects.push_back(std::make_unique<CubePrimitive>(std::move(cube)));
+        objects[1]->setLocation(2.1, -2.1, 0.0);
+
         objects.push_back(std::make_unique<PlatePrimitive>(std::move(plate)));
+        objects[2]->setLocation(0.0, 0.0, 2.0);
+        objects[2]->setRotation(0.0, -90.0, 0.0);
+        objects[2]->setScale(5.0, 5.0,5.0);
 
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
@@ -327,9 +334,6 @@ namespace PositronEngine
             RenderOpenGL::clear();
             RenderOpenGL::enableDepth();
 
-
-            LOG_INFORMATION("SpotLight count - {0}, PointLigh count {1}",
-                            LightTypeCounter::getNumberOfSpotLights(), LightTypeCounter::getNumberOfPointLights());
             if(draw_without_mesh)
             {
                 for(size_t i = 0; i < light_objects.size(); i++)
@@ -511,10 +515,6 @@ namespace PositronEngine
             ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
             ImGui::SliderFloat("specular_factor", &stones_config.specular, 0.0f, 1.0f);
             ImGui::End();
-
-
-
-
 
 
             ImGui::Begin("Light Sources");
