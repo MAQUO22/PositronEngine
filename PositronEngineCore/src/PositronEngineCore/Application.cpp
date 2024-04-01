@@ -171,6 +171,12 @@ namespace PositronEngine
         SpherePrimitive sphere("sphere1");
         CubePrimitive cube("cube1");
         PlatePrimitive plate("plate1");
+        PlatePrimitive plate1("plate2");
+        PlatePrimitive plate2("plate3");
+        PlatePrimitive plate3("plate4");
+        PlatePrimitive plate4("plate5");
+        PlatePrimitive plate5("plate6");
+
 
         DirectionLight dir_light;
 
@@ -215,28 +221,52 @@ namespace PositronEngine
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
         cube.setMaterial(stones);
+
         plate.setMaterial(wood);
+        plate1.setMaterial(wood);
+        plate2.setMaterial(wood);
+        plate3.setMaterial(wood);
+        plate4.setMaterial(wood);
+        plate5.setMaterial(wood);
+
         sphere.setMaterial(stone);
 
 
         std::vector<std::unique_ptr<GameObject>> objects;
-        objects.push_back(std::make_unique<SpherePrimitive>(std::move(sphere)));
+        objects.emplace_back(std::make_unique<SpherePrimitive>(std::move(sphere)));
         objects[0]->setLocation(-2.5, -2.1, 0.0);
 
-        objects.push_back(std::make_unique<CubePrimitive>(std::move(cube)));
+        objects.emplace_back(std::make_unique<CubePrimitive>(std::move(cube)));
         objects[1]->setLocation(2.1, -2.1, 0.0);
 
-        objects.push_back(std::make_unique<PlatePrimitive>(std::move(plate)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate)));
         objects[2]->setLocation(0.0, 0.0, 2.0);
         objects[2]->setRotation(0.0, -90.0, 0.0);
-        objects[2]->setScale(5.0, 5.0,5.0);
+        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate1)));
+        objects[3]->setLocation(0.0, 2.0, 2.0);
+        objects[3]->setRotation(0.0, -90.0, 0.0);
+        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate2)));
+        objects[4]->setLocation(0.0, -2.0, 2.0);
+        objects[4]->setRotation(0.0, -90.0, 0.0);
+        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate3)));
+        objects[5]->setLocation(2.0, 2.0, 2.0);
+        objects[5]->setRotation(0.0, -90.0, 0.0);
+        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate4)));
+        objects[6]->setLocation(2.0, 0.0, 2.0);
+        objects[6]->setRotation(0.0, -90.0, 0.0);
+        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate5)));
+        objects[7]->setLocation(2.0, -2.0, 2.0);
+        objects[7]->setRotation(0.0, -90.0, 0.0);
+
+
+
 
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
         light_objects.emplace_back(std::make_unique<DirectionLight>());
-        light_objects.emplace_back(std::make_unique<PointLight>("point1"));
+        //light_objects.emplace_back(std::make_unique<PointLight>("point1"));
         // light_objects.emplace_back(std::make_unique<PointLight>("point2"));
-        light_objects.emplace_back(std::make_unique<SpotLight>("spot1"));
+        // light_objects.emplace_back(std::make_unique<SpotLight>("spot1"));
         // light_objects.emplace_back(std::make_unique<SpotLight>("spot2"));
 
         for(int i = 0; i < light_objects.size(); i++)
@@ -301,7 +331,7 @@ namespace PositronEngine
         glGenFramebuffers(1, &shadowMapFBO);
 
         // Texture for Shadow Map FBO
-        unsigned int shadowMapWidth = 1024, shadowMapHeight = 1024;
+        unsigned int shadowMapWidth = 2048, shadowMapHeight = 2048;
         unsigned int shadowMap;
         glGenTextures(1, &shadowMap);
         glBindTexture(GL_TEXTURE_2D, shadowMap);
@@ -311,8 +341,8 @@ namespace PositronEngine
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         // Prevents darkness outside the frustrum
-        // float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        // glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+        float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
 
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
@@ -373,15 +403,15 @@ namespace PositronEngine
                 glm::vec3 lightDirection = light_objects[0]->getDirectionVec3();
                 glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f); // Центр вашей сцены или другая подходящая точка
 
-                glm::vec3 lightPosition = center - 10.0f * lightDirection; // 10.0f - произвольный коэффициент, чтобы позиция была достаточно далеко
+                glm::vec3 lightPosition = 15.0f * lightDirection;
 
                 glm::mat4 viewMatrix = glm::lookAt(lightPosition, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
-                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 100.0f);
+                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
 
                 glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 
-                objects[i]->draw(shadow_map_program, camera,lightSpaceMatrix);
+                objects[i]->draw(shadow_map_program, camera, lightSpaceMatrix);
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -414,11 +444,11 @@ namespace PositronEngine
                 glm::vec3 lightDirection = light_objects[0]->getDirectionVec3();
                 glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
 
-                glm::vec3 lightPosition = center - 10.0f * lightDirection;
+                glm::vec3 lightPosition = 15.0f * lightDirection;
 
                 glm::mat4 viewMatrix = glm::lookAt(lightPosition, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
-                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 100.0f);
+                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
 
                 glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 

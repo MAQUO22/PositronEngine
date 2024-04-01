@@ -14,6 +14,8 @@ out vec3 frag_normal;
 out vec2 tex_coord;
 out vec3 camera_position;
 
+out vec3 light_direction;
+
 out vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
 out vec3 spot_light_positions[MAX_LIGHT_SOURCES];
@@ -28,6 +30,8 @@ in DATA
 
     mat4 view_projection_matrix;
     mat4 model_matrix;
+
+    vec3 light_direction;
 
     vec3 camera_position;
 
@@ -73,6 +77,8 @@ void main()
 
         frag_position = TBN * gl_in[i].gl_Position.xyz;
         camera_position = TBN * data_in[i].camera_position;
+        light_direction = TBN * data_in[i].light_direction;
+
         frag_position_light = data_in[i].frag_position_light;
 
         for (int j = 0; j < number_of_point_lights; j++) {

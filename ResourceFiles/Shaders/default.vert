@@ -7,6 +7,8 @@ uniform mat4 model_matrix;
 uniform mat4 view_projection_matrix;
 uniform vec3 camera_position;
 
+uniform vec3 light_direction;
+
 uniform int number_of_point_lights;
 uniform int number_of_spot_lights;
 
@@ -30,6 +32,8 @@ out DATA
     mat4 view_projection_matrix;
     mat4 model_matrix;
 
+    vec3 light_direction;
+
     vec3 camera_position;
 
     vec3 point_light_positions[MAX_LIGHT_SOURCES];
@@ -51,8 +55,9 @@ void main()
     data_out.view_projection_matrix = view_projection_matrix;
 
     data_out.camera_position = camera_position;
+    data_out.light_direction = light_direction;
 
-    data_out.frag_position_light = light_space_matrix * vec4(vertex_position, 1.0f);
+    data_out.frag_position_light = light_space_matrix * model_matrix * vec4(vertex_position, 1.0);
 
     for(int i = 0; i < number_of_point_lights; i++)
     {

@@ -3,7 +3,6 @@
 #define MAX_LIGHT_SOURCES 5
 // uniforms
 uniform vec3 direction_light_color;
-uniform vec3 light_direction;
 
 uniform float ambient_factor;
 uniform float diffuse_factor;
@@ -33,6 +32,8 @@ in vec3 frag_position;
 in vec2 tex_coord;
 in vec3 camera_position;
 
+in vec3 light_direction;
+
 in vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
 in vec3 spot_light_positions[MAX_LIGHT_SOURCES];
@@ -53,7 +54,7 @@ vec4 directionLight(vec3 light_direction, vec3 direction_light_color, vec4 diffu
     vec3 normal = normalize(texture(normal_map, tex_coord).xyz * 2.0 - 1.0);
     //normal = normalize(frag_normal);
 
-    vec3 _light_direction = normalize(-light_direction);
+    vec3 _light_direction = normalize(light_direction);
     float diffuse_factor_modified = max(dot(normal, _light_direction), 0.0f);
     vec3 diffuse = diffuse_factor * direction_light_color * diffuse_factor_modified;
 
@@ -90,7 +91,7 @@ vec4 directionLight(vec3 light_direction, vec3 direction_light_color, vec4 diffu
 
     }
 
-    return vec4(ambient_factor + diffuse * (1.0f - shadow) , 1.0) * diffuse_texture + specular_texture.r * vec4(specular * (1.0f - shadow),1.0f);
+    return vec4(ambient_factor + diffuse * (1.0f - shadow), 1.0) * diffuse_texture + specular_texture.r * vec4(specular * (1.0f - shadow), 1.0f);
 
 }
 
