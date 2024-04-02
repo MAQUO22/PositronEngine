@@ -9,21 +9,53 @@ namespace PositronEngine
     Texture2D::Texture2D(Texture2D& texture)
     {
         _id = texture._id;
-        _type = texture._type;
         _data = texture._data;
+        _width = texture._width;
+        _height = texture._height;
+
+        _type = texture._type;
+
         texture._id = 0;
     }
 
-    Texture2D::Texture2D(const unsigned int size_x, const unsigned int size_y)
+    Texture2D::Texture2D(const unsigned int width, const unsigned int height, TextureType texture_type)
     {
-        glGenTextures(1, &_id);
-        glBindTexture(GL_TEXTURE_2D, _id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, size_x, size_y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        if(texture_type == TextureType::buffer)
+        {
+            glGenTextures(1, &_id);
+            glBindTexture(GL_TEXTURE_2D, _id);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            _width = width;
+            _height = height;
+        }
+        else if(texture_type == TextureType::shadow)
+        {
+            glGenTextures(1, &_id);
+            glBindTexture(GL_TEXTURE_2D, _id);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+            float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+
+            _width = width;
+            _height = height;
+        }
+        else
+        {
+            LOG_WARNING("IF YOU WANT CREATE TEXTURE FOR MATERIAL USE A CONSTRUCTOR WITH PATH");
+        }
+
+
     }
 
 
@@ -89,6 +121,8 @@ namespace PositronEngine
                 glGenerateMipmap(GL_TEXTURE_2D);
             }
 
+            _width = width;
+            _height = height;
             _data = data;
             _type = type;
 
@@ -105,8 +139,12 @@ namespace PositronEngine
     {
         glDeleteTextures(1, &_id);
         _id = texture._id;
-        _type = texture._type;
         _data = texture._data;
+        _width = texture._width;
+        _height = texture._height;
+
+        _type = texture._type;
+
         texture._id = 0;
         return *this;
 
@@ -122,9 +160,19 @@ namespace PositronEngine
         return _id;
     }
 
-    TextureType Texture2D::getTextureType()
+    TextureType Texture2D::getType()
     {
         return _type;
+    }
+
+    unsigned int Texture2D::getWidth() const
+    {
+        return _width;
+    }
+
+    unsigned int Texture2D::getHeight() const
+    {
+        return _height;
     }
 
     void Texture2D::bind()
@@ -145,8 +193,11 @@ namespace PositronEngine
     Texture2D::Texture2D(Texture2D && texture) noexcept
     {
         _id = texture._id;
-        _type = texture._type;
         _data = texture._data;
+        _width = texture._width;
+        _height = texture._height;
+        _type = texture._type;
+
         texture._id = 0;
     }
 }

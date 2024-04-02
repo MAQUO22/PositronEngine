@@ -1,6 +1,6 @@
 #version 460 core
 
-#define MAX_LIGHT_SOURCES 5
+#define MAX_LIGHT_SOURCES 4
 
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
@@ -22,6 +22,7 @@ out vec3 spot_light_positions[MAX_LIGHT_SOURCES];
 out vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 
 out vec4 frag_position_light;
+out vec4 frag_position_spot_light[MAX_LIGHT_SOURCES];
 
 in DATA
 {
@@ -41,6 +42,7 @@ in DATA
     vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 
     vec4 frag_position_light;
+    vec4 frag_position_spot_light[MAX_LIGHT_SOURCES];
 } data_in[];
 
 void main()
@@ -88,6 +90,7 @@ void main()
         for (int j = 0; j < number_of_spot_lights; j++) {
             spot_light_positions[j] = TBN * data_in[i].spot_light_positions[j];
             spot_light_direction[j] = TBN * data_in[i].spot_light_direction[j];
+            frag_position_spot_light[j] = data_in[i].frag_position_spot_light[j];
         }
 
         EmitVertex();

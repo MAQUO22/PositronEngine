@@ -151,17 +151,17 @@ namespace PositronEngine
             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
             {
 
-                if(_material->getTexturesVector()[i].getTextureType() == TextureType::diffuse)
+                if(_material->getTexturesVector()[i].getType() == TextureType::diffuse)
                 {
                     _material->getTexturesVector()[i].bindUnit(0);
                 }
 
-                else if(_material->getTexturesVector()[i].getTextureType() == TextureType::specular)
+                else if(_material->getTexturesVector()[i].getType() == TextureType::specular)
                 {
                     _material->getTexturesVector()[i].bindUnit(1);
                 }
 
-                else if(_material->getTexturesVector()[i].getTextureType() == TextureType::normal)
+                else if(_material->getTexturesVector()[i].getType() == TextureType::normal)
                 {
                     _material->getTexturesVector()[i].bindUnit(2);
                 }
@@ -174,12 +174,12 @@ namespace PositronEngine
         }
     }
 
-    void SpherePrimitive::draw(std::shared_ptr<ShaderProgram>& shader_program,Camera& camera, glm::mat4 view)
+    void SpherePrimitive::draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix)
     {
         updateModelMatrix();
 
         shader_program->bind();
-        shader_program->setMatrix4("lightSpaceMatrix", view);
+        shader_program->setMatrix4("lightSpaceMatrix", space_matrix);
         shader_program->setMatrix4("model", getModelMatrix());
 
         RenderOpenGL::draw(*_mesh->getVertexArray());

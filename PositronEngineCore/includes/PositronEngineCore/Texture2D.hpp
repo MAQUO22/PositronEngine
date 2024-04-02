@@ -8,7 +8,9 @@ namespace PositronEngine
         diffuse,
         specular,
         normal,
-        height
+        height,
+        buffer,
+        shadow
     };
 
     class Texture2D
@@ -17,7 +19,7 @@ namespace PositronEngine
             Texture2D(Texture2D&);
             Texture2D& operator=(const Texture2D&) = delete;
 
-            Texture2D(const unsigned int size_x, const unsigned int size_y);
+            Texture2D(const unsigned int width, const unsigned int height, TextureType texture_type);
             Texture2D(const char* path, TextureType type);
             Texture2D& operator=(Texture2D&& texture) noexcept;
             Texture2D(Texture2D&& texture) noexcept;
@@ -25,7 +27,10 @@ namespace PositronEngine
             ~Texture2D();
 
             unsigned int getID();
-            TextureType getTextureType();
+            TextureType getType();
+
+            unsigned int getWidth() const;
+            unsigned int getHeight() const;
 
             void bind();
             void bindUnit(const unsigned int unit) const;
@@ -36,6 +41,10 @@ namespace PositronEngine
         private:
             unsigned int _id = 0;
             unsigned char* _data;
+
+            unsigned int _width;
+            unsigned int _height;
+
             TextureType _type;
     };
 }

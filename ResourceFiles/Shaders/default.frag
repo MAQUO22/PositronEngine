@@ -1,6 +1,6 @@
 #version 460 core
 
-#define MAX_LIGHT_SOURCES 5
+#define MAX_LIGHT_SOURCES 4
 // uniforms
 uniform vec3 direction_light_color;
 
@@ -11,6 +11,8 @@ uniform float specular_factor;
 
 uniform int number_of_point_lights;
 uniform int number_of_spot_lights;
+
+// uniform sampler2D spot_light_shadow_map[MAX_LIGHT_SOURCES];
 
 uniform vec3 point_light_colors[MAX_LIGHT_SOURCES];
 uniform vec3 spot_light_colors[MAX_LIGHT_SOURCES];
@@ -25,6 +27,7 @@ layout(binding=0) uniform sampler2D in_texture;
 layout(binding=1) uniform sampler2D specular_map;
 layout(binding=2) uniform sampler2D normal_map;
 layout(binding=3) uniform sampler2D shadow_map;
+layout(binding=4) uniform sampler2D shadow_map_spot;
 
 // varyings (input)
 in vec3 frag_normal;
@@ -38,6 +41,7 @@ in vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
 in vec3 spot_light_positions[MAX_LIGHT_SOURCES];
 in vec3 spot_light_direction[MAX_LIGHT_SOURCES];
+in vec4 frag_position_spot_light[MAX_LIGHT_SOURCES];
 
 in vec4 frag_position_light;
 
@@ -124,11 +128,13 @@ vec4 pointLight(vec3 light_position, vec3 point_light_color, float constant_atte
         specular = specular_factor * specular_value * point_light_color;
     }
 
-    return vec4(ambient_factor + diffuse * intens, 1.0) * diffuse_texture + specular_texture.r * vec4(specular * intens,1.0f);
+    return vec4(ambient_factor + diffuse * intens, 1.0) * diffuse_texture +
+                specular_texture.r * vec4(specular * intens,1.0f);
 }
 
 vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direction,
-               float outer_cone, float inner_cone, vec4 diffuse_texture, vec4 specular_texture)
+               float outer_cone, float inner_cone, vec4 diffuse_texture, vec4 specular_texture,
+               vec4 frag_position_light)
 {
 
     vec3 view_direction = normalize(camera_position - frag_position);
@@ -148,7 +154,36 @@ vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direc
 
     float inten = clamp((angle - outer_cone) / (inner_cone - outer_cone), 0.0f, 1.0f);
 
-    return vec4(ambient_factor + diffuse * inten, 1.0) * diffuse_texture + specular_texture.r * vec4(specular * inten, 1.0f);
+    float shadow = 0.0f;
+    // Sets lightCoords to cull space
+    vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
+    if(lightCoords.z <= 1.0f)
+    {
+        // Get from [-1, 1] range to [0, 1] range just like the shadow map
+        lightCoords = (lightCoords + 1.0f) / 2.0f;
+        float currentDepth = lightCoords.z;
+        // Prevents shadow acne
+        float bias = max(0.00025f * (1.0f - dot(normal, _light_direction)), 0.000005f);
+
+        // Smoothens out the shadows
+        int sampleRadius = 2;
+        vec2 pixelSize = 1.0 / textureSize(shadow_map_spot, 0);
+        for(int y = -sampleRadius; y <= sampleRadius; y++)
+        {
+            for(int x = -sampleRadius; x <= sampleRadius; x++)
+            {
+                float closestDepth = texture(shadow_map_spot, lightCoords.xy + vec2(x, y) * pixelSize).r;
+                if (currentDepth > closestDepth + bias)
+                    shadow += 1.0f;
+            }
+        }
+        // Get average shadow
+        shadow /= pow((sampleRadius * 2 + 1), 2);
+
+    }
+
+    return vec4(ambient_factor + (diffuse * (1.0f - shadow)) * inten, 1.0) * diffuse_texture +
+                specular_texture.r * vec4((specular * (1.0f - shadow)) * inten, 1.0f);
 }
 
 
@@ -170,7 +205,8 @@ void main() {
     {
          frag_color += spotLight(spot_light_positions[i], spot_light_colors[i], spot_light_direction[i],
                                  outer_cone[i], inner_cone[i],
-                                 diffuse_texture, specular_texture);
+                                 diffuse_texture, specular_texture,
+                                 frag_position_spot_light[i]);
     }
 
     float brightness = dot(frag_color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));

@@ -124,7 +124,7 @@ namespace PositronEngine
         for(size_t i = 0; i < _light_material->getTexturesVector().size(); i++)
         {
 
-            if(_light_material->getTexturesVector()[i].getTextureType() == TextureType::diffuse)
+            if(_light_material->getTexturesVector()[i].getType() == TextureType::diffuse)
             {
                 _light_material->getTexturesVector()[i].bindUnit(0);
             }

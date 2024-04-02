@@ -1,6 +1,6 @@
 #version 460
 
-#define MAX_LIGHT_SOURCES 5
+#define MAX_LIGHT_SOURCES 4
 
 // uniforms
 uniform mat4 model_matrix;
@@ -16,6 +16,7 @@ uniform vec3 point_light_positions[MAX_LIGHT_SOURCES];
 
 uniform vec3 spot_light_positions[MAX_LIGHT_SOURCES];
 uniform vec3 spot_light_direction[MAX_LIGHT_SOURCES];
+uniform mat4 spot_light_space_matix[MAX_LIGHT_SOURCES];
 
 uniform mat4 light_space_matrix;
 
@@ -42,6 +43,8 @@ out DATA
     vec3 spot_light_direction[MAX_LIGHT_SOURCES];
 
     vec4 frag_position_light;
+    vec4 frag_position_spot_light[MAX_LIGHT_SOURCES];
+
 } data_out;
 
 void main()
@@ -68,6 +71,7 @@ void main()
     {
         data_out.spot_light_positions[j] = spot_light_positions[j];
         data_out.spot_light_direction[j] = spot_light_direction[j];
+        data_out.frag_position_spot_light[j] = spot_light_space_matix[j] * model_matrix * vec4(vertex_position, 1.0);
     }
 
 }

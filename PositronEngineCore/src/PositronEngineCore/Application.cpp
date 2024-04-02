@@ -220,14 +220,14 @@ namespace PositronEngine
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
-        cube.setMaterial(stones);
+        cube.setMaterial(stone);
 
         plate.setMaterial(wood);
-        plate1.setMaterial(wood);
+        plate1.setMaterial(stones);
         plate2.setMaterial(wood);
-        plate3.setMaterial(wood);
+        plate3.setMaterial(stones);
         plate4.setMaterial(wood);
-        plate5.setMaterial(wood);
+        plate5.setMaterial(stones);
 
         sphere.setMaterial(stone);
 
@@ -292,15 +292,15 @@ namespace PositronEngine
 
         FrameBuffer framebuffer;
 
-        Texture2D post_processing_texture(_window->getWidth(), _window->getHeight());
+        Texture2D post_processing_texture(_window->getWidth(), _window->getHeight(), TextureType::buffer);
         framebuffer.connectTexture(GL_COLOR_ATTACHMENT0, post_processing_texture.getID());
 
-        Texture2D bloomTexture(_window->getWidth(), _window->getHeight());
+        Texture2D bloomTexture(_window->getWidth(), _window->getHeight(), TextureType::buffer);
         framebuffer.connectTexture(GL_COLOR_ATTACHMENT1, bloomTexture.getID());
 
         FrameBuffer::checkFrameBufferErrors();
 
-        Texture2D image(_window->getWidth(), _window->getHeight());
+        Texture2D image(_window->getWidth(), _window->getHeight(), TextureType::buffer);
 
         unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffers(2, attachments);
@@ -311,48 +311,41 @@ namespace PositronEngine
 
 
         FrameBuffer pingpongFBO;
-        Texture2D pingpongBuffer(_window->getWidth(), _window->getHeight());
+        Texture2D pingpongBuffer(_window->getWidth(), _window->getHeight(), TextureType::buffer);
         pingpongFBO.connectTexture(GL_COLOR_ATTACHMENT0, pingpongBuffer.getID());
 
         FrameBuffer::checkFrameBufferErrors();
 
         FrameBuffer pingpongFBO1;
-        Texture2D pingpongBuffer1(_window->getWidth(), _window->getHeight());
+        Texture2D pingpongBuffer1(_window->getWidth(), _window->getHeight(), TextureType::buffer);
         pingpongFBO1.connectTexture(GL_COLOR_ATTACHMENT0, pingpongBuffer1.getID());
 
         FrameBuffer::checkFrameBufferErrors();
 
         FrameBuffer viewport;
 
-        Texture2D resultTextureID(_window->getWidth(), _window->getHeight());
+        Texture2D resultTextureID(_window->getWidth(), _window->getHeight(), TextureType::buffer);
         viewport.connectTexture(GL_COLOR_ATTACHMENT0, resultTextureID.getID());
 
-        unsigned int shadowMapFBO;
-        glGenFramebuffers(1, &shadowMapFBO);
+        FrameBuffer shadowMapFBO;
 
-        // Texture for Shadow Map FBO
-        unsigned int shadowMapWidth = 2048, shadowMapHeight = 2048;
-        unsigned int shadowMap;
-        glGenTextures(1, &shadowMap);
-        glBindTexture(GL_TEXTURE_2D, shadowMap);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        // Prevents darkness outside the frustrum
-        float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+        Texture2D shadowMapDirectionTexture(2048, 2048, TextureType::shadow);
+        shadowMapFBO.connectTexture(GL_DEPTH_ATTACHMENT, shadowMapDirectionTexture.getID());
 
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
-        // Needed since we don't touch the color buffer
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // glDrawBuffer(GL_NONE);
+        // glReadBuffer(GL_NONE);
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        FrameBuffer spot_buffer;
+
+        Texture2D spot_shadow(2048, 2048, TextureType::shadow);
+        spot_buffer.connectTexture(GL_DEPTH_ATTACHMENT, spot_shadow.getID());
+
+        // glDrawBuffer(GL_NONE);
+        // glReadBuffer(GL_NONE);
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-        glm::mat4 tempLight;
 
         FrameBuffer::checkFrameBufferErrors();
 
@@ -389,29 +382,51 @@ namespace PositronEngine
             _window->onUpdate();
             onInputUpdate();
 
-            //================================================SHADOW_MAP======================================================================
+            //===============================================SHADOW_MAP_DIRECTION_LIGH==========================================================
 
             glEnable(GL_DEPTH_TEST);
-
-            glViewport(0, 0, shadowMapWidth, shadowMapHeight);
-            glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+            glViewport(0, 0, shadowMapDirectionTexture.getWidth(), shadowMapDirectionTexture.getHeight());
+            shadowMapFBO.bind();
             glClear(GL_DEPTH_BUFFER_BIT);
 
             for(size_t i = 0; i < objects.size(); i++)
             {
+                glm::vec3 lightPosition = 15.0f * light_objects[0]->getDirectionVec3();
 
-                glm::vec3 lightDirection = light_objects[0]->getDirectionVec3();
-                glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f); // Центр вашей сцены или другая подходящая точка
-
-                glm::vec3 lightPosition = 15.0f * lightDirection;
-
-                glm::mat4 viewMatrix = glm::lookAt(lightPosition, center, glm::vec3(0.0f, 1.0f, 0.0f));
+                glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
                 glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
 
                 glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 
-                objects[i]->draw(shadow_map_program, camera, lightSpaceMatrix);
+                objects[i]->draw(shadow_map_program, lightSpaceMatrix);
+            }
+
+            //==============================================SHADOW_MAPS_SPOT_LIGHT============================================================
+
+            glEnable(GL_DEPTH_TEST);
+            glViewport(0, 0, spot_shadow.getWidth(), spot_shadow.getHeight());
+            spot_buffer.bind();
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            for(size_t i = 0; i < objects.size(); i++)
+            {
+                for(size_t j = 0; j < light_objects.size(); j++)
+                {
+                    if(light_objects[j]->getLightType() == LightType::spot)
+                    {
+                        glm::mat4 viewMatrix = glm::lookAt(light_objects[j]->getLocationVec3(),
+                                                    light_objects[j]->getDirectionVec3(),
+                                                    glm::vec3(0.0f, 0.0f, 1.0f));
+
+                        glm::mat4 projectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+
+                        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+
+                        objects[i]->draw(shadow_map_program, lightSpaceMatrix);
+                    }
+                }
+
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -441,21 +456,52 @@ namespace PositronEngine
 
             for(size_t i = 0; i < objects.size(); i++)
             {
-                glm::vec3 lightDirection = light_objects[0]->getDirectionVec3();
-                glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
+                for(size_t j = 0, m = 0; j < light_objects.size(); j++)
+                {
+                    if(light_objects[j]->getLightType() == LightType::direction)
+                    {
+                        glm::vec3 lightPosition = 15.0f * light_objects[j]->getDirectionVec3();
 
-                glm::vec3 lightPosition = 15.0f * lightDirection;
+                        glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-                glm::mat4 viewMatrix = glm::lookAt(lightPosition, center, glm::vec3(0.0f, 1.0f, 0.0f));
+                        glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
 
-                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
+                        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 
-                glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+                        objects[i]->getMaterial()->getShaderProgram()->bind();
+                        objects[i]->getMaterial()->getShaderProgram()->setMatrix4("light_space_matrix", lightSpaceMatrix);
 
-                objects[i]->getMaterial()->getShaderProgram()->bind();
-                objects[i]->getMaterial()->getShaderProgram()->setMatrix4("light_space_matrix", lightSpaceMatrix);
-                glBindTextureUnit(3, shadowMap);
-                objects[i]->draw(camera, light_objects);
+                        shadowMapDirectionTexture.bindUnit(3);
+
+                        objects[i]->draw(camera, light_objects);
+                    }
+                    else if(light_objects[j]->getLightType() == LightType::spot)
+                    {
+                        glm::mat4 viewMatrix = glm::lookAt(light_objects[j]->getLocationVec3(),
+                                                    light_objects[j]->getDirectionVec3(),
+                                                    glm::vec3(0.0f, 0.0f, 1.0f));
+
+                        glm::mat4 projectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+
+                        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+                        std::string uniform_space_matrix = "spot_light_space_matix[" + std::to_string(m) + "]";
+
+                        if( i < 3)
+                        {
+                            objects[i]->getMaterial()->getShaderProgram()->bind();
+                            objects[i]->getMaterial()->getShaderProgram()->setMatrix4(uniform_space_matrix.c_str(), lightSpaceMatrix);
+                        }
+
+
+                        spot_shadow.bindUnit(4);
+
+                        m++;
+
+                        objects[i]->draw(camera, light_objects);
+                    }
+                }
+
+
 
             }
 
@@ -558,13 +604,22 @@ namespace PositronEngine
             ImVec2 viewport_size = ImGui::GetWindowSize();
             camera.setViewportSize(viewport_size.x, viewport_size.y);
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
-            //ImGui::Image((void*)(intptr_t)shadowMap, viewport_size);
             ImGui::End();
 
-            ImGui::Begin("ShadowMap");
-            ImGui::SetWindowSize(ImVec2(1280,720));
-            ImGui::Image((void*)(intptr_t)shadowMap, ImVec2(2048,2048));
-            ImGui::End();
+            // for(int i = 0 ; i < shadow_maps_spot_light.size(); i++)
+            // {
+            //     ImGui::Begin("SHADOW MAPS SPOT LIGHT");
+            //     ImGui::SetWindowSize(ImVec2(1280, 720));
+            //     ImGui::Image((void*)(intptr_t)shadow_maps_spot_light[i].getID(),
+            //                  ImVec2(shadow_maps_spot_light[i].getWidth(), shadow_maps_spot_light[i].getHeight()));
+            //     ImGui::End();
+            // }
+
+            ImGui::Begin("SHADOW MAPS SPOT LIGHT");
+                ImGui::SetWindowSize(ImVec2(1620, 1000));
+                ImGui::Image((void*)(intptr_t)spot_shadow.getID(),
+                             ImVec2(spot_shadow.getWidth(), spot_shadow.getHeight()));
+                ImGui::End();
 
             ImGui::Begin("Post-processing");
             ImGui::Checkbox("Bloom activate", &bloom_activate);

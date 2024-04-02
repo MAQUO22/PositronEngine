@@ -19,7 +19,7 @@ namespace PositronEngine
             SpherePrimitive& operator=(const SpherePrimitive&);
 
             void draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources) override;
-            void draw(std::shared_ptr<ShaderProgram>& shader_program,Camera& camera, glm::mat4 view) override;
+            void draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix) override;
 
             void setMaterial(const std::shared_ptr<Material>& material) override;
 

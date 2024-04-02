@@ -255,5 +255,9 @@ namespace PositronEngine
         glUniform1d(glGetUniformLocation(_id, name), value);
     }
 
+    unsigned int ShaderProgram::getID() const
+    {
+        return _id;
+    }
 
 }

@@ -29,6 +29,8 @@ namespace PositronEngine
             void setBool(const char* name, const int value) const;
             void setDouble(const char* name, const double value) const;
 
+            unsigned int getID() const;
+
         private:
             bool _is_compiled = false;
             unsigned int _id = 0;
