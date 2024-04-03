@@ -55,6 +55,11 @@ namespace PositronEngine
         return glm::vec3(0.0f);
     }
 
+    glm::mat4 LightObject::getSpaceMatrix()
+    {
+        return glm::mat4(1.0f);
+    }
+
     void LightObject::setLocation(const float x, const float y, const float z) {}
     void LightObject::setLocationVec3(const glm::vec3& location) {}
 

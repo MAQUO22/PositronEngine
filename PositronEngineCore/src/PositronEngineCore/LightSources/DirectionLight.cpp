@@ -1,8 +1,22 @@
 #include "PositronEngineCore/LightSources/DirectionLight.hpp"
 #include "PositronEngineCore/Camera.hpp"
 
+
 namespace PositronEngine
 {
+    glm::mat4 DirectionLight::calculateSpaceMatrix()
+    {
+        glm::vec3 lightPosition = 15.0f * getDirectionVec3();
+
+        glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
+
+        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+
+        return lightSpaceMatrix;
+    }
+
     DirectionLight::DirectionLight()
     {
         _type = LightType::direction;
@@ -36,6 +50,11 @@ namespace PositronEngine
     LightType DirectionLight::getLightType()
     {
         return _type;
+    }
+
+    glm::mat4 DirectionLight::getSpaceMatrix()
+    {
+        return calculateSpaceMatrix();
     }
 
     void DirectionLight::draw(Camera& camera) {}

@@ -5,6 +5,11 @@
 
 namespace PositronEngine
 {
+    glm::mat4 PointLight::calculateSpaceMatrix()
+    {
+        return glm::mat4(1.0f);
+    }
+
     PointLight::PointLight(std::string name)
     {
         LightTypeCounter::incrementPointLightCount();
@@ -83,6 +88,12 @@ namespace PositronEngine
     {
         return _type;
     }
+
+    glm::mat4 PointLight::getSpaceMatrix()
+    {
+        return calculateSpaceMatrix();
+    }
+
     void PointLight::draw(Camera& camera)
     {
 

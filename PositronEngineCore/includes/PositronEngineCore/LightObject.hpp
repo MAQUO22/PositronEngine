@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <memory>
 #include "PositronEngineCore/LightTypeCounter.hpp"
 
@@ -65,6 +67,7 @@ namespace PositronEngine
             virtual void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material);
 
             virtual LightType getLightType() ;
+            virtual glm::mat4 getSpaceMatrix();
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

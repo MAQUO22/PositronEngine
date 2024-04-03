@@ -21,8 +21,11 @@ namespace PositronEngine
             void drawWithoutMesh(Camera& camera) override;
 
             LightType getLightType() override;
+            glm::mat4 getSpaceMatrix() override;
 
         private:
+            glm::mat4 calculateSpaceMatrix();
+
             float _direction[3] {1.0f, 0.0f, 1.0f};
             LightType _type;
     };

@@ -33,7 +33,7 @@
 namespace PositronEngine
 {
 
-    int max_light_sources_for_type = 5;
+    int max_light_sources_for_type = 4;
     bool bloom_activate = false;
     bool draw_without_mesh = false;
     bool draw_skybox = true;
@@ -172,11 +172,9 @@ namespace PositronEngine
         CubePrimitive cube("cube1");
         PlatePrimitive plate("plate1");
         PlatePrimitive plate1("plate2");
-        PlatePrimitive plate2("plate3");
         PlatePrimitive plate3("plate4");
         PlatePrimitive plate4("plate5");
         PlatePrimitive plate5("plate6");
-
 
         DirectionLight dir_light;
 
@@ -195,6 +193,15 @@ namespace PositronEngine
         textures_stone.push_back(Texture2D("stone_specular.jpg", TextureType::specular));
         textures_stone.push_back(Texture2D("stone_normal.jpg", TextureType::normal));
 
+        std::vector<Texture2D> textures_bark;
+        textures_bark.push_back(Texture2D("bark.jpg", TextureType::diffuse));
+        textures_bark.push_back(Texture2D("bark_specular.jpg", TextureType::specular));
+        textures_bark.push_back(Texture2D("bark_normal.jpg", TextureType::normal));
+
+        std::vector<Texture2D> textures_concrete;
+        textures_concrete.push_back(Texture2D("concrete.jpg", TextureType::diffuse));
+        textures_concrete.push_back(Texture2D("concrete_specular.jpg", TextureType::specular));
+        textures_concrete.push_back(Texture2D("concrete_normal.jpg", TextureType::normal));
 
         std::vector<Texture2D> textures_light;
 
@@ -214,60 +221,69 @@ namespace PositronEngine
             14.0f     // shininess
         };
 
-        std::shared_ptr<Material> stones = std::make_shared<Material>(textures_stones, stones_config);
+        std::shared_ptr<Material> brick = std::make_shared<Material>(textures_stones, stones_config);
         std::shared_ptr<Material> wood = std::make_shared<Material>(textures_wood, wood_config);
         std::shared_ptr<Material> stone = std::make_shared<Material>(textures_stone, stones_config);
+        std::shared_ptr<Material> bark = std::make_shared<Material>(textures_bark, stones_config);
+        std::shared_ptr<Material> concrete = std::make_shared<Material>(textures_concrete, stones_config);
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
         cube.setMaterial(stone);
 
-        plate.setMaterial(wood);
-        plate1.setMaterial(stones);
-        plate2.setMaterial(wood);
-        plate3.setMaterial(stones);
-        plate4.setMaterial(wood);
-        plate5.setMaterial(stones);
-
-        sphere.setMaterial(stone);
+        // plate.setMaterial(concrete);
+        // plate1.setMaterial(wood);
+        // //plate2.setMaterial(bark);
+        // plate3.setMaterial(brick);
+        // //
+        // // plate4.setMaterial(wood);
+        // // plate5.setMaterial(wood);
+        // //
+        // sphere.setMaterial(stone);
 
 
         std::vector<std::unique_ptr<GameObject>> objects;
-        objects.emplace_back(std::make_unique<SpherePrimitive>(std::move(sphere)));
+        objects.emplace_back(std::make_unique<SpherePrimitive>("sphere"));
         objects[0]->setLocation(-2.5, -2.1, 0.0);
+        objects[0]->setScale(0.5, 0.5, 0.5);
+        objects[0]->setMaterial(brick);
 
-        objects.emplace_back(std::make_unique<CubePrimitive>(std::move(cube)));
+        objects.emplace_back(std::make_unique<CubePrimitive>("cube"));
         objects[1]->setLocation(2.1, -2.1, 0.0);
+        objects[1]->setScale(0.5, 0.5, 0.5);
+        objects[1]->setMaterial(stone);
 
-        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("plate1"));
         objects[2]->setLocation(0.0, 0.0, 2.0);
         objects[2]->setRotation(0.0, -90.0, 0.0);
-        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate1)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("plate2"));
         objects[3]->setLocation(0.0, 2.0, 2.0);
         objects[3]->setRotation(0.0, -90.0, 0.0);
-        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate2)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("plate3"));
         objects[4]->setLocation(0.0, -2.0, 2.0);
         objects[4]->setRotation(0.0, -90.0, 0.0);
-        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate3)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("plate4"));
         objects[5]->setLocation(2.0, 2.0, 2.0);
         objects[5]->setRotation(0.0, -90.0, 0.0);
-        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate4)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("plate5"));
         objects[6]->setLocation(2.0, 0.0, 2.0);
         objects[6]->setRotation(0.0, -90.0, 0.0);
-        objects.emplace_back(std::make_unique<PlatePrimitive>(std::move(plate5)));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("plate6"));
         objects[7]->setLocation(2.0, -2.0, 2.0);
         objects[7]->setRotation(0.0, -90.0, 0.0);
 
+        for(int i = 2 ; i < objects.size(); i++)
+        {
+            objects[i]->setMaterial(concrete);
+        }
 
 
+        LOG_INFORMATION("objects size - {0}", objects.size());
 
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
         light_objects.emplace_back(std::make_unique<DirectionLight>());
-        //light_objects.emplace_back(std::make_unique<PointLight>("point1"));
-        // light_objects.emplace_back(std::make_unique<PointLight>("point2"));
-        // light_objects.emplace_back(std::make_unique<SpotLight>("spot1"));
-        // light_objects.emplace_back(std::make_unique<SpotLight>("spot2"));
+        light_objects.emplace_back(std::make_unique<SpotLight>("spot1"));
 
         for(int i = 0; i < light_objects.size(); i++)
         {
@@ -332,20 +348,8 @@ namespace PositronEngine
         Texture2D shadowMapDirectionTexture(2048, 2048, TextureType::shadow);
         shadowMapFBO.connectTexture(GL_DEPTH_ATTACHMENT, shadowMapDirectionTexture.getID());
 
-        // glDrawBuffer(GL_NONE);
-        // glReadBuffer(GL_NONE);
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        FrameBuffer spot_buffer;
-
-        Texture2D spot_shadow(2048, 2048, TextureType::shadow);
-        spot_buffer.connectTexture(GL_DEPTH_ATTACHMENT, spot_shadow.getID());
-
-        // glDrawBuffer(GL_NONE);
-        // glReadBuffer(GL_NONE);
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
+        std::vector<FrameBuffer> spotShadowMapsFBO;
+        std::vector<Texture2D> spotShadowsTextures;
 
         FrameBuffer::checkFrameBufferErrors();
 
@@ -391,42 +395,40 @@ namespace PositronEngine
 
             for(size_t i = 0; i < objects.size(); i++)
             {
-                glm::vec3 lightPosition = 15.0f * light_objects[0]->getDirectionVec3();
-
-                glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-                glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
-
-                glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
-
-                objects[i]->draw(shadow_map_program, lightSpaceMatrix);
+                objects[i]->draw(shadow_map_program, light_objects[0]->getSpaceMatrix());
             }
 
             //==============================================SHADOW_MAPS_SPOT_LIGHT============================================================
 
+
             glEnable(GL_DEPTH_TEST);
-            glViewport(0, 0, spot_shadow.getWidth(), spot_shadow.getHeight());
-            spot_buffer.bind();
-            glClear(GL_DEPTH_BUFFER_BIT);
 
-            for(size_t i = 0; i < objects.size(); i++)
+            spotShadowMapsFBO.clear();
+            spotShadowsTextures.clear();
+
+            for(size_t i = 0; i < LightTypeCounter::getNumberOfSpotLights(); i++)
             {
-                for(size_t j = 0; j < light_objects.size(); j++)
+                spotShadowMapsFBO.emplace_back();
+                spotShadowsTextures.emplace_back(1024, 1024, TextureType::shadow);
+
+                spotShadowMapsFBO[i].connectTexture(GL_DEPTH_ATTACHMENT, spotShadowsTextures[i].getID());
+            }
+
+
+            for(size_t j = 0, f = 0; j < light_objects.size(); j++)
+            {
+                if(light_objects[j]->getLightType() == LightType::spot)
                 {
-                    if(light_objects[j]->getLightType() == LightType::spot)
+                    glViewport(0, 0, spotShadowsTextures[f].getWidth(), spotShadowsTextures[f].getHeight());
+                    spotShadowMapsFBO[f].bind();
+                    glClear(GL_DEPTH_BUFFER_BIT);
+
+                    for(size_t k = 0; k < objects.size(); k++)
                     {
-                        glm::mat4 viewMatrix = glm::lookAt(light_objects[j]->getLocationVec3(),
-                                                    light_objects[j]->getDirectionVec3(),
-                                                    glm::vec3(0.0f, 0.0f, 1.0f));
-
-                        glm::mat4 projectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
-
-                        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
-
-                        objects[i]->draw(shadow_map_program, lightSpaceMatrix);
+                        objects[k]->draw(shadow_map_program, light_objects[j]->getSpaceMatrix());
                     }
+                    f++;
                 }
-
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -454,55 +456,23 @@ namespace PositronEngine
                 }
             }
 
-            for(size_t i = 0; i < objects.size(); i++)
+            for(size_t i = 0, j = 0; i < objects.size(); i++)
             {
-                for(size_t j = 0, m = 0; j < light_objects.size(); j++)
+                if(j < light_objects.size())
                 {
                     if(light_objects[j]->getLightType() == LightType::direction)
                     {
-                        glm::vec3 lightPosition = 15.0f * light_objects[j]->getDirectionVec3();
-
-                        glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-                        glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
-
-                        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
-
-                        objects[i]->getMaterial()->getShaderProgram()->bind();
-                        objects[i]->getMaterial()->getShaderProgram()->setMatrix4("light_space_matrix", lightSpaceMatrix);
-
                         shadowMapDirectionTexture.bindUnit(3);
-
-                        objects[i]->draw(camera, light_objects);
                     }
                     else if(light_objects[j]->getLightType() == LightType::spot)
                     {
-                        glm::mat4 viewMatrix = glm::lookAt(light_objects[j]->getLocationVec3(),
-                                                    light_objects[j]->getDirectionVec3(),
-                                                    glm::vec3(0.0f, 0.0f, 1.0f));
-
-                        glm::mat4 projectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
-
-                        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
-                        std::string uniform_space_matrix = "spot_light_space_matix[" + std::to_string(m) + "]";
-
-                        if( i < 3)
-                        {
-                            objects[i]->getMaterial()->getShaderProgram()->bind();
-                            objects[i]->getMaterial()->getShaderProgram()->setMatrix4(uniform_space_matrix.c_str(), lightSpaceMatrix);
-                        }
-
-
-                        spot_shadow.bindUnit(4);
-
-                        m++;
-
-                        objects[i]->draw(camera, light_objects);
+                        for(size_t t = 0; t < spotShadowsTextures.size(); t++)
+                            spotShadowsTextures[t].bindUnit(4 + t);
                     }
+                    j++;
                 }
 
-
-
+                objects[i]->draw(camera, light_objects);
             }
 
             if(draw_skybox)
@@ -511,8 +481,6 @@ namespace PositronEngine
             }
 
             //===============================================================================================================================
-
-
 
             //================================================БУФЕР_КАДРА_ДЛЯ_ПИНГ_ПОНГ_БЛЮРА================================================
 
@@ -606,20 +574,13 @@ namespace PositronEngine
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
             ImGui::End();
 
-            // for(int i = 0 ; i < shadow_maps_spot_light.size(); i++)
-            // {
-            //     ImGui::Begin("SHADOW MAPS SPOT LIGHT");
-            //     ImGui::SetWindowSize(ImVec2(1280, 720));
-            //     ImGui::Image((void*)(intptr_t)shadow_maps_spot_light[i].getID(),
-            //                  ImVec2(shadow_maps_spot_light[i].getWidth(), shadow_maps_spot_light[i].getHeight()));
-            //     ImGui::End();
-            // }
-
-            ImGui::Begin("SHADOW MAPS SPOT LIGHT");
-                ImGui::SetWindowSize(ImVec2(1620, 1000));
-                ImGui::Image((void*)(intptr_t)spot_shadow.getID(),
-                             ImVec2(spot_shadow.getWidth(), spot_shadow.getHeight()));
-                ImGui::End();
+            ImGui::Begin("ShadowMap");
+            ImGui::SetWindowSize(ImVec2(1600,800));
+            for(int i = 0; i < spotShadowsTextures.size(); i++)
+            {
+                ImGui::Image((void*)(intptr_t)spotShadowsTextures[i].getID(), ImVec2(2048,2048));
+            }
+            ImGui::End();
 
             ImGui::Begin("Post-processing");
             ImGui::Checkbox("Bloom activate", &bloom_activate);
@@ -769,7 +730,7 @@ namespace PositronEngine
 
 
 
-            stones->setLightConfig(stones_config);
+            brick->setLightConfig(stones_config);
             //cube.setMaterial(stones);
 
             onGUIdraw();

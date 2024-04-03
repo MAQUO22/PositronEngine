@@ -12,7 +12,6 @@ uniform float specular_factor;
 uniform int number_of_point_lights;
 uniform int number_of_spot_lights;
 
-// uniform sampler2D spot_light_shadow_map[MAX_LIGHT_SOURCES];
 
 uniform vec3 point_light_colors[MAX_LIGHT_SOURCES];
 uniform vec3 spot_light_colors[MAX_LIGHT_SOURCES];
@@ -27,7 +26,7 @@ layout(binding=0) uniform sampler2D in_texture;
 layout(binding=1) uniform sampler2D specular_map;
 layout(binding=2) uniform sampler2D normal_map;
 layout(binding=3) uniform sampler2D shadow_map;
-layout(binding=4) uniform sampler2D shadow_map_spot;
+layout(binding=4) uniform sampler2D spot_light_shadow_map_array[MAX_LIGHT_SOURCES];
 
 // varyings (input)
 in vec3 frag_normal;
@@ -134,7 +133,7 @@ vec4 pointLight(vec3 light_position, vec3 point_light_color, float constant_atte
 
 vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direction,
                float outer_cone, float inner_cone, vec4 diffuse_texture, vec4 specular_texture,
-               vec4 frag_position_light)
+               vec4 frag_position_light, sampler2D shadow_map_spot)
 {
 
     vec3 view_direction = normalize(camera_position - frag_position);
@@ -163,7 +162,7 @@ vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direc
         lightCoords = (lightCoords + 1.0f) / 2.0f;
         float currentDepth = lightCoords.z;
         // Prevents shadow acne
-        float bias = max(0.00025f * (1.0f - dot(normal, _light_direction)), 0.000005f);
+        float bias = max(0.0025f * (1.0f - dot(normal, _light_direction)), 0.00005f);
 
         // Smoothens out the shadows
         int sampleRadius = 2;
@@ -182,12 +181,14 @@ vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direc
 
     }
 
-    return vec4(ambient_factor + (diffuse * (1.0f - shadow)) * inten, 1.0) * diffuse_texture +
-                specular_texture.r * vec4((specular * (1.0f - shadow)) * inten, 1.0f);
+    return vec4(diffuse * (1.0f - shadow) * inten, 1.0) * diffuse_texture +
+                specular_texture.r * vec4(specular * (1.0f - shadow) * inten, 1.0f);
 }
 
 
 void main() {
+
+
 
     vec4 diffuse_texture = texture(in_texture, tex_coord);
     vec4 specular_texture = texture(specular_map, tex_coord);
@@ -206,7 +207,7 @@ void main() {
          frag_color += spotLight(spot_light_positions[i], spot_light_colors[i], spot_light_direction[i],
                                  outer_cone[i], inner_cone[i],
                                  diffuse_texture, specular_texture,
-                                 frag_position_spot_light[i]);
+                                 frag_position_spot_light[i], spot_light_shadow_map_array[i]);
     }
 
     float brightness = dot(frag_color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));

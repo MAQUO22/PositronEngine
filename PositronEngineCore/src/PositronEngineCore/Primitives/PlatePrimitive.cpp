@@ -21,6 +21,8 @@ namespace PositronEngine
             0, 1, 2, // Первый треугольник
             2, 3, 0, // Второй треугольник
         };
+
+        int kekes = 0;
     }
 
 
@@ -58,7 +60,7 @@ namespace PositronEngine
     {
         if(_material == nullptr)
         {
-            LOG_CRITICAL("CUBE HAS NO MATERIAL!!!");
+            LOG_CRITICAL("PLATE HAS NO MATERIAL!!!");
         }
 
         else
@@ -113,7 +115,9 @@ namespace PositronEngine
                                 std::string uniform_direction = "spot_light_direction[" + std::to_string(s) + "]";
                                 std::string uniform_outer_cone = "outer_cone[" + std::to_string(s) + "]";
                                 std::string uniform_inner_cone = "inner_cone[" + std::to_string(s) + "]";
+                                std::string uniform_space_matrix = "spot_light_space_matix[" + std::to_string(s) + "]";
 
+                                _material->getShaderProgram()->setMatrix4(uniform_space_matrix.c_str(), light_sources[i]->getSpaceMatrix());
                                 _material->getShaderProgram()->setVec3(uniform_color.c_str(), light_sources[i]->getColorVec3());
                                 _material->getShaderProgram()->setVec3(uniform_position.c_str(), light_sources[i]->getLocationVec3());
                                 _material->getShaderProgram()->setVec3(uniform_direction.c_str(), light_sources[i]->getDirectionVec3());
@@ -125,6 +129,7 @@ namespace PositronEngine
                         }
                         else if(light_sources[i]->getLightType() == LightType::direction)
                         {
+                            _material->getShaderProgram()->setMatrix4("light_space_matrix",light_sources[i]->getSpaceMatrix());
                             _material->getShaderProgram()->setVec3("direction_light_color", light_sources[i]->getColorVec3());
                             _material->getShaderProgram()->setVec3("light_direction", light_sources[i]->getDirectionVec3());
                         }

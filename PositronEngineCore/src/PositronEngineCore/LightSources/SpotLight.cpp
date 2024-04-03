@@ -5,6 +5,20 @@
 
 namespace PositronEngine
 {
+    glm::mat4 SpotLight::calculateSpaceMatrix()
+    {
+
+        glm::mat4 viewMatrix = glm::lookAt(getLocationVec3(),
+                                           getDirectionVec3(),
+                                           glm::vec3(0.0f, 0.0f, 1.0f));
+
+        glm::mat4 projectionMatrix = glm::perspective(glm::radians(70.0f), 1.0f, 0.1f, 200.0f);
+
+        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
+
+        return lightSpaceMatrix;
+    }
+
     SpotLight::SpotLight(std::string name)
     {
         LightTypeCounter::incrementSpotLightCount();
@@ -107,6 +121,12 @@ namespace PositronEngine
     {
         return _type;
     }
+
+    glm::mat4 SpotLight::getSpaceMatrix()
+    {
+        return calculateSpaceMatrix();
+    }
+
     void SpotLight::draw(Camera& camera)
     {
 

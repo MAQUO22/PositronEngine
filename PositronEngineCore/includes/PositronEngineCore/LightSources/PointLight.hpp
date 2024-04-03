@@ -34,8 +34,11 @@ namespace PositronEngine
             void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) override;
 
             LightType getLightType() override;
+            glm::mat4 getSpaceMatrix() override;
 
         private:
+            glm::mat4 calculateSpaceMatrix();
+
             float _location[3] {0.0f, 0.0f, 0.0f};
             float _constantAttenuation {0.05};
             float _linearAttenuation {0.01};
