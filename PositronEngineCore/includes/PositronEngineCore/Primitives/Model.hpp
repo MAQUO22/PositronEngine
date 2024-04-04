@@ -1,6 +1,9 @@
 #pragma once
 
 #include <json/json.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+
 #include "PositronEngineCore/Mesh.hpp"
 #include "PositronEngineCore/Material.hpp"
 #include "PositronEngineCore/Camera.hpp"
@@ -20,14 +23,12 @@ namespace PositronEngine
             Model(const char* file_name);
 
             void draw(Camera& camera, std::vector<std::unique_ptr<LightObject>>& light_sources) override;
-
             void draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix) override;
 
             void setMaterial(const std::shared_ptr<Material>& material) override;
             std::shared_ptr<Material> getMaterial() override;
 
             std::vector<glm::mat4> matrices_meshes;
-            glm::mat4 getModelMatrix(int index);
 
         private:
             const char* _file;

@@ -16,6 +16,7 @@
 #include "PositronEngineCore/FrameBuffer.hpp"
 #include "PositronEngineCore/RenderBuffer.hpp"
 
+#include "PositronEngineCore/Primitives/Model.hpp"
 #include "PositronEngineCore/Primitives/CubePrimitive.hpp"
 #include "PositronEngineCore/Primitives/SpherePrimitive.hpp"
 #include "PositronEngineCore/Primitives/PlatePrimitive.hpp"
@@ -176,6 +177,9 @@ namespace PositronEngine
         PlatePrimitive plate4("plate5");
         PlatePrimitive plate5("plate6");
 
+
+        Model model("/home/n0rr/Desctop/C++/PositronEngine/ResourceFiles/Models/GLTF/scene.gltf");
+
         DirectionLight dir_light;
 
         std::vector<Texture2D> textures_stones;
@@ -271,8 +275,13 @@ namespace PositronEngine
         objects.emplace_back(std::make_unique<PlatePrimitive>("plate6"));
         objects[7]->setLocation(2.0, -2.0, 2.0);
         objects[7]->setRotation(0.0, -90.0, 0.0);
+        objects.emplace_back(std::make_unique<Model>(std::move(model)));
+        objects[8]->setLocation(-0.68, -0.176, 2.060);
+        objects[8]->setRotation(-86.146, -75.264, 92.261);
+        objects[8]->setScale(0.025, 0.025, 0.025);
+        objects[8]->setMaterial(stone);
 
-        for(int i = 2 ; i < objects.size(); i++)
+        for(int i = 2 ; i < objects.size() - 1; i++)
         {
             objects[i]->setMaterial(concrete);
         }

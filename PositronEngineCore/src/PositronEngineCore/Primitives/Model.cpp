@@ -53,19 +53,6 @@ namespace PositronEngine
         traverseNode(0);
     }
 
-    glm::mat4 Model::getModelMatrix(int index)
-    {
-        if(index < matrices_meshes.size())
-        {
-            return matrices_meshes[index];
-        }
-        else
-        {
-            LOG_CRITICAL("WRONG INDEX!");
-            return glm::mat4(1.0f);
-        }
-    }
-
     std::vector<float> Model::getFloats(JSON accessor)
     {
         std::vector<float> float_vec;
@@ -267,6 +254,7 @@ namespace PositronEngine
 
         if(node.find("children") != node.end())
         {
+            LOG_INFORMATION("CHILDREN");
             for(size_t i = 0; i < node["children"].size(); i++)
             {
                 traverseNode(node["children"][i], matrix_next_node);
@@ -336,7 +324,8 @@ namespace PositronEngine
                 _material->getShaderProgram()->bind();
 
                 _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-                _material->getShaderProgram()->setMatrix4("model_matrix", GameObject::getModelMatrix());
+
+                _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
 
                 _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
 
@@ -430,9 +419,6 @@ namespace PositronEngine
             LOG_INFORMATION("MESHES SIZE -> {0}", _meshes.size());
             for(int i = 0; i < _meshes.size(); i++)
             {
-                _material->getShaderProgram()->bind();
-                _material->getShaderProgram()->setMatrix4("model_matrix", matrices_meshes[i]);
-
                 RenderOpenGL::draw(*_meshes[i]->getVertexArray());
             }
 
@@ -441,6 +427,18 @@ namespace PositronEngine
         }
     }
 
-    void Model::draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix) {}
+    void Model::draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix)
+    {
+        updateModelMatrix();
+
+        shader_program->bind();
+        shader_program->setMatrix4("lightSpaceMatrix", space_matrix);
+        shader_program->setMatrix4("model", getModelMatrix());
+
+        for(int i = 0; i < _meshes.size(); i++)
+        {
+            RenderOpenGL::draw(*_meshes[i]->getVertexArray());
+        }
+    }
 
 }
