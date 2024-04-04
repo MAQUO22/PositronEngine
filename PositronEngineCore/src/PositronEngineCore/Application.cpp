@@ -398,6 +398,8 @@ namespace PositronEngine
                 objects[i]->draw(shadow_map_program, light_objects[0]->getSpaceMatrix());
             }
 
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
             //==============================================SHADOW_MAPS_SPOT_LIGHT============================================================
 
 
@@ -456,9 +458,26 @@ namespace PositronEngine
                 }
             }
 
-            for(size_t i = 0, j = 0; i < objects.size(); i++)
+            // for(size_t i = 0; i < objects.size(); i++)
+            // {
+            //     for(size_t j = 0; j < light_objects.size(); j++)
+            //     {
+            //         if(light_objects[j]->getLightType() == LightType::direction)
+            //         {
+            //             shadowMapDirectionTexture.bindUnit(3);
+            //         }
+            //         else if(light_objects[j]->getLightType() == LightType::spot)
+            //         {
+            //             for(size_t t = 0; t < spotShadowsTextures.size(); t++)
+            //                 spotShadowsTextures[t].bindUnit(4 + t);
+            //         }
+            //         objects[i]->draw(camera, light_objects);
+            //     }
+            // }
+
+            for(size_t i = 0; i < objects.size(); i++)
             {
-                if(j < light_objects.size())
+                for(size_t j = 0; j < light_objects.size(); j++)
                 {
                     if(light_objects[j]->getLightType() == LightType::direction)
                     {
@@ -469,11 +488,11 @@ namespace PositronEngine
                         for(size_t t = 0; t < spotShadowsTextures.size(); t++)
                             spotShadowsTextures[t].bindUnit(4 + t);
                     }
-                    j++;
                 }
 
                 objects[i]->draw(camera, light_objects);
             }
+
 
             if(draw_skybox)
             {

@@ -29,6 +29,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/LightMaterial.hpp
 
     includes/PositronEngineCore/CubeMap.hpp
+    includes/PositronEngineCore/Primitives/Model.hpp
     includes/PositronEngineCore/Primitives/CubePrimitive.hpp
     includes/PositronEngineCore/Primitives/PlatePrimitive.hpp
     includes/PositronEngineCore/Primitives/SpherePrimitive.hpp
@@ -70,6 +71,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/LightObject.cpp
 
     src/PositronEngineCore/CubeMap.cpp
+    src/PositronEngineCore/Primitives/Model.cpp
     src/PositronEngineCore/Primitives/CubePrimitive.cpp
     src/PositronEngineCore/Primitives/PlatePrimitive.cpp
     src/PositronEngineCore/Primitives/SpherePrimitive.cpp
@@ -84,6 +86,7 @@ set(ENGINE_ALL_SOURCES
     ${ENGINE_PUBLIC_INCLUDES}
     ${ENGINE_PRIVATE_INCLUDES}
     ${ENGINE_PRIVATE_SOURSES}
+    ${JSON_INCLUDES}
 )
 
 add_library(${ENGINE_PROJECT_NAME} STATIC
@@ -113,6 +116,11 @@ set(IMGUI_SOURCES
 add_library(ImGUI STATIC
     ${IMGUI_INCLUDES}
     ${IMGUI_SOURCES}
+)
+
+
+set(JSON_INCLUDES
+    ../submodules/json/json.hpp
 )
 
 target_include_directories(ImGUI PUBLIC ../submodules)
