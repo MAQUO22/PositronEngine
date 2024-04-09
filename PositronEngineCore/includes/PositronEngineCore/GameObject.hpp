@@ -19,6 +19,7 @@ namespace PositronEngine
 
             virtual void draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources) = 0;
             virtual void draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix) = 0;
+            virtual void draw(std::shared_ptr<ShaderProgram>& shader_program, std::vector<glm::mat4> space_matrices) = 0;
 
             virtual ~GameObject() = default;
 

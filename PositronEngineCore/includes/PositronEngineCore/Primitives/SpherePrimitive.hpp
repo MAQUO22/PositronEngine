@@ -20,6 +20,7 @@ namespace PositronEngine
 
             void draw(Camera& camera,std::vector<std::unique_ptr<LightObject>>& light_sources) override;
             void draw(std::shared_ptr<ShaderProgram>& shader_program, glm::mat4 space_matrix) override;
+            void draw(std::shared_ptr<ShaderProgram>& shader_program, std::vector<glm::mat4> space_matrices) override;
 
             void setMaterial(const std::shared_ptr<Material>& material) override;
 

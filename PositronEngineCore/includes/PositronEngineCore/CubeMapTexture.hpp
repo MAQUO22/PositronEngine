@@ -11,6 +11,7 @@ namespace PositronEngine
             CubeMapTexture& operator=(const CubeMapTexture&) = delete;
 
             CubeMapTexture(const std::string* paths);
+            CubeMapTexture(const unsigned int width, const unsigned int height);
 
             CubeMapTexture& operator=(CubeMapTexture&& texture) noexcept;
             CubeMapTexture(CubeMapTexture&& texture) noexcept;

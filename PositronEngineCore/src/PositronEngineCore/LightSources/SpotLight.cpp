@@ -12,7 +12,7 @@ namespace PositronEngine
                                            getDirectionVec3(),
                                            glm::vec3(0.0f, 0.0f, 1.0f));
 
-        glm::mat4 projectionMatrix = glm::perspective(glm::radians(70.0f), 1.0f, 0.1f, 200.0f);
+        glm::mat4 projectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 400.0f);
 
         glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 

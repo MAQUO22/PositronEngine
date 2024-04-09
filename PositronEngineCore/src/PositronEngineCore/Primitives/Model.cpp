@@ -153,7 +153,6 @@ namespace PositronEngine
 
     void Model::loadMesh(unsigned int index_mesh)
     {
-        LOG_INFORMATION("MODEL LOAD MESH");
         unsigned int position_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["attributes"]["POSITION"];
         unsigned int normal_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["attributes"]["NORMAL"];
         unsigned int texture_uv_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
@@ -162,17 +161,11 @@ namespace PositronEngine
         std::vector<float> position_vector = getFloats(_json["accessors"][position_accessor_index]);
         std::vector<glm::vec3> positions = groupFloatsVec3(position_vector);
 
-        LOG_INFORMATION("POSITIONS MESH");
-
         std::vector<float> normal_vector = getFloats(_json["accessors"][normal_accessor_index]);
         std::vector<glm::vec3> normals = groupFloatsVec3(normal_vector);
 
-        LOG_INFORMATION("NORMALS MESH");
-
         std::vector<float> texture_uvs_vector = getFloats(_json["accessors"][texture_uv_accessor_index]);
         std::vector<glm::vec2> texture_uvs = groupFloatsVec2(texture_uvs_vector);
-
-        LOG_INFORMATION("TEX COORDS MESH");
 
         std::vector<Vertex> vertices = assembleVertices(positions, normals, texture_uvs);
         std::vector<GLuint> indices = getIndices(_json["accessors"][index_accessor_index]);
@@ -416,7 +409,6 @@ namespace PositronEngine
                 }
             }
 
-            LOG_INFORMATION("MESHES SIZE -> {0}", _meshes.size());
             for(int i = 0; i < _meshes.size(); i++)
             {
                 RenderOpenGL::draw(*_meshes[i]->getVertexArray());
@@ -434,6 +426,25 @@ namespace PositronEngine
         shader_program->bind();
         shader_program->setMatrix4("lightSpaceMatrix", space_matrix);
         shader_program->setMatrix4("model", getModelMatrix());
+
+        for(int i = 0; i < _meshes.size(); i++)
+        {
+            RenderOpenGL::draw(*_meshes[i]->getVertexArray());
+        }
+    }
+
+    void Model::draw(std::shared_ptr<ShaderProgram>& shader_program, std::vector<glm::mat4> space_matrices)
+    {
+        updateModelMatrix();
+
+        shader_program->bind();
+        shader_program->setMatrix4("model", getModelMatrix());
+
+        for(size_t i = 0 ; i < 6; i++)
+        {
+            std::string uniform_shadow_matrices = "shadowMatrices[" + std::to_string(i) + "]";
+            shader_program->setMatrix4(uniform_shadow_matrices.c_str(), space_matrices[i]);
+        }
 
         for(int i = 0; i < _meshes.size(); i++)
         {

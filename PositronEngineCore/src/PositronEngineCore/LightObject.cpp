@@ -1,4 +1,5 @@
 #include "PositronEngineCore/LightObject.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace PositronEngine
 {
@@ -58,6 +59,12 @@ namespace PositronEngine
     glm::mat4 LightObject::getSpaceMatrix()
     {
         return glm::mat4(1.0f);
+    }
+
+    std::vector<glm::mat4> LightObject::getSpaceMatrices()
+    {
+        std::vector<glm::mat4> matrices;
+        return matrices;
     }
 
     void LightObject::setLocation(const float x, const float y, const float z) {}

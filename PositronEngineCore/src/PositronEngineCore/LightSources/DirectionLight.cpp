@@ -10,7 +10,7 @@ namespace PositronEngine
 
         glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-        glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 150.0f);
+        glm::mat4 projectionMatrix = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 100.0f);
 
         glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 
@@ -21,7 +21,6 @@ namespace PositronEngine
     {
         _type = LightType::direction;
     }
-
 
     void DirectionLight::setDirection(const float x, const float y, const float z)
     {

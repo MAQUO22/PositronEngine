@@ -221,6 +221,22 @@ namespace PositronEngine
         RenderOpenGL::draw(*_mesh->getVertexArray());
     }
 
+    void CubePrimitive::draw(std::shared_ptr<ShaderProgram>& shader_program, std::vector<glm::mat4> space_matrices)
+    {
+        updateModelMatrix();
+
+        shader_program->bind();
+        shader_program->setMatrix4("model", getModelMatrix());
+
+        for(size_t i = 0 ; i < space_matrices.size(); i++)
+        {
+            std::string uniform_shadow_matrices = "shadowMatrices[" + std::to_string(i) + "]";
+            shader_program->setMatrix4(uniform_shadow_matrices.c_str(), space_matrices[i]);
+        }
+
+        RenderOpenGL::draw(*_mesh->getVertexArray());
+    }
+
     std::shared_ptr<Material> CubePrimitive::getMaterial()
     {
         return _material;

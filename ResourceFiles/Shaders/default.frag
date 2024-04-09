@@ -26,7 +26,8 @@ layout(binding=0) uniform sampler2D in_texture;
 layout(binding=1) uniform sampler2D specular_map;
 layout(binding=2) uniform sampler2D normal_map;
 layout(binding=3) uniform sampler2D shadow_map;
-layout(binding=4) uniform sampler2D spot_light_shadow_map_array[MAX_LIGHT_SOURCES];
+layout(binding=4) uniform samplerCube shadow_map_point;
+layout(binding=5) uniform sampler2D spot_light_shadow_map_array[MAX_LIGHT_SOURCES];
 
 // varyings (input)
 in vec3 frag_normal;
@@ -127,8 +128,32 @@ vec4 pointLight(vec3 light_position, vec3 point_light_color, float constant_atte
         specular = specular_factor * specular_value * point_light_color;
     }
 
-    return vec4(ambient_factor + diffuse * intens, 1.0) * diffuse_texture +
-                specular_texture.r * vec4(specular * intens,1.0f);
+    float shadow = 0.0f;
+	vec3 fragToLight = light_position - frag_position;
+	float currentDepth = length(fragToLight);
+	float bias = max(0.5f * (1.0f - dot(normal, light_direction_)), 0.0005f);
+
+	// Not really a radius, more like half the width of a square
+	int sampleRadius = 2;
+	float offset = 0.03f;
+	for(int z = -sampleRadius; z <= sampleRadius; z++)
+	{
+		for(int y = -sampleRadius; y <= sampleRadius; y++)
+		{
+		    for(int x = -sampleRadius; x <= sampleRadius; x++)
+		    {
+		        float closestDepth = texture(shadow_map_point, fragToLight + vec3(x, y, z) * offset).r;
+				closestDepth *= 150.0f;
+				if (currentDepth > closestDepth + bias)
+					shadow += 1.0f;
+		    }
+		}
+	}
+	// Average shadow
+	shadow /= pow((sampleRadius * 2 + 1), 3);
+
+    return vec4(diffuse * (1.0f - shadow) * intens, 1.0) * diffuse_texture +
+                specular_texture.r * vec4(specular * (1.0f - shadow) * intens, 1.0f);
 }
 
 vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direction,
@@ -191,6 +216,7 @@ void main() {
 
 
     vec4 diffuse_texture = texture(in_texture, tex_coord);
+
     vec4 specular_texture = texture(specular_map, tex_coord);
 
     frag_color = directionLight(light_direction, direction_light_color, diffuse_texture, specular_texture);

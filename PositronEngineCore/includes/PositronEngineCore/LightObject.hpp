@@ -4,6 +4,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <memory>
+#include <vector>
 #include "PositronEngineCore/LightTypeCounter.hpp"
 
 namespace PositronEngine
@@ -68,6 +69,7 @@ namespace PositronEngine
 
             virtual LightType getLightType() ;
             virtual glm::mat4 getSpaceMatrix();
+            virtual std::vector<glm::mat4> getSpaceMatrices();
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

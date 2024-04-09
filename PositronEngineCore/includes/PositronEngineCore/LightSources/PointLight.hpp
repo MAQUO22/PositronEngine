@@ -36,6 +36,8 @@ namespace PositronEngine
             LightType getLightType() override;
             glm::mat4 getSpaceMatrix() override;
 
+            std::vector<glm::mat4> getSpaceMatrices() override;
+
         private:
             glm::mat4 calculateSpaceMatrix();
 

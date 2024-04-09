@@ -94,6 +94,33 @@ namespace PositronEngine
         return calculateSpaceMatrix();
     }
 
+    std::vector<glm::mat4> PointLight::getSpaceMatrices()
+    {
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 150.0f);
+
+        std::vector<glm::mat4> shadowTransforms;
+
+        shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
+                                                            getLocationVec3() + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+
+        shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
+                                                            getLocationVec3() + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+
+        shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
+                                                            getLocationVec3() + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+
+        shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
+                                                            getLocationVec3() + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+
+        shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
+                                                            getLocationVec3() + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+
+        shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
+                                                            getLocationVec3() + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+
+        return shadowTransforms;
+    }
+
     void PointLight::draw(Camera& camera)
     {
 

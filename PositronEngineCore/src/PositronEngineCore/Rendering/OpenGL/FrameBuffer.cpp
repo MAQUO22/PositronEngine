@@ -31,4 +31,10 @@ namespace PositronEngine
         bind();
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, id, 0);
     }
+
+    void FrameBuffer::connectCubeMapTexture(unsigned int attachment, unsigned int id)
+    {
+        bind();
+        glFramebufferTexture(GL_FRAMEBUFFER, attachment, id, 0);
+    }
 }

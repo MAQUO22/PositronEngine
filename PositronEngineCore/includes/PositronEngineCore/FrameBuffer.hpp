@@ -11,6 +11,7 @@ namespace PositronEngine
 
             void bind();
             void connectTexture(unsigned int attachment, unsigned int id);
+            void connectCubeMapTexture(unsigned int attachment, unsigned int id);
             static void checkFrameBufferErrors();
 
         private:
