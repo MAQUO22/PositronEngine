@@ -5,6 +5,12 @@
 
 namespace PositronEngine
 {
+
+    glm::vec3 Camera::_world_forward = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec3 Camera::_world_up = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 Camera::_world_right = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
     Camera::Camera(const glm::vec3& location, const glm::vec3& rotation, const ProjectionMode projection_mode)
         : _location(location), _rotation(rotation), _projection_mode(projection_mode)
     {
@@ -65,6 +71,7 @@ namespace PositronEngine
         if(_update_view_matrix)
         {
             updateViewMatrix();
+            _update_view_matrix = false;
         }
 
         return _view_matrix;
@@ -93,7 +100,6 @@ namespace PositronEngine
 
     void Camera::updateViewMatrix()
     {
-
         const float roll_radians = glm::radians(_rotation.x);
         const float pitch_radians = glm::radians(_rotation.y);
         const float yaw_radians = glm::radians(_rotation.z);
@@ -117,7 +123,7 @@ namespace PositronEngine
 
         _direction = glm::normalize(euler_rotate_matrix * _world_forward);
         _right = glm::normalize(euler_rotate_matrix * _world_right);
-        _up = glm::cross(_right, _direction);
+        _up = glm::normalize(glm::cross(_right, _direction));
 
         _view_matrix = glm::lookAt(_location, _location + _direction, _up);
     }
@@ -130,7 +136,7 @@ namespace PositronEngine
 
     void Camera::moveUp(const float delta)
     {
-        _location += _world_up * delta;
+        _location += _up * delta;
         _update_view_matrix = true;
     }
 

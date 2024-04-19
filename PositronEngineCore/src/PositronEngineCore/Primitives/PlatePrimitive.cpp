@@ -185,7 +185,7 @@ namespace PositronEngine
         shader_program->bind();
         shader_program->setMatrix4("model", getModelMatrix());
 
-        for(size_t i = 0 ; i < 6; i++)
+        for(size_t i = 0 ; i < space_matrices.size(); i++)
         {
             std::string uniform_shadow_matrices = "shadowMatrices[" + std::to_string(i) + "]";
             shader_program->setMatrix4(uniform_shadow_matrices.c_str(), space_matrices[i]);

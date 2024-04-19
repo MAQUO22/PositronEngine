@@ -61,7 +61,7 @@ namespace PositronEngine
         return glm::mat4(1.0f);
     }
 
-    std::vector<glm::mat4> LightObject::getSpaceMatrices()
+    std::vector<glm::mat4> LightObject::getSpaceMatrices(float far_plane)
     {
         std::vector<glm::mat4> matrices;
         return matrices;

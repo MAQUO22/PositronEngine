@@ -69,7 +69,7 @@ namespace PositronEngine
 
             virtual LightType getLightType() ;
             virtual glm::mat4 getSpaceMatrix();
-            virtual std::vector<glm::mat4> getSpaceMatrices();
+            virtual std::vector<glm::mat4> getSpaceMatrices(float far_plane);
 
         private:
             float _color[3] {1.0f, 1.0f, 1.0f};

@@ -35,9 +35,15 @@ namespace PositronEngine
 {
 
     int max_light_sources_for_type = 4;
+    bool cast_shadow = true;
     bool bloom_activate = false;
     bool draw_without_mesh = false;
     bool draw_skybox = true;
+
+    bool is_primitive_changed = true;
+    bool is_light_changed = true;
+
+    float light_far_plane = 145.0f;
 
     float gamma = 0.280f;
     float exposure = 1.75f;
@@ -236,12 +242,11 @@ namespace PositronEngine
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
-        cube.setMaterial(stone);
 
 
         std::vector<std::unique_ptr<GameObject>> objects;
         objects.emplace_back(std::make_unique<SpherePrimitive>("sphere"));
-        objects[0]->setLocation(-2.5, -2.1, 0.0);
+        objects[0]->setLocation(0.0, 0.0, -2.0);
         objects[0]->setScale(0.5, 0.5, 0.5);
         objects[0]->setMaterial(brick);
 
@@ -250,10 +255,17 @@ namespace PositronEngine
         objects[1]->setScale(0.5, 0.5, 0.5);
         objects[1]->setMaterial(stone);
 
-        objects.emplace_back(std::make_unique<PlatePrimitive>("BOTTOM"));
-        objects[2]->setLocation(0.0, 0.0, 2.0);
-        objects[2]->setRotation(0.0, -90.0, 0.0);
-        objects[2]->setScale(10.0f, 10.0f, 10.0f);
+        // objects.emplace_back(std::make_unique<PlatePrimitive>("BOTTOM"));
+        // objects[2]->setLocation(0.0, 0.0, 2.0);
+        // objects[2]->setRotation(0.0, -90.0, 0.0);
+        // objects[2]->setScale(1.0f, 10.0f, 10.0f);
+        // objects[2]->setMaterial(concrete);
+
+        objects.emplace_back(std::make_unique<PlatePrimitive>("UP"));
+        objects[2]->setLocation(0.0, 0.0, -5.0);
+        objects[2]->setRotation(0.0, 90.0, 0.0);
+        objects[2]->setScale(1.0f, 10.0f, 10.0f);
+        objects[2]->setMaterial(concrete);
 
         objects.emplace_back(std::make_unique<Model>(std::move(model)));
         objects[3]->setLocation(-0.68, -0.176, 2.060);
@@ -261,10 +273,6 @@ namespace PositronEngine
         objects[3]->setScale(0.025, 0.025, 0.025);
         objects[3]->setMaterial(stone);
 
-        for(int i = 2 ; i < objects.size() - 1; i++)
-        {
-            objects[i]->setMaterial(concrete);
-        }
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
         light_objects.emplace_back(std::make_unique<DirectionLight>());
@@ -337,10 +345,8 @@ namespace PositronEngine
 
         FrameBuffer::checkFrameBufferErrors();
 
-        FrameBuffer shadowMapPointFBO;
-        CubeMapTexture pointLightDepthCubeMap(1024, 1024);
-
-        shadowMapPointFBO.connectCubeMapTexture(GL_DEPTH_ATTACHMENT, pointLightDepthCubeMap.getID());
+        std::vector<FrameBuffer> shadowMapPointFBO;
+        std::vector<CubeMapTexture> pointLightDepthCubeMap;
 
         FrameBuffer::checkFrameBufferErrors();
 
@@ -377,76 +383,100 @@ namespace PositronEngine
             _window->onUpdate();
             onInputUpdate();
 
-            //===============================================SHADOW_MAP_DIRECTION_LIGH==========================================================
-
-            glEnable(GL_DEPTH_TEST);
-            glViewport(0, 0, shadowMapDirectionTexture.getWidth(), shadowMapDirectionTexture.getHeight());
-            shadowMapFBO.bind();
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            for(size_t i = 0; i < objects.size(); i++)
+            if(cast_shadow)
             {
-                objects[i]->draw(shadow_map_program, light_objects[0]->getSpaceMatrix());
-            }
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            //==============================================SHADOW_MAPS_POINT_LIGHT===========================================================
-
-            glEnable(GL_DEPTH_TEST);
-
-            for(size_t j = 0; j < light_objects.size(); j++)
-            {
-                if(light_objects[j]->getLightType() == LightType::point)
+                if(is_light_changed || is_primitive_changed)
                 {
-                    glViewport(0, 0, 1024, 1024);
-                    shadowMapPointFBO.bind();
+                    LOG_INFORMATION("CHANGED");
+                    //===============================================SHADOW_MAP_DIRECTION_LIGH==========================================================
+
+
+                    glEnable(GL_DEPTH_TEST);
+                    glViewport(0, 0, shadowMapDirectionTexture.getWidth(), shadowMapDirectionTexture.getHeight());
+                    shadowMapFBO.bind();
                     glClear(GL_DEPTH_BUFFER_BIT);
 
-                    shadow_cube_map_program->bind();
-                    shadow_cube_map_program->setVec3("lightPos", light_objects[j]->getLocationVec3());
-
-                    for(size_t k = 0; k < objects.size(); k++)
+                    for(size_t i = 0; i < objects.size(); i++)
                     {
-                        objects[k]->draw(shadow_cube_map_program, light_objects[j]->getSpaceMatrices());
+                        objects[i]->draw(shadow_map_program, light_objects[0]->getSpaceMatrix());
                     }
+
+                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                    //==============================================SHADOW_MAPS_POINT_LIGHT===========================================================
+
+                    glEnable(GL_DEPTH_TEST);
+
+                    shadowMapPointFBO.clear();
+                    pointLightDepthCubeMap.clear();
+
+                    for(size_t i = 0; i < LightTypeCounter::getNumberOfPointLights(); i++)
+                    {
+                        shadowMapPointFBO.emplace_back();
+                        pointLightDepthCubeMap.emplace_back(1024, 1024);
+
+                        shadowMapPointFBO[i].connectCubeMapTexture(GL_DEPTH_ATTACHMENT, pointLightDepthCubeMap[i].getID());
+                    }
+
+                    for(size_t j = 0, f = 0; j < light_objects.size(); j++)
+                    {
+                        if(light_objects[j]->getLightType() == LightType::point)
+                        {
+                            glViewport(0, 0, 1024, 1024);
+                            shadowMapPointFBO[f].bind();
+                            glClear(GL_DEPTH_BUFFER_BIT);
+
+                            shadow_cube_map_program->bind();
+                            shadow_cube_map_program->setVec3("lightPos", light_objects[j]->getLocationVec3());
+                            shadow_cube_map_program->setFloat("farPlane", light_far_plane);
+
+                            for(size_t k = 0; k < objects.size(); k++)
+                            {
+                                objects[k]->draw(shadow_cube_map_program, light_objects[j]->getSpaceMatrices(light_far_plane));
+                            }
+                            f++;
+                        }
+                    }
+
+                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                    //==============================================SHADOW_MAPS_SPOT_LIGHT============================================================
+
+                    glEnable(GL_DEPTH_TEST);
+
+                    spotShadowMapsFBO.clear();
+                    spotShadowsTextures.clear();
+
+                    for(size_t i = 0; i < LightTypeCounter::getNumberOfSpotLights(); i++)
+                    {
+                        spotShadowMapsFBO.emplace_back();
+                        spotShadowsTextures.emplace_back(1024, 1024, TextureType::shadow);
+
+                        spotShadowMapsFBO[i].connectTexture(GL_DEPTH_ATTACHMENT, spotShadowsTextures[i].getID());
+                    }
+
+                    for(size_t j = 0, f = 0; j < light_objects.size(); j++)
+                    {
+                        if(light_objects[j]->getLightType() == LightType::spot)
+                        {
+                            glViewport(0, 0, spotShadowsTextures[f].getWidth(), spotShadowsTextures[f].getHeight());
+                            spotShadowMapsFBO[f].bind();
+                            glClear(GL_DEPTH_BUFFER_BIT);
+
+                            for(size_t k = 0; k < objects.size(); k++)
+                            {
+                                objects[k]->draw(shadow_map_program, light_objects[j]->getSpaceMatrix());
+                            }
+                            f++;
+                        }
+                    }
+
+                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                    is_light_changed = false;
+                    is_primitive_changed = false;
                 }
             }
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            //==============================================SHADOW_MAPS_SPOT_LIGHT============================================================
-
-            glEnable(GL_DEPTH_TEST);
-
-            spotShadowMapsFBO.clear();
-            spotShadowsTextures.clear();
-
-            for(size_t i = 0; i < LightTypeCounter::getNumberOfSpotLights(); i++)
-            {
-                spotShadowMapsFBO.emplace_back();
-                spotShadowsTextures.emplace_back(1024, 1024, TextureType::shadow);
-
-                spotShadowMapsFBO[i].connectTexture(GL_DEPTH_ATTACHMENT, spotShadowsTextures[i].getID());
-            }
-
-            for(size_t j = 0, f = 0; j < light_objects.size(); j++)
-            {
-                if(light_objects[j]->getLightType() == LightType::spot)
-                {
-                    glViewport(0, 0, spotShadowsTextures[f].getWidth(), spotShadowsTextures[f].getHeight());
-                    spotShadowMapsFBO[f].bind();
-                    glClear(GL_DEPTH_BUFFER_BIT);
-
-                    for(size_t k = 0; k < objects.size(); k++)
-                    {
-                        objects[k]->draw(shadow_map_program, light_objects[j]->getSpaceMatrix());
-                    }
-                    f++;
-                }
-            }
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             //================================================БУФЕР_КАДРА_ПОСТ-ПРОЦЕССИНГА====================================================
             glViewport(0, 0, _window->getWidth(), _window->getHeight());
@@ -471,20 +501,38 @@ namespace PositronEngine
                 }
             }
 
-            for(size_t i = 0; i < objects.size(); i++)
+            if(cast_shadow)
             {
-                for(size_t j = 0; j < light_objects.size(); j++)
+                for(size_t i = 0; i < objects.size(); i++)
                 {
-                    if(light_objects[j]->getLightType() == LightType::spot)
-                    {
-                        for(size_t t = 0; t < spotShadowsTextures.size(); t++)
-                            spotShadowsTextures[t].bindUnit(5 + t);
-                    }
-                }
+                    objects[i]->getMaterial()->getShaderProgram()->setBool("cast_shadow", cast_shadow);
 
-                shadowMapDirectionTexture.bindUnit(3);
-                pointLightDepthCubeMap.bindUnit(4);
-                objects[i]->draw(camera, light_objects);
+                    for(size_t j = 0, s = 0, p = 0; j < light_objects.size(); j++)
+                    {
+                        if(light_objects[j]->getLightType() == LightType::spot)
+                        {
+                            spotShadowsTextures[s].bindUnit(9 + s);
+                            s++;
+                        }
+                        else if(light_objects[j]->getLightType() == LightType::point)
+                        {
+                            pointLightDepthCubeMap[p].bindUnit(4 + p);
+                            p++;
+                        }
+                    }
+
+                    shadowMapDirectionTexture.bindUnit(3);
+                    objects[i]->draw(camera, light_objects);
+                }
+            }
+            else
+            {
+                for(size_t i = 0; i < objects.size(); i++)
+                {
+                    objects[i]->getMaterial()->getShaderProgram()->setBool("cast_shadow", cast_shadow);
+
+                    objects[i]->draw(camera, light_objects);
+                }
             }
 
             if(draw_skybox)
@@ -597,6 +645,7 @@ namespace PositronEngine
             {
                 objects.push_back(std::make_unique<CubePrimitive>("cube_butt"));
                 objects[objects.size() - 1]->setMaterial(stone);
+                is_primitive_changed = true;
             }
             ImGui::SameLine();
 
@@ -604,6 +653,7 @@ namespace PositronEngine
             {
                 objects.push_back(std::make_unique<SpherePrimitive>("sphere_butt"));
                 objects[objects.size() - 1]->setMaterial(stone);
+                is_primitive_changed = true;
             }
             ImGui::SameLine();
 
@@ -611,6 +661,7 @@ namespace PositronEngine
             {
                 objects.push_back(std::make_unique<PlatePrimitive>("plate_butt"));
                 objects[objects.size() - 1]->setMaterial(stone);
+                is_primitive_changed = true;
             }
             ImGui::SameLine();
 
@@ -628,9 +679,12 @@ namespace PositronEngine
                 snprintf(label_scale, 64, "%s_SCALE", objects[i]->getName().c_str());
 
 
-                ImGui::SliderFloat3(label_location, objects[i]->getLocation(), -10.0f, 10.0f);
-                ImGui::SliderFloat3(label_rotation, objects[i]->getRotation(), -360.0f, 360.0f);
-                ImGui::SliderFloat3(label_scale, objects[i]->getScale() , -5.0f, 5.0f);
+                if(ImGui::SliderFloat3(label_location, objects[i]->getLocation(), -10.0f, 10.0f))
+                    is_primitive_changed = true;
+                if(ImGui::SliderFloat3(label_rotation, objects[i]->getRotation(), -360.0f, 360.0f))
+                    is_primitive_changed = true;
+                if(ImGui::SliderFloat3(label_scale, objects[i]->getScale() , -5.0f, 5.0f))
+                    is_primitive_changed = true;
                 ImGui::Spacing();
             }
             
@@ -646,6 +700,11 @@ namespace PositronEngine
 
             ImGui::Begin("Light Sources");
             ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);
+            if(ImGui::Checkbox("Cast shadow", &cast_shadow))
+                is_light_changed = true;
+
+            if(ImGui::SliderFloat("farPlane light", &light_far_plane, -500.0f, 500.0f))
+                is_light_changed = true;
 
             if(ImGui::Button("Add Point Light"))
             {
@@ -653,6 +712,7 @@ namespace PositronEngine
                 {
                     light_objects.push_back(std::make_unique<PointLight>("point_butt"));
                     light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
+                    is_light_changed = true;
                 }
             }
             ImGui::SameLine();
@@ -663,11 +723,11 @@ namespace PositronEngine
                 {
                     light_objects.push_back(std::make_unique<SpotLight>("spot_butt"));
                     light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
+                    is_light_changed = true;
                 }
             }
 
             ImGui::Spacing();
-
 
             for(size_t i = 0; i < light_objects.size(); i++)
             {
@@ -687,9 +747,12 @@ namespace PositronEngine
                     snprintf(label_linear_attenation, 64, "POINT_LIGHT_LINEAR_ATTENATION %d", i + 1);
 
                     ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
-                    ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f);
-                    ImGui::SliderFloat(label_linear_attenation, light_objects[i]->getPtrLinearAttenuation() ,0.0f, 0.3f);
-                    ImGui::SliderFloat(label_const_attenation, light_objects[i]->getPtrConstantAttenuation() ,0.0f, 0.3f);
+                    if(ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f))
+                        is_light_changed = true;
+                    if(ImGui::SliderFloat(label_linear_attenation, light_objects[i]->getPtrLinearAttenuation() ,0.0f, 0.3f))
+                        is_light_changed = true;
+                    if(ImGui::SliderFloat(label_const_attenation, light_objects[i]->getPtrConstantAttenuation() ,0.0f, 0.3f))
+                        is_light_changed = true;
 
 
                     ImGui::Spacing();
@@ -707,10 +770,14 @@ namespace PositronEngine
 
 
                     ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
-                    ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f);
-                    ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f);
-                    ImGui::SliderFloat(label_inner_cone, light_objects[i]->getPtrInnerCone(), light_objects[i]->getOuterCone(), 2.0f);
-                    ImGui::SliderFloat(label_outer_cone, light_objects[i]->getPtrOuterCone(), 0.0f, light_objects[i]->getInnerCone());
+                    if(ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f))
+                        is_light_changed = true;
+                    if(ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f))
+                        is_light_changed = true;
+                    if(ImGui::SliderFloat(label_inner_cone, light_objects[i]->getPtrInnerCone(), light_objects[i]->getOuterCone(), 2.0f))
+                        is_light_changed = true;
+                    if(ImGui::SliderFloat(label_outer_cone, light_objects[i]->getPtrOuterCone(), 0.0f, light_objects[i]->getInnerCone()))
+                        is_light_changed = true;
 
                     ImGui::Spacing();
                 }
@@ -720,7 +787,8 @@ namespace PositronEngine
                     snprintf(label_color, 64, "DIRECT_LIGHT_COLOR");
 
                     ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
-                    ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f);
+                    if(ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f))
+                        is_light_changed = true;
                     ImGui::Spacing();
                 }
             }

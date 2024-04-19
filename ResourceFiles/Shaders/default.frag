@@ -22,12 +22,14 @@ uniform float linear_attenuation[MAX_LIGHT_SOURCES];
 uniform float outer_cone[MAX_LIGHT_SOURCES];
 uniform float inner_cone[MAX_LIGHT_SOURCES];
 
+uniform bool cast_shadow;
+
 layout(binding=0) uniform sampler2D in_texture;
 layout(binding=1) uniform sampler2D specular_map;
 layout(binding=2) uniform sampler2D normal_map;
 layout(binding=3) uniform sampler2D shadow_map;
-layout(binding=4) uniform samplerCube shadow_map_point;
-layout(binding=5) uniform sampler2D spot_light_shadow_map_array[MAX_LIGHT_SOURCES];
+layout(binding=4) uniform samplerCube point_light_shadow_cubemap_array[MAX_LIGHT_SOURCES];
+layout(binding=9) uniform sampler2D spot_light_shadow_map_array[MAX_LIGHT_SOURCES];
 
 // varyings (input)
 in vec3 frag_normal;
@@ -67,40 +69,47 @@ vec4 directionLight(vec3 light_direction, vec3 direction_light_color, vec4 diffu
     vec3 specular = specular_factor * specular_value * direction_light_color;
 
 
+    if(cast_shadow)
+    {
     float shadow = 0.0f;
     // Sets lightCoords to cull space
     vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
-    if(lightCoords.z <= 1.0f)
-    {
-        // Get from [-1, 1] range to [0, 1] range just like the shadow map
-        lightCoords = (lightCoords + 1.0f) / 2.0f;
-        float currentDepth = lightCoords.z;
-        // Prevents shadow acne
-        float bias = max(0.025f * (1.0f - dot(normal, _light_direction)), 0.0005f);
-
-        // Smoothens out the shadows
-        int sampleRadius = 2;
-        vec2 pixelSize = 1.0 / textureSize(shadow_map, 0);
-        for(int y = -sampleRadius; y <= sampleRadius; y++)
+        if(lightCoords.z <= 1.0f)
         {
-            for(int x = -sampleRadius; x <= sampleRadius; x++)
+            // Get from [-1, 1] range to [0, 1] range just like the shadow map
+            lightCoords = (lightCoords + 1.0f) / 2.0f;
+            float currentDepth = lightCoords.z;
+            // Prevents shadow acne
+            float bias = max(0.025f * (1.0f - dot(normal, _light_direction)), 0.0005f);
+
+            // Smoothens out the shadows
+            int sampleRadius = 2;
+            vec2 pixelSize = 1.0 / textureSize(shadow_map, 0);
+            for(int y = -sampleRadius; y <= sampleRadius; y++)
             {
-                float closestDepth = texture(shadow_map, lightCoords.xy + vec2(x, y) * pixelSize).r;
-                if (currentDepth > closestDepth + bias)
-                    shadow += 1.0f;
+                for(int x = -sampleRadius; x <= sampleRadius; x++)
+                {
+                    float closestDepth = texture(shadow_map, lightCoords.xy + vec2(x, y) * pixelSize).r;
+                    if (currentDepth > closestDepth + bias)
+                        shadow += 1.0f;
+                }
             }
+            // Get average shadow
+            shadow /= pow((sampleRadius * 2 + 1), 2);
         }
-        // Get average shadow
-        shadow /= pow((sampleRadius * 2 + 1), 2);
 
+        return vec4(ambient_factor + diffuse * (1.0f - shadow), 1.0) * diffuse_texture +
+                    specular_texture.r * vec4(specular * (1.0f - shadow), 1.0f);
     }
-
-    return vec4(ambient_factor + diffuse * (1.0f - shadow), 1.0) * diffuse_texture + specular_texture.r * vec4(specular * (1.0f - shadow), 1.0f);
+    else
+    {
+        return vec4(ambient_factor + diffuse, 1.0) * diffuse_texture + specular_texture.r * vec4(specular, 1.0f);
+    }
 
 }
 
 vec4 pointLight(vec3 light_position, vec3 point_light_color, float constant_attenuation,
-                float linear_attenuation, vec4 diffuse_texture, vec4 specular_texture)
+                float linear_attenuation, samplerCube shadow_map_point, vec4 diffuse_texture, vec4 specular_texture)
 {
     vec3 light_vector = light_position - frag_position;
     float dist = length(light_vector);
@@ -128,32 +137,39 @@ vec4 pointLight(vec3 light_position, vec3 point_light_color, float constant_atte
         specular = specular_factor * specular_value * point_light_color;
     }
 
-    float shadow = 0.0f;
-	vec3 fragToLight = light_position - frag_position;
-	float currentDepth = length(fragToLight);
-	float bias = max(0.5f * (1.0f - dot(normal, light_direction_)), 0.0005f);
+    if(cast_shadow)
+    {
+        float shadow = 0.0f;
+        vec3 fragToLight = frag_position - light_position;
+        float currentDepth = length(fragToLight);
+        float bias = max(0.5f * (1.0f - dot(normal, light_direction_)), 0.0005f);
 
-	// Not really a radius, more like half the width of a square
-	int sampleRadius = 2;
-	float offset = 0.03f;
-	for(int z = -sampleRadius; z <= sampleRadius; z++)
-	{
-		for(int y = -sampleRadius; y <= sampleRadius; y++)
-		{
-		    for(int x = -sampleRadius; x <= sampleRadius; x++)
-		    {
-		        float closestDepth = texture(shadow_map_point, fragToLight + vec3(x, y, z) * offset).r;
-				closestDepth *= 150.0f;
-				if (currentDepth > closestDepth + bias)
-					shadow += 1.0f;
-		    }
-		}
-	}
-	// Average shadow
-	shadow /= pow((sampleRadius * 2 + 1), 3);
+        // Not really a radius, more like half the width of a square
+        int sampleRadius = 2;
+        float offset = 0.03f;
+        for(int z = -sampleRadius; z <= sampleRadius; z++)
+        {
+            for(int y = -sampleRadius; y <= sampleRadius; y++)
+            {
+                for(int x = -sampleRadius; x <= sampleRadius; x++)
+                {
+                    float closestDepth = texture(shadow_map_point, fragToLight + vec3(x, y, z) * offset).r;
+                    closestDepth *= 145.0f;
+                    if (currentDepth > closestDepth + bias)
+                        shadow += 1.0f;
+                }
+            }
+        }
+        // Average shadow
+        shadow /= pow((sampleRadius * 2 + 1), 3);
 
-    return vec4(diffuse * (1.0f - shadow) * intens, 1.0) * diffuse_texture +
-                specular_texture.r * vec4(specular * (1.0f - shadow) * intens, 1.0f);
+        return vec4(diffuse * (1.0f - shadow) * intens, 1.0) * diffuse_texture +
+                    specular_texture.r * vec4(specular * (1.0f - shadow) * intens, 1.0f);
+    }
+    else
+    {
+        return vec4(diffuse * intens, 1.0) * diffuse_texture + specular_texture.r * vec4(specular * intens, 1.0f);
+    }
 }
 
 vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direction,
@@ -178,36 +194,42 @@ vec4 spotLight(vec3 light_position, vec3 spot_light_color, vec3 spot_light_direc
 
     float inten = clamp((angle - outer_cone) / (inner_cone - outer_cone), 0.0f, 1.0f);
 
-    float shadow = 0.0f;
-    // Sets lightCoords to cull space
-    vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
-    if(lightCoords.z <= 1.0f)
+    if(cast_shadow)
     {
-        // Get from [-1, 1] range to [0, 1] range just like the shadow map
-        lightCoords = (lightCoords + 1.0f) / 2.0f;
-        float currentDepth = lightCoords.z;
-        // Prevents shadow acne
-        float bias = max(0.0025f * (1.0f - dot(normal, _light_direction)), 0.00005f);
-
-        // Smoothens out the shadows
-        int sampleRadius = 2;
-        vec2 pixelSize = 1.0 / textureSize(shadow_map_spot, 0);
-        for(int y = -sampleRadius; y <= sampleRadius; y++)
+        float shadow = 0.0f;
+        // Sets lightCoords to cull space
+        vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
+        if(lightCoords.z <= 1.0f)
         {
-            for(int x = -sampleRadius; x <= sampleRadius; x++)
+            // Get from [-1, 1] range to [0, 1] range just like the shadow map
+            lightCoords = (lightCoords + 1.0f) / 2.0f;
+            float currentDepth = lightCoords.z;
+            // Prevents shadow acne
+            float bias = max(0.0025f * (1.0f - dot(normal, _light_direction)), 0.00005f);
+
+            // Smoothens out the shadows
+            int sampleRadius = 2;
+            vec2 pixelSize = 1.0 / textureSize(shadow_map_spot, 0);
+            for(int y = -sampleRadius; y <= sampleRadius; y++)
             {
-                float closestDepth = texture(shadow_map_spot, lightCoords.xy + vec2(x, y) * pixelSize).r;
-                if (currentDepth > closestDepth + bias)
-                    shadow += 1.0f;
+                for(int x = -sampleRadius; x <= sampleRadius; x++)
+                {
+                    float closestDepth = texture(shadow_map_spot, lightCoords.xy + vec2(x, y) * pixelSize).r;
+                    if (currentDepth > closestDepth + bias)
+                        shadow += 1.0f;
+                }
             }
+            // Get average shadow
+            shadow /= pow((sampleRadius * 2 + 1), 2);
         }
-        // Get average shadow
-        shadow /= pow((sampleRadius * 2 + 1), 2);
 
+        return vec4(diffuse * (1.0f - shadow) * inten, 1.0) * diffuse_texture +
+                    specular_texture.r * vec4(specular * (1.0f - shadow) * inten, 1.0f);
     }
-
-    return vec4(diffuse * (1.0f - shadow) * inten, 1.0) * diffuse_texture +
-                specular_texture.r * vec4(specular * (1.0f - shadow) * inten, 1.0f);
+    else
+    {
+        return vec4(diffuse * inten, 1.0) * diffuse_texture + specular_texture.r * vec4(specular * inten, 1.0f);
+    }
 }
 
 
@@ -225,6 +247,7 @@ void main() {
     {
         frag_color += pointLight(point_light_positions[i], point_light_colors[i],
                                  constant_attenuation[i], linear_attenuation[i],
+                                 point_light_shadow_cubemap_array[i],
                                  diffuse_texture, specular_texture);
     }
 

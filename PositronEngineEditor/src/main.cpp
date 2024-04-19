@@ -59,8 +59,8 @@ class PositronEditor : public PositronEngine::Application
                 }
                 else
                 {
-                    rotation_delta.z += static_cast<float>(initial_mouse_position_x - current_cursor_position.x) / 5.0f;
-                    rotation_delta.y -= static_cast<float>(current_cursor_position.y - initial_mouse_position_y) / 5.0f;
+                    rotation_delta.z += static_cast<float>(current_cursor_position.x - initial_mouse_position_x) / 5.0f;
+                    rotation_delta.y -= static_cast<float>(initial_mouse_position_y - current_cursor_position.y) / 5.0f;
                 }
 
                 initial_mouse_position_x = current_cursor_position.x;

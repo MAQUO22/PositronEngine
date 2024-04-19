@@ -63,9 +63,9 @@ namespace PositronEngine
             glm::vec3 _right;
             glm::vec3 _up;
 
-            static constexpr glm::vec3 _world_forward{1.0f, 0.0f, 0.0f};
-            static constexpr glm::vec3 _world_up{0.0f, 0.0f, 1.0f};
-            static constexpr glm::vec3 _world_right{0.0f, -1.0f, 0.0f};
+            static glm::vec3 _world_forward;
+            static glm::vec3 _world_up;
+            static glm::vec3 _world_right;
 
             glm::mat4 _projection_matrix;
             ProjectionMode _projection_mode;

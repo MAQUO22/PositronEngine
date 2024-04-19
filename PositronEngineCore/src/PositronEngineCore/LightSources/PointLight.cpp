@@ -94,36 +94,36 @@ namespace PositronEngine
         return calculateSpaceMatrix();
     }
 
-    std::vector<glm::mat4> PointLight::getSpaceMatrices()
+    std::vector<glm::mat4> PointLight::getSpaceMatrices(float far_plane)
     {
-        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 150.0f);
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, far_plane);
 
         std::vector<glm::mat4> shadowTransforms;
 
         shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
-                                                            getLocationVec3() + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+                                                            getLocationVec3() + glm::vec3(0.0, 1.0, 0.0), glm::vec3(1.0, 0.0, 0.0))); //гуд
 
         shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
-                                                            getLocationVec3() + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+                                                            getLocationVec3() + glm::vec3(0.0, -1.0, 0.0), glm::vec3(1.0, 0.0, 0.0))); //гуд
 
         shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
-                                                            getLocationVec3() + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+                                                            getLocationVec3() + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0))); //
 
         shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
-                                                            getLocationVec3() + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+                                                            getLocationVec3() + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
 
         shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
-                                                            getLocationVec3() + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+                                                            getLocationVec3() + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0))); //гуд
 
         shadowTransforms.push_back(shadowProj * glm::lookAt(getLocationVec3(),
-                                                            getLocationVec3() + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+                                                            getLocationVec3() + glm::vec3(0.0, 0.0, -1.0), glm::vec3(1.0, 0.0, 0.0))); //гуд
+
 
         return shadowTransforms;
     }
 
     void PointLight::draw(Camera& camera)
     {
-
         _cube->setLocation(_location[0], _location[1], _location[2]);
         _cube->updateModelMatrix();
 
