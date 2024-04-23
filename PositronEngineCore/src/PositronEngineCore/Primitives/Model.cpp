@@ -5,8 +5,10 @@
 #include <PositronEngineCore/RenderOpenGL.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
 namespace PositronEngine
 {
+    const std::string PATH_TO_TEXTURES = "../../ResourceFiles/Models/";
 
     std::string getFileContext(const char* file_name)
     {
@@ -26,269 +28,92 @@ namespace PositronEngine
         throw(errno);
     }
 
-
-    std::vector<unsigned char> Model::getData()
+    void Model::loadModel(std::string path)
     {
-        std::string bytes_text;
-        std::string uri = _json["buffers"][0]["uri"];
+        Assimp::Importer importer;
+        const aiScene *scene = importer.ReadFile(PATH_TO_TEXTURES + path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-        std::string file_str = std::string(_file);
-        std::string file_directory = file_str.substr(0, file_str.find_last_of('/') + 1);
-        bytes_text = getFileContext((file_directory + uri).c_str());
-
-        std::vector<unsigned char> data(bytes_text.begin(), bytes_text.end());
-
-        return data;
-    }
-
-    Model::Model(const char* file_name)
-    {
-        std::string file_context = getFileContext(file_name);
-        _json = JSON::parse(file_context);
-
-        Model::_file = file_name;
-        _data = getData();
-
-        LOG_INFORMATION("MODEL CONSTRUCTOR");
-        traverseNode(0);
-    }
-
-    std::vector<float> Model::getFloats(JSON accessor)
-    {
-        std::vector<float> float_vec;
-
-        unsigned int buffer_view_indices = accessor.at("bufferView").get<unsigned int>();
-        unsigned int count = accessor["count"];
-        unsigned int accessor_byte_offset = accessor.value("byteOffset", 0);
-        std::string type = accessor["type"];
-
-        JSON buffer_view = _json["bufferViews"][buffer_view_indices];
-        unsigned int byte_offset = buffer_view["byteOffset"];
-
-
-        unsigned int number_per_verteces;
-        if(type == "SCALAR") number_per_verteces = 1;
-        else if(type == "VEC2") number_per_verteces = 2;
-        else if(type == "VEC3") number_per_verteces = 3;
-        else if(type == "VEC4") number_per_verteces = 4;
-        else LOG_CRITICAL("TYPE IS INVALID (NOT SCALAR OR VEC)");
-
-        unsigned int beggining_of_data = byte_offset + accessor_byte_offset;
-        unsigned int length_of_data = count * 4 * number_per_verteces;
-
-        for(size_t i = beggining_of_data; i < beggining_of_data + length_of_data; i)
+        if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
-            unsigned char bytes[] = {_data[i++], _data[i++], _data[i++], _data[i++] };
-            float value;
-            std::memcpy(&value, bytes, sizeof(float));
-            float_vec.push_back(value);
+            LOG_CRITICAL("MODEL IMPORT ERROR: {0}", importer.GetErrorString());
+            return;
         }
 
-        return float_vec;
+        _directory = path.substr(0, path.find_last_of('/'));
+        processNode(scene->mRootNode, scene);
+
     }
 
-    std::vector<GLuint> Model::getIndices(JSON accessor)
+    Model::Model(const char* file_name, std::string name)
     {
-        std::vector<GLuint> indices;
-
-        unsigned int buffer_view_indices = accessor.at("bufferView").get<unsigned int>();
-        unsigned int count = accessor["count"];
-        unsigned int accessor_byte_offset = accessor.value("byteOffset", 0);
-        unsigned int component_type = accessor["componentType"];
-
-
-        JSON buffer_view = _json["bufferViews"][buffer_view_indices];
-        unsigned int byte_offset = buffer_view.value("byteOffset", 0);
-
-        unsigned int beggining_of_data = byte_offset + accessor_byte_offset;
-
-        if(component_type == 5125)
-        {
-            for(size_t i = beggining_of_data; i < byte_offset + accessor_byte_offset + count * 4; i)
-            {
-                unsigned char bytes[] = { _data[i++], _data[i++], _data[i++], _data[i++] };
-                unsigned int value;
-                std::memcpy(&value, bytes, sizeof(unsigned int));
-                indices.push_back((GLuint)value);
-            }
-        }
-        else if(component_type == 5123)
-        {
-            for(size_t i = beggining_of_data; i < byte_offset + accessor_byte_offset + count * 2; i)
-            {
-                unsigned char bytes[] = { _data[i++], _data[i++]};
-                unsigned int value;
-                std::memcpy(&value, bytes, sizeof(unsigned short));
-                indices.push_back((GLuint)value);
-            }
-        }
-        else if(component_type == 5122)
-        {
-            for(size_t i = beggining_of_data; i < byte_offset + accessor_byte_offset + count * 2; i)
-            {
-                unsigned char bytes[] = { _data[i++], _data[i++]};
-                unsigned int value;
-                std::memcpy(&value, bytes, sizeof(short));
-                indices.push_back((GLuint)value);
-            }
-        }
-
-        return indices;
+        _name = name;
+        loadModel(file_name);
     }
 
-    std::vector<Vertex> Model::assembleVertices(std::vector<glm::vec3> positions,
-                                                std::vector<glm::vec3> normals,
-                                                std::vector<glm::vec2> texture_uvs)
+    void Model::processNode(aiNode *node, const aiScene* scene)
+    {
+        for(size_t i = 0; i < node->mNumMeshes; i++)
+        {
+            aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+            _meshes.push_back(processMesh(mesh, scene));
+        }
+
+        for(size_t i = 0; i < node->mNumChildren; i++)
+        {
+            processNode(node->mChildren[i], scene);
+        }
+    }
+
+    std::shared_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene* scene)
     {
         std::vector<Vertex> vertices;
+        std::vector<GLuint> indices;
 
-        for(size_t i = 0; i < positions.size(); i++)
+        for(size_t i = 0; i < mesh->mNumVertices; i++)
         {
-            vertices.push_back(Vertex{ positions[i], normals[i], texture_uvs[i] });
-        }
+            Vertex vertex;
+            glm::vec3 vector;
 
-        return vertices;
-    }
+            vector.x = mesh->mVertices[i].x;
+            vector.y = mesh->mVertices[i].y;
+            vector.z = mesh->mVertices[i].z;
+            vertex.position = vector;
 
+            vector.x = mesh->mNormals[i].x;
+            vector.y = mesh->mNormals[i].y;
+            vector.z = mesh->mNormals[i].z;
+            vertex.normal = vector;
 
-    void Model::loadMesh(unsigned int index_mesh)
-    {
-        unsigned int position_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["attributes"]["POSITION"];
-        unsigned int normal_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["attributes"]["NORMAL"];
-        unsigned int texture_uv_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
-        unsigned int index_accessor_index = _json["meshes"][index_mesh]["primitives"][0]["indices"];
-
-        std::vector<float> position_vector = getFloats(_json["accessors"][position_accessor_index]);
-        std::vector<glm::vec3> positions = groupFloatsVec3(position_vector);
-
-        std::vector<float> normal_vector = getFloats(_json["accessors"][normal_accessor_index]);
-        std::vector<glm::vec3> normals = groupFloatsVec3(normal_vector);
-
-        std::vector<float> texture_uvs_vector = getFloats(_json["accessors"][texture_uv_accessor_index]);
-        std::vector<glm::vec2> texture_uvs = groupFloatsVec2(texture_uvs_vector);
-
-        std::vector<Vertex> vertices = assembleVertices(positions, normals, texture_uvs);
-        std::vector<GLuint> indices = getIndices(_json["accessors"][index_accessor_index]);
-
-        _meshes.push_back(std::make_shared<Mesh>(vertices, indices));
-
-    }
-
-    void Model::traverseNode(unsigned int next_node, glm::mat4 matrix)
-    {
-        JSON node = _json["nodes"][next_node];
-
-        glm::vec3 translation = glm::vec3(0.0f, 0.0f, 0.0f);
-        if(node.find("translation") != node.end())
-        {
-            float translation_values[3];
-            for(size_t i = 0; i < node["translation"].size(); i++)
+            if(mesh->mTextureCoords[0])
             {
-                translation_values[i] = (node["translation"][i]);
+                glm::vec2 vec;
+
+                vec.x = mesh->mTextureCoords[0][i].x;
+                vec.y = mesh->mTextureCoords[0][i].y;
+                vertex.texUV = vec;
             }
-            translation = glm::make_vec3(translation_values);
-        }
-
-        glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-        if(node.find("rotation") != node.end())
-        {
-            float rotation_values[4] =
+            else
             {
-                node["rotation"][3],
-                node["rotation"][0],
-                node["rotation"][1],
-                node["rotation"][2]
-            };
+                vertex.texUV = glm::vec2(0.0f, 0.0f);
 
-            rotation = glm::make_quat(rotation_values);
-        }
-
-        glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-        if(node.find("scale") != node.end())
-        {
-            float scale_values[3];
-            for(size_t i = 0; i < node["scale"].size(); i++)
-            {
-                scale_values[i] = (node["scale"][i]);
             }
-            scale = glm::make_vec3(scale_values);
+
+            vertices.push_back(vertex);
         }
 
-        glm::mat4 matrix_node = glm::mat4(1.0f);
-        if(node.find("matrix") != node.end())
+        for(size_t i = 0; i < mesh->mNumFaces; i++)
         {
-            float matrix_values[16];
-            for(size_t i = 0; i < node["matrix"].size(); i++)
+            aiFace face = mesh->mFaces[i];
+
+            for(size_t j = 0; j < face.mNumIndices; j++)
             {
-                matrix_values[i] = (node["matrix"][i]);
-            }
-            matrix_node = glm::make_mat4(matrix_values);
-        }
-
-        glm::mat4 trans = glm::mat4(1.0f);
-        glm::mat4 rot = glm::mat4(1.0f);
-        glm::mat4 sca = glm::mat4(1.0f);
-
-        trans = glm::translate(trans, translation);
-        rot = glm::mat4_cast(rotation);
-        sca = glm::scale(sca, scale);
-
-        glm::mat4 matrix_next_node = matrix * matrix_node * trans * rot * sca;
-
-        if(node.find("mesh") != node.end())
-        {
-            translations_meshes.push_back(translation);
-            rotations_meshes.push_back(rotation);
-            scales_meshes.push_back(scale);
-            matrices_meshes.push_back(matrix_next_node);
-
-            loadMesh(node["mesh"]);
-        }
-
-        if(node.find("children") != node.end())
-        {
-            LOG_INFORMATION("CHILDREN");
-            for(size_t i = 0; i < node["children"].size(); i++)
-            {
-                traverseNode(node["children"][i], matrix_next_node);
+                indices.push_back(face.mIndices[j]);
             }
         }
-    }
 
-    std::vector<glm::vec2> Model::groupFloatsVec2(std::vector<float> float_vec)
-    {
-        std::vector<glm::vec2> vectors;
-
-        for(size_t i = 0; i < float_vec.size(); i)
-        {
-            vectors.push_back(glm::vec2(float_vec[i++], float_vec[i++]));
-        }
-
-        return vectors;
-    }
-
-    std::vector<glm::vec3> Model::groupFloatsVec3(std::vector<float> float_vec)
-    {
-        std::vector<glm::vec3> vectors;
-
-        for(size_t i = 0; i < float_vec.size(); i)
-        {
-            vectors.push_back(glm::vec3(float_vec[i++], float_vec[i++], float_vec[i++]));
-        }
-
-        return vectors;
-    }
-
-    std::vector<glm::vec4> Model::groupFloatsVec4(std::vector<float> float_vec)
-    {
-        std::vector<glm::vec4> vectors;
-
-        for(size_t i = 0; i < float_vec.size(); i)
-        {
-            vectors.push_back(glm::vec4(float_vec[i++], float_vec[i++], float_vec[i++], float_vec[i++]));
-        }
-
-        return vectors;
+        LOG_INFORMATION("VERTICES COUNT -> {0}", vertices.size());
+        LOG_INFORMATION("INDICES COUNT -> {0}", indices.size());
+        return std::make_shared<Mesh>(vertices, indices);
     }
 
     std::shared_ptr<Material> Model::getMaterial()
@@ -329,7 +154,6 @@ namespace PositronEngine
 
                 _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
                 _material->getShaderProgram()->setInt("number_of_spot_lights", LightTypeCounter::getNumberOfSpotLights());
-                _material->getShaderProgram()->setBool("model", false);
 
                 if(light_sources.size() != 0)
                 {
@@ -427,6 +251,7 @@ namespace PositronEngine
         shader_program->setMatrix4("lightSpaceMatrix", space_matrix);
         shader_program->setMatrix4("model", getModelMatrix());
 
+        LOG_INFORMATION("MESHES SIZE -> {0}", _meshes.size());
         for(int i = 0; i < _meshes.size(); i++)
         {
             RenderOpenGL::draw(*_meshes[i]->getVertexArray());

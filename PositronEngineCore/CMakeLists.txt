@@ -86,7 +86,6 @@ set(ENGINE_ALL_SOURCES
     ${ENGINE_PUBLIC_INCLUDES}
     ${ENGINE_PRIVATE_INCLUDES}
     ${ENGINE_PRIVATE_SOURSES}
-    ${JSON_INCLUDES}
 )
 
 add_library(${ENGINE_PROJECT_NAME} STATIC
@@ -116,11 +115,6 @@ set(IMGUI_SOURCES
 add_library(ImGUI STATIC
     ${IMGUI_INCLUDES}
     ${IMGUI_SOURCES}
-)
-
-
-set(JSON_INCLUDES
-    ../submodules/json/json.hpp
 )
 
 target_include_directories(ImGUI PUBLIC ../submodules)
@@ -154,4 +148,6 @@ target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE glad)
 add_subdirectory(../submodules/glm ${CMAKE_CURRENT_BINARY_DIR}/glm)
 target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE glm)
 
+add_subdirectory(../submodules/assimp ${CMAKE_CURRENT_BINARY_DIR}/assimp)
+target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE assimp)
 

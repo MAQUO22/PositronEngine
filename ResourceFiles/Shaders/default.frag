@@ -71,9 +71,9 @@ vec4 directionLight(vec3 light_direction, vec3 direction_light_color, vec4 diffu
 
     if(cast_shadow)
     {
-    float shadow = 0.0f;
-    // Sets lightCoords to cull space
-    vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
+        float shadow = 0.0f;
+        // Sets lightCoords to cull space
+        vec3 lightCoords = frag_position_light.xyz / frag_position_light.w;
         if(lightCoords.z <= 1.0f)
         {
             // Get from [-1, 1] range to [0, 1] range just like the shadow map

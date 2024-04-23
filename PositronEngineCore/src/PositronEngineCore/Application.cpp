@@ -187,7 +187,7 @@ namespace PositronEngine
         SpherePrimitive sphere("sphere1");
         CubePrimitive cube("cube1");
 
-        Model model("/home/n0rr/Desctop/C++/PositronEngine/ResourceFiles/Models/GLTF/scene.gltf");
+        Model heart("GLTF/Gear1.gltf", "HOUSE");
 
         DirectionLight dir_light;
 
@@ -255,23 +255,15 @@ namespace PositronEngine
         objects[1]->setScale(0.5, 0.5, 0.5);
         objects[1]->setMaterial(stone);
 
-        // objects.emplace_back(std::make_unique<PlatePrimitive>("BOTTOM"));
-        // objects[2]->setLocation(0.0, 0.0, 2.0);
-        // objects[2]->setRotation(0.0, -90.0, 0.0);
-        // objects[2]->setScale(1.0f, 10.0f, 10.0f);
-        // objects[2]->setMaterial(concrete);
-
         objects.emplace_back(std::make_unique<PlatePrimitive>("UP"));
         objects[2]->setLocation(0.0, 0.0, -5.0);
         objects[2]->setRotation(0.0, 90.0, 0.0);
         objects[2]->setScale(1.0f, 10.0f, 10.0f);
         objects[2]->setMaterial(concrete);
 
-        objects.emplace_back(std::make_unique<Model>(std::move(model)));
-        objects[3]->setLocation(-0.68, -0.176, 2.060);
-        objects[3]->setRotation(-86.146, -75.264, 92.261);
-        objects[3]->setScale(0.025, 0.025, 0.025);
-        objects[3]->setMaterial(stone);
+        objects.emplace_back(std::make_unique<Model>(std::move(heart)));
+
+        objects[3]->setMaterial(wood);
 
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
@@ -505,8 +497,6 @@ namespace PositronEngine
             {
                 for(size_t i = 0; i < objects.size(); i++)
                 {
-                    objects[i]->getMaterial()->getShaderProgram()->setBool("cast_shadow", cast_shadow);
-
                     for(size_t j = 0, s = 0, p = 0; j < light_objects.size(); j++)
                     {
                         if(light_objects[j]->getLightType() == LightType::spot)
@@ -522,6 +512,8 @@ namespace PositronEngine
                     }
 
                     shadowMapDirectionTexture.bindUnit(3);
+
+                    objects[i]->getMaterial()->getShaderProgram()->setBool("cast_shadow", cast_shadow);
                     objects[i]->draw(camera, light_objects);
                 }
             }
