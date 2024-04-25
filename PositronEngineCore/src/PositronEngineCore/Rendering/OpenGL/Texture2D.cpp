@@ -86,7 +86,7 @@ namespace PositronEngine
                 glGenerateMipmap(GL_TEXTURE_2D);
             }
 
-            else if(type == TextureType::specular)
+            else if(type == TextureType::roughness)
             {
                 glGenTextures(1, &_id);
                 glBindTexture(GL_TEXTURE_2D, _id);
@@ -114,7 +114,7 @@ namespace PositronEngine
 
             }
 
-            else if(type == TextureType::height)
+            else if(type == TextureType::displasement)
             {
                 glGenTextures(1, &_id);
                 glBindTexture(GL_TEXTURE_2D, _id);

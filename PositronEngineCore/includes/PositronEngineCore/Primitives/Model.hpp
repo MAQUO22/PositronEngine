@@ -27,7 +27,7 @@ namespace PositronEngine
 
             void setMaterial(const std::shared_ptr<Material>& material) override;
             std::shared_ptr<Material> getMaterial() override;
-
+            std::string getName() override;
 
         private:
             const char* _file;
@@ -36,7 +36,9 @@ namespace PositronEngine
 
             std::shared_ptr<Material> _material;
 
-            std::vector<Texture2D> textures_loaded;
+            std::vector<Texture2D> diffuse_textures;
+            std::vector<Texture2D> normal_textures;
+            std::vector<Texture2D> roughnes_textures;
 
             std::vector<std::shared_ptr<Mesh>> _meshes;
 

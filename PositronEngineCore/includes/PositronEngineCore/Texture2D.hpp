@@ -6,9 +6,9 @@ namespace PositronEngine
     enum class TextureType
     {
         diffuse,
-        specular,
+        roughness,
         normal,
-        height,
+        displasement,
         buffer,
         shadow
     };

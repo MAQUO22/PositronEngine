@@ -85,11 +85,6 @@ namespace PositronEngine
                 _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
                 _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
 
-                _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
-                _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
-                _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
-                _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
-
                 _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
                 _material->getShaderProgram()->setInt("number_of_spot_lights", LightTypeCounter::getNumberOfSpotLights());
 
@@ -151,29 +146,11 @@ namespace PositronEngine
                 }
             }
 
-            for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
-            {
-
-                if(_material->getTexturesVector()[i].getType() == TextureType::diffuse)
-                {
-                    _material->getTexturesVector()[i].bindUnit(0);
-                }
-
-                else if(_material->getTexturesVector()[i].getType() == TextureType::specular)
-                {
-                    _material->getTexturesVector()[i].bindUnit(1);
-                }
-
-                else if(_material->getTexturesVector()[i].getType() == TextureType::normal)
-                {
-                    _material->getTexturesVector()[i].bindUnit(2);
-                }
-            }
+            _material->bindMaterialMaps();
 
             RenderOpenGL::draw(*_mesh->getVertexArray());
 
-            for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
-                _material->getTexturesVector()[i].unbindUnit();
+            _material->unbindMaterialMaps();
         }
     }
 

@@ -48,6 +48,7 @@ namespace PositronEngine
     {
         _name = name;
         loadModel(file_name);
+        _material = std::make_shared<Material>();
     }
 
     void Model::processNode(aiNode *node, const aiScene* scene)
@@ -117,7 +118,7 @@ namespace PositronEngine
 
             std::vector<std::string> diffuse_paths;
             std::vector<std::string> normal_paths;
-            std::vector<std::string> specular_paths;
+            std::vector<std::string> roughness_paths;
 
             aiString texturePath;
 
@@ -127,27 +128,40 @@ namespace PositronEngine
                 }
             }
 
-            for(size_t i = 0; i < diffuse_paths.size(); i++)
-            {
-                textures_loaded.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + diffuse_paths[i]).c_str(), TextureType::diffuse));
-
+            for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_NORMALS); i++) {
+                if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
+                    normal_paths.push_back(texturePath.C_Str());
+                }
             }
 
+            for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_SPECULAR); i++) {
 
+                if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
+                    roughness_paths.push_back(texturePath.C_Str());
+                }
+            }
 
+            for(size_t i = 0; i < diffuse_paths.size(); i++)
+            {
+                diffuse_textures.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + diffuse_paths[i]).c_str(),
+                                                             TextureType::diffuse));
+            }
 
-            // for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_NORMALS); i++) {
-            //     if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
-            //         normal_paths.push_back(texturePath.C_Str());
-            //     }
-            // }
-            //
-            // for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_SPECULAR); i++) {
-            //
-            //     if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
-            //         specular_paths.push_back(texturePath.C_Str());
-            //     }
-            // }
+            for(size_t i = 0; i < normal_paths.size(); i++)
+            {
+                normal_textures.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + normal_paths[i]).c_str(),
+                                                             TextureType::normal));
+            }
+
+            for(size_t i = 0; i < roughness_paths.size(); i++)
+            {
+                roughnes_textures.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + roughness_paths[i]).c_str(),
+                                                             TextureType::roughness));
+            }
+
+            LOG_INFORMATION("diffuse maps count -> {0}", diffuse_textures.size());
+            LOG_INFORMATION("normal maps count -> {0}", normal_textures.size());
+            LOG_INFORMATION("specular maps count -> {0}", roughnes_textures.size());
         }
 
         LOG_INFORMATION("VERTICES COUNT -> {0}", vertices.size());
@@ -166,6 +180,11 @@ namespace PositronEngine
         _material = material;
     }
 
+    std::string Model::getName()
+    {
+       return _name;
+    }
+
     void Model::draw(Camera& camera, std::vector<std::unique_ptr<LightObject>>& light_sources)
     {
         if(_material == nullptr)
@@ -181,15 +200,8 @@ namespace PositronEngine
                 _material->getShaderProgram()->bind();
 
                 _material->getShaderProgram()->setMatrix4("view_projection_matrix", camera.getProjectionMatrix() * camera.getViewMatrix());
-
                 _material->getShaderProgram()->setMatrix4("model_matrix", getModelMatrix());
-
                 _material->getShaderProgram()->setVec3("camera_position", camera.getLocation());
-
-                _material->getShaderProgram()->setFloat("ambient_factor", _material->getLightConfig().ambient);
-                _material->getShaderProgram()->setFloat("diffuse_factor", _material->getLightConfig().diffuse);
-                _material->getShaderProgram()->setFloat("shininess", _material->getLightConfig().shininess);
-                _material->getShaderProgram()->setFloat("specular_factor", _material->getLightConfig().specular);
 
                 _material->getShaderProgram()->setInt("number_of_point_lights", LightTypeCounter::getNumberOfPointLights());
                 _material->getShaderProgram()->setInt("number_of_spot_lights", LightTypeCounter::getNumberOfSpotLights());
@@ -253,35 +265,33 @@ namespace PositronEngine
                 }
             }
 
-//             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
-//             {
-//
-//                 if(_material->getTexturesVector()[i].getType() == TextureType::diffuse)
-//                 {
-//                     _material->getTexturesVector()[i].bindUnit(0);
-//                 }
-//
-//                 else if(_material->getTexturesVector()[i].getType() == TextureType::specular)
-//                 {
-//                     _material->getTexturesVector()[i].bindUnit(1);
-//                 }
-//
-//                 else if(_material->getTexturesVector()[i].getType() == TextureType::normal)
-//                 {
-//                     _material->getTexturesVector()[i].bindUnit(2);
-//                 }
-//             }
-
             for(int i = 0; i < _meshes.size(); i++)
             {
-                if(textures_loaded[i].getType() == TextureType::diffuse)
-                    textures_loaded[i].bindUnit(0);
+                if(diffuse_textures.size() > i)
+                {
+                    _material->getShaderProgram()->bind();
+                    _material->getShaderProgram()->setBool("has_color_map", true);
+                    diffuse_textures[i].bindUnit(0);
+                }
+
+                if(roughnes_textures.size() > i)
+                {
+                    _material->getShaderProgram()->bind();
+                    _material->getShaderProgram()->setBool("has_roughness_map", true);
+                    roughnes_textures[i].bindUnit(1);
+                }
+
+
+                if(normal_textures.size() > i)
+                {
+                    _material->getShaderProgram()->bind();
+                    _material->getShaderProgram()->setBool("has_normal_map", true);
+                    normal_textures[i].bindUnit(1);
+                }
 
                 RenderOpenGL::draw(*_meshes[i]->getVertexArray());
-            }
 
-            for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
-                    _material->getTexturesVector()[i].unbindUnit();
+            }
         }
     }
 

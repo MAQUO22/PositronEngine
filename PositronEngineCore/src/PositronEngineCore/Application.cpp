@@ -187,60 +187,42 @@ namespace PositronEngine
         SpherePrimitive sphere("sphere1");
         CubePrimitive cube("cube1");
 
-        Model heart("vr_room_-_art_gallery/scene.gltf", "HOUSE");
+        Model heart("yorha_number_2_type_b/scene.gltf", "HOUSE");
+        Model scene("vr_room_-_art_gallery/scene.gltf", "SCENE");
 
         DirectionLight dir_light;
 
-        std::vector<Texture2D> textures_stones;
-        textures_stones.push_back(Texture2D("stones_diffuse.jpg", TextureType::diffuse));
-        textures_stones.push_back(Texture2D("stones_specular.jpg", TextureType::specular));
-        textures_stones.push_back(Texture2D("stones_normal.jpg", TextureType::normal));
+        std::vector<Texture2D> textures_rock;
+        textures_rock.push_back(Texture2D("rock_color.jpg", TextureType::diffuse));
+        textures_rock.push_back(Texture2D("rock_roughness.jpg", TextureType::roughness));
+        textures_rock.push_back(Texture2D("rock_normal.jpg", TextureType::normal));
 
-        std::vector<Texture2D> textures_wood;
-        textures_wood.push_back(Texture2D("wood.jpg", TextureType::diffuse));
-        textures_wood.push_back(Texture2D("wood_specular.jpg", TextureType::specular));
-        textures_wood.push_back(Texture2D("wood_normal.jpg", TextureType::normal));
+        std::vector<Texture2D> textures_brick;
+        textures_brick.push_back(Texture2D("brick_color.jpg", TextureType::diffuse));
+        textures_brick.push_back(Texture2D("brick_normal.jpg", TextureType::normal));
 
         std::vector<Texture2D> textures_stone;
-        textures_stone.push_back(Texture2D("stone.jpg", TextureType::diffuse));
-        textures_stone.push_back(Texture2D("stone_specular.jpg", TextureType::specular));
-        textures_stone.push_back(Texture2D("stone_normal.jpg", TextureType::normal));
-
-        std::vector<Texture2D> textures_bark;
-        textures_bark.push_back(Texture2D("bark.jpg", TextureType::diffuse));
-        textures_bark.push_back(Texture2D("bark_specular.jpg", TextureType::specular));
-        textures_bark.push_back(Texture2D("bark_normal.jpg", TextureType::normal));
+        textures_stone.push_back(Texture2D("rock2_color.jpg", TextureType::diffuse));
+        textures_stone.push_back(Texture2D("rock2_roughness.jpg", TextureType::roughness));
+        textures_stone.push_back(Texture2D("rock2_normal.jpg", TextureType::normal));
 
         std::vector<Texture2D> textures_concrete;
-        textures_concrete.push_back(Texture2D("concrete.jpg", TextureType::diffuse));
-        textures_concrete.push_back(Texture2D("concrete_specular.jpg", TextureType::specular));
+        textures_concrete.push_back(Texture2D("concrete_color.jpg", TextureType::diffuse));
+        textures_concrete.push_back(Texture2D("concrete_roughness.jpg", TextureType::roughness));
         textures_concrete.push_back(Texture2D("concrete_normal.jpg", TextureType::normal));
+
+        std::vector<Texture2D> textures_paving;
+        textures_paving.push_back(Texture2D("paving_color.jpg", TextureType::diffuse));
+        textures_paving.push_back(Texture2D("paving_roughness.jpg", TextureType::roughness));
+        textures_paving.push_back(Texture2D("paving_normal.jpg", TextureType::normal));
 
         std::vector<Texture2D> textures_light;
 
-        LightReactionConfig stones_config
-        {
-            0.314f,  // ambient
-            1.14f,   // diffuse
-            0.5f,   // specular
-            32.0f     // shininess
-        };
-
-        LightReactionConfig wood_config
-        {
-            0.84f,  // ambient
-            1.5f,   // diffuse
-            0.77f,   // specular
-            14.0f     // shininess
-        };
-
-        std::shared_ptr<Material> brick = std::make_shared<Material>(textures_stones, stones_config);
-        std::shared_ptr<Material> wood = std::make_shared<Material>(textures_wood, wood_config);
-        std::shared_ptr<Material> stone = std::make_shared<Material>(textures_stone, stones_config);
-        std::shared_ptr<Material> bark = std::make_shared<Material>(textures_bark, stones_config);
-        std::shared_ptr<Material> concrete = std::make_shared<Material>(textures_concrete, stones_config);
-        //std::shared_ptr<Material> model_material = std::make_shared<Material>(textures_model, stones_config);
-
+        std::shared_ptr<Material> rock = std::make_shared<Material>(textures_rock);
+        std::shared_ptr<Material> brick = std::make_shared<Material>(textures_brick);
+        std::shared_ptr<Material> stone = std::make_shared<Material>(textures_stone);
+        std::shared_ptr<Material> concrete = std::make_shared<Material>(textures_concrete);
+        std::shared_ptr<Material> paving = std::make_shared<Material>(textures_paving);
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
@@ -255,18 +237,18 @@ namespace PositronEngine
         objects.emplace_back(std::make_unique<CubePrimitive>("cube"));
         objects[1]->setLocation(2.1, -2.1, 0.0);
         objects[1]->setScale(0.5, 0.5, 0.5);
-        objects[1]->setMaterial(stone);
+        objects[1]->setMaterial(paving);
 
-        objects.emplace_back(std::make_unique<PlatePrimitive>("UP"));
+        objects.emplace_back(std::make_unique<PlatePrimitive>("BOTTOM"));
         objects[2]->setLocation(0.0, 0.0, -5.0);
         objects[2]->setRotation(0.0, 90.0, 0.0);
         objects[2]->setScale(1.0f, 10.0f, 10.0f);
         objects[2]->setMaterial(concrete);
 
+
         objects.emplace_back(std::make_unique<Model>(std::move(heart)));
-
-        objects[3]->setMaterial(wood);
-
+        objects.emplace_back(std::make_unique<Model>(std::move(scene)));
+        objects[4]->setScale(2.0f, 2.0f, 2.0f);
 
         std::vector<std::unique_ptr<LightObject>> light_objects;
         light_objects.emplace_back(std::make_unique<DirectionLight>());
@@ -495,39 +477,27 @@ namespace PositronEngine
                 }
             }
 
-            if(cast_shadow)
+            for(size_t i = 0; i < objects.size(); i++)
             {
-                for(size_t i = 0; i < objects.size(); i++)
+                for(size_t j = 0, s = 0, p = 0; j < light_objects.size(); j++)
                 {
-                    for(size_t j = 0, s = 0, p = 0; j < light_objects.size(); j++)
+                    if(light_objects[j]->getLightType() == LightType::spot)
                     {
-                        if(light_objects[j]->getLightType() == LightType::spot)
-                        {
-                            spotShadowsTextures[s].bindUnit(9 + s);
-                            s++;
-                        }
-                        else if(light_objects[j]->getLightType() == LightType::point)
-                        {
-                            pointLightDepthCubeMap[p].bindUnit(4 + p);
-                            p++;
-                        }
+                        spotShadowsTextures[s].bindUnit(9 + s);
+                        s++;
                     }
-
-                    shadowMapDirectionTexture.bindUnit(3);
-
-                    objects[i]->getMaterial()->getShaderProgram()->setBool("cast_shadow", cast_shadow);
-                    objects[i]->draw(camera, light_objects);
+                    else if(light_objects[j]->getLightType() == LightType::point)
+                    {
+                        pointLightDepthCubeMap[p].bindUnit(4 + p);
+                        p++;
+                    }
                 }
-            }
-            else
-            {
-                for(size_t i = 0; i < objects.size(); i++)
-                {
-                    objects[i]->getMaterial()->getShaderProgram()->setBool("cast_shadow", cast_shadow);
 
-                    objects[i]->draw(camera, light_objects);
-                }
+                shadowMapDirectionTexture.bindUnit(3);
+
+                objects[i]->draw(camera, light_objects);
             }
+
 
             if(draw_skybox)
             {
@@ -685,10 +655,21 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Material");
-            ImGui::SliderFloat("ambient_factor", &stones_config.ambient, 0.0f, 2.0f);
-            ImGui::SliderFloat("diffuse_factor", &stones_config.diffuse, 0.0f, 2.0f);
-            ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
-            ImGui::SliderFloat("specular_factor", &stones_config.specular, 0.0f, 1.0f);
+            if(ImGui::SliderFloat("ambient_factor", objects[3]->getMaterial()->getAmbientFactor(), 0.0f, 2.0f))
+                objects[3]->getMaterial()->setAmbientFactor(*objects[3]->getMaterial()->getAmbientFactor());
+
+            if(ImGui::SliderFloat("diffuse_factor", objects[3]->getMaterial()->getDiffuseFactor(), 0.0f, 2.0f))
+                objects[3]->getMaterial()->setDiffuseFactor(*objects[3]->getMaterial()->getDiffuseFactor());
+
+            if(!objects[3]->getMaterial()->checkRoughnessMap())
+                if(ImGui::SliderFloat("roughness", objects[3]->getMaterial()->getRoughnessFactor(), 1.0f, 128.0f))
+                    objects[3]->getMaterial()->setRoughnessFactor(*objects[3]->getMaterial()->getRoughnessFactor());
+
+            if(ImGui::SliderFloat("specular_factor", objects[3]->getMaterial()->getSpecularFactor(), 0.0f, 1.0f))
+                objects[3]->getMaterial()->setSpecularFactor(*objects[3]->getMaterial()->getSpecularFactor());
+
+            if(ImGui::SliderFloat("metallic_factor", objects[3]->getMaterial()->getMetallicFactor(), 0.0f, 1.0f))
+                objects[3]->getMaterial()->setMetallicFactor(*objects[3]->getMaterial()->getMetallicFactor());
             ImGui::End();
 
             ImGui::Begin("Light Sources");
@@ -787,8 +768,6 @@ namespace PositronEngine
             }
 
             ImGui::End();
-
-            brick->setLightConfig(stones_config);
 
             onGUIdraw();
             GUImodule::onWindowUpdateDraw();

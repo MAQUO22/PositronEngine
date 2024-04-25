@@ -74,7 +74,7 @@ void main()
         mat3 TBN = mat3(T, B, N);
         TBN = transpose(TBN);
 
-        frag_normal = data_in[i].frag_normal;
+        frag_normal = TBN * data_in[i].frag_normal;
         tex_coord = data_in[i].tex_coord;
 
         frag_position = TBN * gl_in[i].gl_Position.xyz;
