@@ -28,7 +28,6 @@ namespace PositronEngine
             void setMaterial(const std::shared_ptr<Material>& material) override;
             std::shared_ptr<Material> getMaterial() override;
 
-            std::vector<glm::mat4> matrices_meshes;
 
         private:
             const char* _file;
@@ -36,9 +35,13 @@ namespace PositronEngine
             std::string _directory;
 
             std::shared_ptr<Material> _material;
+
+            std::vector<Texture2D> textures_loaded;
+
             std::vector<std::shared_ptr<Mesh>> _meshes;
 
             void loadModel(std::string path);
+            void loadMaterialTextures(aiMaterial *material, aiTextureType type, std::string type_name);
             void processNode(aiNode *node, const aiScene* scene);
             std::shared_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene* scene);
 

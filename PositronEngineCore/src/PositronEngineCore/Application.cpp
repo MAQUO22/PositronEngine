@@ -187,7 +187,7 @@ namespace PositronEngine
         SpherePrimitive sphere("sphere1");
         CubePrimitive cube("cube1");
 
-        Model heart("GLTF/Gear1.gltf", "HOUSE");
+        Model heart("vr_room_-_art_gallery/scene.gltf", "HOUSE");
 
         DirectionLight dir_light;
 
@@ -239,6 +239,8 @@ namespace PositronEngine
         std::shared_ptr<Material> stone = std::make_shared<Material>(textures_stone, stones_config);
         std::shared_ptr<Material> bark = std::make_shared<Material>(textures_bark, stones_config);
         std::shared_ptr<Material> concrete = std::make_shared<Material>(textures_concrete, stones_config);
+        //std::shared_ptr<Material> model_material = std::make_shared<Material>(textures_model, stones_config);
+
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
@@ -688,7 +690,6 @@ namespace PositronEngine
             ImGui::SliderFloat("shininess", &stones_config.shininess, 1.0f, 128.0f);
             ImGui::SliderFloat("specular_factor", &stones_config.specular, 0.0f, 1.0f);
             ImGui::End();
-
 
             ImGui::Begin("Light Sources");
             ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);

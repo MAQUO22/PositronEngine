@@ -8,7 +8,7 @@
 
 namespace PositronEngine
 {
-    const std::string PATH_TO_TEXTURES = "../../ResourceFiles/Models/";
+    const std::string PATH_TO_MODEL = "../../ResourceFiles/Models/";
 
     std::string getFileContext(const char* file_name)
     {
@@ -31,7 +31,7 @@ namespace PositronEngine
     void Model::loadModel(std::string path)
     {
         Assimp::Importer importer;
-        const aiScene *scene = importer.ReadFile(PATH_TO_TEXTURES + path, aiProcess_Triangulate | aiProcess_FlipUVs);
+        const aiScene *scene = importer.ReadFile(PATH_TO_MODEL + path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
         if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -109,6 +109,45 @@ namespace PositronEngine
             {
                 indices.push_back(face.mIndices[j]);
             }
+        }
+
+        if(mesh->mMaterialIndex >= 0)
+        {
+            aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+
+            std::vector<std::string> diffuse_paths;
+            std::vector<std::string> normal_paths;
+            std::vector<std::string> specular_paths;
+
+            aiString texturePath;
+
+            for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_DIFFUSE); i++) {
+                if (material->GetTexture(aiTextureType_DIFFUSE, i, &texturePath) == AI_SUCCESS) {
+                    diffuse_paths.push_back(texturePath.C_Str());
+                }
+            }
+
+            for(size_t i = 0; i < diffuse_paths.size(); i++)
+            {
+                textures_loaded.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + diffuse_paths[i]).c_str(), TextureType::diffuse));
+
+            }
+
+
+
+
+            // for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_NORMALS); i++) {
+            //     if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
+            //         normal_paths.push_back(texturePath.C_Str());
+            //     }
+            // }
+            //
+            // for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_SPECULAR); i++) {
+            //
+            //     if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
+            //         specular_paths.push_back(texturePath.C_Str());
+            //     }
+            // }
         }
 
         LOG_INFORMATION("VERTICES COUNT -> {0}", vertices.size());
@@ -214,27 +253,30 @@ namespace PositronEngine
                 }
             }
 
-            for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
-            {
-
-                if(_material->getTexturesVector()[i].getType() == TextureType::diffuse)
-                {
-                    _material->getTexturesVector()[i].bindUnit(0);
-                }
-
-                else if(_material->getTexturesVector()[i].getType() == TextureType::specular)
-                {
-                    _material->getTexturesVector()[i].bindUnit(1);
-                }
-
-                else if(_material->getTexturesVector()[i].getType() == TextureType::normal)
-                {
-                    _material->getTexturesVector()[i].bindUnit(2);
-                }
-            }
+//             for(size_t i = 0; i < _material->getTexturesVector().size(); i++)
+//             {
+//
+//                 if(_material->getTexturesVector()[i].getType() == TextureType::diffuse)
+//                 {
+//                     _material->getTexturesVector()[i].bindUnit(0);
+//                 }
+//
+//                 else if(_material->getTexturesVector()[i].getType() == TextureType::specular)
+//                 {
+//                     _material->getTexturesVector()[i].bindUnit(1);
+//                 }
+//
+//                 else if(_material->getTexturesVector()[i].getType() == TextureType::normal)
+//                 {
+//                     _material->getTexturesVector()[i].bindUnit(2);
+//                 }
+//             }
 
             for(int i = 0; i < _meshes.size(); i++)
             {
+                if(textures_loaded[i].getType() == TextureType::diffuse)
+                    textures_loaded[i].bindUnit(0);
+
                 RenderOpenGL::draw(*_meshes[i]->getVertexArray());
             }
 

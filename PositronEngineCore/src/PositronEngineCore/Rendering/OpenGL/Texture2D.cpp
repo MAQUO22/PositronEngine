@@ -63,6 +63,12 @@ namespace PositronEngine
     {
         int width, height, nrChannels;
         unsigned char* data = stbi_load((PATH_TO_TEXTURES + std::string(path)).c_str(), &width, &height, &nrChannels, 0);
+
+        if(!data)
+        {
+            data = stbi_load(std::string(path).c_str(), &width, &height, &nrChannels, 0);
+        }
+
         if(data)
         {
             stbi_set_flip_vertically_on_load(false);

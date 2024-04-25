@@ -1,0 +1,11 @@
+Model Information:
+* title:	Yorha Number 2 Type B
+* source:	https://sketchfab.com/3d-models/yorha-number-2-type-b-5a02e09c588444ef8f90aeb3bbe8ffd4
+* author:	JustNerro (https://sketchfab.com/JustNerro)
+
+Model License:
+* license type:	CC-BY-SA-4.0 (http://creativecommons.org/licenses/by-sa/4.0/)
+* requirements:	Author must be credited. Modified versions must have the same license. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Yorha Number 2 Type B" (https://sketchfab.com/3d-models/yorha-number-2-type-b-5a02e09c588444ef8f90aeb3bbe8ffd4) by JustNerro (https://sketchfab.com/JustNerro) licensed under CC-BY-SA-4.0 (http://creativecommons.org/licenses/by-sa/4.0/)

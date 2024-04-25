@@ -1,0 +1,11 @@
+Model Information:
+* title:	VR Room - Art Gallery
+* source:	https://sketchfab.com/3d-models/vr-room-art-gallery-c36c25be0d6d4ef89179ffd8e202c401
+* author:	carlcapu9 (https://sketchfab.com/carlcapu9)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "VR Room - Art Gallery" (https://sketchfab.com/3d-models/vr-room-art-gallery-c36c25be0d6d4ef89179ffd8e202c401) by carlcapu9 (https://sketchfab.com/carlcapu9) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
