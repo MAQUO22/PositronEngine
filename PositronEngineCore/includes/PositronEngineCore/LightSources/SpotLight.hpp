@@ -39,6 +39,8 @@ namespace PositronEngine
 
             void setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) override;
 
+            std::string getName() override;
+
             LightType getLightType() override;
             glm::mat4 getSpaceMatrix() override;
 

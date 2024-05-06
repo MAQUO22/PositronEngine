@@ -8,6 +8,17 @@
 
 namespace PositronEngine
 {
+    struct MapsForMesh
+    {
+        Texture2D diffuse;
+        Texture2D normal;
+        Texture2D roughness;
+        bool has_diffuse = false;
+        bool has_normal = false;
+        bool has_roughness = false;
+
+    };
+
     const std::string PATH_TO_MODEL = "../../ResourceFiles/Models/";
 
     std::string getFileContext(const char* file_name)
@@ -119,12 +130,14 @@ namespace PositronEngine
             std::vector<std::string> diffuse_paths;
             std::vector<std::string> normal_paths;
             std::vector<std::string> roughness_paths;
+            std::vector<MapsForMesh> maps_for_mesh;
 
             aiString texturePath;
 
             for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_DIFFUSE); i++) {
                 if (material->GetTexture(aiTextureType_DIFFUSE, i, &texturePath) == AI_SUCCESS) {
                     diffuse_paths.push_back(texturePath.C_Str());
+
                 }
             }
 
@@ -267,26 +280,37 @@ namespace PositronEngine
 
             for(int i = 0; i < _meshes.size(); i++)
             {
-                if(diffuse_textures.size() > i)
+                _material->getShaderProgram()->bind();
+
+                if(diffuse_textures.size() >= i)
                 {
-                    _material->getShaderProgram()->bind();
                     _material->getShaderProgram()->setBool("has_color_map", true);
                     diffuse_textures[i].bindUnit(0);
+                }
+                else
+                {
+                    _material->getShaderProgram()->setBool("has_color_map", false);
                 }
 
                 if(roughnes_textures.size() > i)
                 {
-                    _material->getShaderProgram()->bind();
                     _material->getShaderProgram()->setBool("has_roughness_map", true);
                     roughnes_textures[i].bindUnit(1);
+                }
+                else
+                {
+                    _material->getShaderProgram()->setBool("has_roughness_map", false);
                 }
 
 
                 if(normal_textures.size() > i)
                 {
-                    _material->getShaderProgram()->bind();
                     _material->getShaderProgram()->setBool("has_normal_map", true);
                     normal_textures[i].bindUnit(1);
+                }
+                else
+                {
+                    _material->getShaderProgram()->setBool("has_normal_map", false);
                 }
 
                 RenderOpenGL::draw(*_meshes[i]->getVertexArray());

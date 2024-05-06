@@ -30,6 +30,7 @@
 #include <glad/glad.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_glfw.h>
+#include <list>
 
 namespace PositronEngine
 {
@@ -39,6 +40,9 @@ namespace PositronEngine
     bool bloom_activate = false;
     bool draw_without_mesh = false;
     bool draw_skybox = true;
+
+    int selectedObject;
+    int selectedLightObject;
 
     bool is_primitive_changed = true;
     bool is_light_changed = true;
@@ -184,14 +188,6 @@ namespace PositronEngine
             return -2;
         }
 
-        SpherePrimitive sphere("sphere1");
-        CubePrimitive cube("cube1");
-
-        Model heart("yorha_number_2_type_b/scene.gltf", "HOUSE");
-        Model scene("vr_room_-_art_gallery/scene.gltf", "SCENE");
-
-        DirectionLight dir_light;
-
         std::vector<Texture2D> textures_rock;
         textures_rock.push_back(Texture2D("rock_color.jpg", TextureType::diffuse));
         textures_rock.push_back(Texture2D("rock_roughness.jpg", TextureType::roughness));
@@ -227,38 +223,39 @@ namespace PositronEngine
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
 
 
-
-        std::vector<std::unique_ptr<GameObject>> objects;
-        objects.emplace_back(std::make_unique<SpherePrimitive>("sphere"));
-        objects[0]->setLocation(0.0, 0.0, -2.0);
-        objects[0]->setScale(0.5, 0.5, 0.5);
-        objects[0]->setMaterial(brick);
-
-        objects.emplace_back(std::make_unique<CubePrimitive>("cube"));
-        objects[1]->setLocation(2.1, -2.1, 0.0);
-        objects[1]->setScale(0.5, 0.5, 0.5);
-        objects[1]->setMaterial(paving);
-
-        objects.emplace_back(std::make_unique<PlatePrimitive>("BOTTOM"));
-        objects[2]->setLocation(0.0, 0.0, -5.0);
-        objects[2]->setRotation(0.0, 90.0, 0.0);
-        objects[2]->setScale(1.0f, 10.0f, 10.0f);
-        objects[2]->setMaterial(concrete);
+        _scene->addObject(std::make_unique<SpherePrimitive>("sphere"));
+        _scene->getObjects()[0]->setLocation(0.0, 0.0, -2.0);
+        _scene->getObjects()[0]->setScale(0.5, 0.5, 0.5);
+        _scene->getObjects()[0]->setMaterial(brick);
 
 
-        objects.emplace_back(std::make_unique<Model>(std::move(heart)));
-        objects.emplace_back(std::make_unique<Model>(std::move(scene)));
-        objects[4]->setScale(2.0f, 2.0f, 2.0f);
+        _scene->addObject(std::make_unique<CubePrimitive>("cube"));
+        _scene->getObjects()[1]->setLocation(2.1, -2.1, 0.0);
+        _scene->getObjects()[1]->setScale(0.5, 0.5, 0.5);
+        _scene->getObjects()[1]->setMaterial(paving);
 
-        std::vector<std::unique_ptr<LightObject>> light_objects;
-        light_objects.emplace_back(std::make_unique<DirectionLight>());
+        _scene->addObject(std::make_unique<PlatePrimitive>("BOTTOM"));
+        _scene->getObjects()[2]->setLocation(0.0, 0.0, -5.0);
+        _scene->getObjects()[2]->setRotation(0.0, 90.0, 0.0);
+        _scene->getObjects()[2]->setScale(1.0f, 10.0f, 10.0f);
+        _scene->getObjects()[2]->setMaterial(concrete);
 
-        for(int i = 0; i < light_objects.size(); i++)
+
+        _scene->addObject(std::make_unique<Model>("yorha_number_2_type_b/scene.gltf", "2B"));
+        _scene->addObject(std::make_unique<Model>("vr_room_-_art_gallery/scene.gltf", "SCENE"));
+        _scene->getObjects()[4]->setScale(2.0f, 2.0f, 2.0f);
+
+        _scene->addLightObject(std::make_unique<DirectionLight>("dir"));
+        _scene->addLightObject(std::make_unique<PointLight>("point"));
+        _scene->addLightObject(std::make_unique<SpotLight>("spot"));
+
+        for(int i = 0; i < _scene->getLightObjects().size(); i++)
         {
-            if(light_objects[i])
-                light_objects[i]->setLightMaterial(light_material);
+            if(_scene->getLightObjects()[i])
+                _scene->getLightObjects()[i]->setLightMaterial(light_material);
         }
 
+        _scene->removeObjectByName("cube");
 
         std::string facesCubemap[6] =
         {
@@ -313,7 +310,7 @@ namespace PositronEngine
 
         FrameBuffer shadowMapFBO;
 
-        Texture2D shadowMapDirectionTexture(2048, 2048, TextureType::shadow);
+        Texture2D shadowMapDirectionTexture(4096, 4096, TextureType::shadow);
         shadowMapFBO.connectTexture(GL_DEPTH_ATTACHMENT, shadowMapDirectionTexture.getID());
 
         std::vector<FrameBuffer> spotShadowMapsFBO;
@@ -372,9 +369,9 @@ namespace PositronEngine
                     shadowMapFBO.bind();
                     glClear(GL_DEPTH_BUFFER_BIT);
 
-                    for(size_t i = 0; i < objects.size(); i++)
+                    for(size_t i = 0; i < _scene->getObjects().size(); i++)
                     {
-                        objects[i]->draw(shadow_map_program, light_objects[0]->getSpaceMatrix());
+                        _scene->getObjects()[i]->draw(shadow_map_program, _scene->getLightObjects()[0]->getSpaceMatrix());
                     }
 
                     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -394,21 +391,22 @@ namespace PositronEngine
                         shadowMapPointFBO[i].connectCubeMapTexture(GL_DEPTH_ATTACHMENT, pointLightDepthCubeMap[i].getID());
                     }
 
-                    for(size_t j = 0, f = 0; j < light_objects.size(); j++)
+                    for(size_t j = 0, f = 0; j < _scene->getLightObjects().size(); j++)
                     {
-                        if(light_objects[j]->getLightType() == LightType::point)
+                        if(_scene->getLightObjects()[j]->getLightType() == LightType::point)
                         {
                             glViewport(0, 0, 1024, 1024);
                             shadowMapPointFBO[f].bind();
                             glClear(GL_DEPTH_BUFFER_BIT);
 
                             shadow_cube_map_program->bind();
-                            shadow_cube_map_program->setVec3("lightPos", light_objects[j]->getLocationVec3());
+                            shadow_cube_map_program->setVec3("lightPos", _scene->getLightObjects()[j]->getLocationVec3());
                             shadow_cube_map_program->setFloat("farPlane", light_far_plane);
 
-                            for(size_t k = 0; k < objects.size(); k++)
+                            for(size_t k = 0; k < _scene->getObjects().size(); k++)
                             {
-                                objects[k]->draw(shadow_cube_map_program, light_objects[j]->getSpaceMatrices(light_far_plane));
+                                _scene->getObjects()[k]->draw(shadow_cube_map_program,
+                                                              _scene->getLightObjects()[j]->getSpaceMatrices(light_far_plane));
                             }
                             f++;
                         }
@@ -431,17 +429,18 @@ namespace PositronEngine
                         spotShadowMapsFBO[i].connectTexture(GL_DEPTH_ATTACHMENT, spotShadowsTextures[i].getID());
                     }
 
-                    for(size_t j = 0, f = 0; j < light_objects.size(); j++)
+                    for(size_t j = 0, f = 0; j < _scene->getLightObjects().size(); j++)
                     {
-                        if(light_objects[j]->getLightType() == LightType::spot)
+                        if(_scene->getLightObjects()[j]->getLightType() == LightType::spot)
                         {
                             glViewport(0, 0, spotShadowsTextures[f].getWidth(), spotShadowsTextures[f].getHeight());
                             spotShadowMapsFBO[f].bind();
                             glClear(GL_DEPTH_BUFFER_BIT);
 
-                            for(size_t k = 0; k < objects.size(); k++)
+                            for(size_t k = 0; k < _scene->getObjects().size(); k++)
                             {
-                                objects[k]->draw(shadow_map_program, light_objects[j]->getSpaceMatrix());
+                                _scene->getObjects()[k]->draw(shadow_map_program,
+                                                              _scene->getLightObjects()[j]->getSpaceMatrix());
                             }
                             f++;
                         }
@@ -464,29 +463,29 @@ namespace PositronEngine
 
             if(draw_without_mesh)
             {
-                for(size_t i = 0; i < light_objects.size(); i++)
+                for(size_t i = 0; i < _scene->getLightObjects().size(); i++)
                 {
-                    light_objects[i]->drawWithoutMesh(camera);
+                    _scene->getLightObjects()[i]->drawWithoutMesh(camera);
                 }
             }
             else
             {
-                for(size_t i = 0; i < light_objects.size(); i++)
+                for(size_t i = 0; i < _scene->getLightObjects().size(); i++)
                 {
-                    light_objects[i]->draw(camera);
+                    _scene->getLightObjects()[i]->draw(camera);
                 }
             }
 
-            for(size_t i = 0; i < objects.size(); i++)
+            for(size_t i = 0; i < _scene->getObjects().size(); i++)
             {
-                for(size_t j = 0, s = 0, p = 0; j < light_objects.size(); j++)
+                for(size_t j = 0, s = 0, p = 0; j < _scene->getLightObjects().size(); j++)
                 {
-                    if(light_objects[j]->getLightType() == LightType::spot)
+                    if(_scene->getLightObjects()[j]->getLightType() == LightType::spot)
                     {
                         spotShadowsTextures[s].bindUnit(9 + s);
                         s++;
                     }
-                    else if(light_objects[j]->getLightType() == LightType::point)
+                    else if(_scene->getLightObjects()[j]->getLightType() == LightType::point)
                     {
                         pointLightDepthCubeMap[p].bindUnit(4 + p);
                         p++;
@@ -495,7 +494,7 @@ namespace PositronEngine
 
                 shadowMapDirectionTexture.bindUnit(3);
 
-                objects[i]->draw(camera, light_objects);
+                _scene->getObjects()[i]->draw(camera, _scene->getLightObjects());
             }
 
 
@@ -571,25 +570,105 @@ namespace PositronEngine
 
             GUImodule::onWindowStartUpdate();
             GUImodule::ShowExampleAppDockSpace(&show);
-            ImGui::ShowDemoWindow();
 
             ImGui::Begin("Scene");
-            if (ImGui::TreeNode("Root")) {
-                if (ImGui::TreeNode("Object 1")) {
-                    ImGui::Text("Object details go here");
 
-                    ImGui::TreePop();
-                }
+            ImGui::Text("SCENE NAME - ");
+            ImGui::SameLine();
+            ImGui::Text("%s", _scene->getName().c_str());
+            ImGui::Spacing();
 
-                if (ImGui::TreeNode("Object 2")) {
-                    ImGui::Text("Object details go here");
+            static char objectNameBuffer[30] = "";
 
-                    ImGui::TreePop();
-                }
+            ImGui::Text("Enter name :");
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(135);
+            ImGui::InputText("##InputField", objectNameBuffer, sizeof(objectNameBuffer));
 
-                ImGui::TreePop();
+            ImGui::Text("Objects: ");
+            if (ImGui::Button("Add Cube")) {
+                _scene->addObject(std::make_unique<CubePrimitive>(std::string(objectNameBuffer)));
+                _scene->getObjects().back()->setMaterial(stone);
+
+                is_primitive_changed = true;
+                objectNameBuffer[0] = '\0';
+            }
+            ImGui::SameLine();
+
+            if(ImGui::Button("Add Sphere"))
+            {
+                _scene->addObject(std::make_unique<SpherePrimitive>(std::string(objectNameBuffer)));
+                _scene->getObjects().back()->setMaterial(stone);
+
+                is_primitive_changed = true;
+                objectNameBuffer[0] = '\0';
+            }
+            ImGui::SameLine();
+
+            if(ImGui::Button("Add Plate"))
+            {
+                _scene->addObject(std::make_unique<PlatePrimitive>(std::string(objectNameBuffer)));
+                _scene->getObjects().back()->setMaterial(stone);
+
+                is_primitive_changed = true;
+                objectNameBuffer[0] = '\0';
             }
 
+            ImGui::Spacing();
+            ImGui::Text("Light Objects: ");
+
+            if(ImGui::Button("Add Point Light"))
+            {
+                if(LightTypeCounter::getNumberOfPointLights() < max_light_sources_for_type)
+                {
+                    _scene->addLightObject(std::make_unique<PointLight>(std::string(objectNameBuffer)));
+                    _scene->getLightObjects().back()->setLightMaterial(light_material);
+
+                    is_light_changed = true;
+                    objectNameBuffer[0] = '\0';
+                }
+            }
+            ImGui::SameLine();
+
+            if(ImGui::Button("Add Spot Light"))
+            {
+                if(LightTypeCounter::getNumberOfSpotLights() < max_light_sources_for_type)
+                {
+                    _scene->addLightObject(std::make_unique<SpotLight>(std::string(objectNameBuffer)));
+                    _scene->getLightObjects().back()->setLightMaterial(light_material);
+
+                    is_light_changed = true;
+                    objectNameBuffer[0] = '\0';
+                }
+            }
+
+            ImGui::Spacing();
+
+            if (ImGui::TreeNode("Root")) {
+                if (ImGui::TreeNode("Objects")) {
+                    for(size_t i = 0; i < _scene->getObjects().size(); i++)
+                    {
+                        if (ImGui::Selectable(_scene->getObjects()[i]->getName().c_str(), selectedObject == i))
+                        {
+                            selectedObject = i;
+                            selectedLightObject = -1;
+                        }
+                    }
+                    ImGui::TreePop();
+                }
+                if (ImGui::TreeNode("Light Objects")) {
+                    for(size_t l = 0; l < _scene->getLightObjects().size(); l++)
+                    {
+                        if (ImGui::Selectable(_scene->getLightObjects()[l]->getName().c_str(), selectedLightObject == l))
+                        {
+                            selectedLightObject = l;
+                            selectedObject = -1;
+                        }
+                    }
+                    ImGui::TreePop();
+                }
+                ImGui::TreePop();
+            }
             ImGui::End();
 
             ImGui::Begin("Viewport");
@@ -600,170 +679,205 @@ namespace PositronEngine
 
             ImGui::Begin("Post-processing");
             ImGui::Checkbox("Bloom activate", &bloom_activate);
+            ImGui::Checkbox("Draw SkyBox", &draw_skybox);
             ImGui::SliderFloat("Gamma", &gamma, 0.0f, 3.0f);
             ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
             ImGui::End();
 
-            ImGui::Begin("Primitives");
-            if(ImGui::Button("Add Cube"))
+            ImGui::Begin("Properties");
+
+            if(selectedObject >= 0)
             {
-                objects.push_back(std::make_unique<CubePrimitive>("cube_butt"));
-                objects[objects.size() - 1]->setMaterial(stone);
-                is_primitive_changed = true;
-            }
-            ImGui::SameLine();
-
-            if(ImGui::Button("Add Sphere"))
-            {
-                objects.push_back(std::make_unique<SpherePrimitive>("sphere_butt"));
-                objects[objects.size() - 1]->setMaterial(stone);
-                is_primitive_changed = true;
-            }
-            ImGui::SameLine();
-
-            if(ImGui::Button("Add Plate"))
-            {
-                objects.push_back(std::make_unique<PlatePrimitive>("plate_butt"));
-                objects[objects.size() - 1]->setMaterial(stone);
-                is_primitive_changed = true;
-            }
-            ImGui::SameLine();
-
-            ImGui::Checkbox("Draw SkyBox", &draw_skybox);
-
-            ImGui::Spacing();
-
-            for(size_t i = 0; i < objects.size(); i++)
-            {
-                char label_location[64];
-                char label_rotation[64];
-                char label_scale[64];
-                snprintf(label_location, 64, "%s_LOCATION", objects[i]->getName().c_str());
-                snprintf(label_rotation, 64, "%s_ROTATION", objects[i]->getName().c_str());
-                snprintf(label_scale, 64, "%s_SCALE", objects[i]->getName().c_str());
-
-
-                if(ImGui::SliderFloat3(label_location, objects[i]->getLocation(), -10.0f, 10.0f))
+                ImGui::Text("OBJECT - ");
+                ImGui::SameLine();
+                ImGui::Text("%s", _scene->getObjects()[selectedObject]->getName().c_str());
+                ImGui::SameLine();
+                if(ImGui::Button("DELETE"))
+                {
+                    _scene->removeObjectByName(_scene->getObjects()[selectedObject]->getName());
                     is_primitive_changed = true;
-                if(ImGui::SliderFloat3(label_rotation, objects[i]->getRotation(), -360.0f, 360.0f))
-                    is_primitive_changed = true;
-                if(ImGui::SliderFloat3(label_scale, objects[i]->getScale() , -5.0f, 5.0f))
-                    is_primitive_changed = true;
+                }
+
                 ImGui::Spacing();
+                ImGui::Text("LOCATION:");
+
+                ImGui::Text("X:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##XSlider", &_scene->getObjects()[selectedObject]->getLocation()[0], -25.0f, 25.0f))
+                    is_primitive_changed = true;
+
+                ImGui::SameLine();
+                ImGui::Text("Y:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##YSlider", &_scene->getObjects()[selectedObject]->getLocation()[1], -25.0f, 25.0f))
+                    is_primitive_changed = true;
+
+                ImGui::SameLine();
+                ImGui::Text("Z:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##ZSlider", &_scene->getObjects()[selectedObject]->getLocation()[2], -25.0f, 25.0f))
+                    is_primitive_changed = true;
+
+                ImGui::Spacing();
+                ImGui::Text("ROTATION:");
+
+                ImGui::Text("X:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##XRSlider", &_scene->getObjects()[selectedObject]->getRotation()[0], -360.0f, 360.0f))
+                    is_primitive_changed = true;
+
+                ImGui::SameLine();
+                ImGui::Text("Y:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##YRSlider", &_scene->getObjects()[selectedObject]->getRotation()[1], -360.0f, 360.0f))
+                    is_primitive_changed = true;
+
+                ImGui::SameLine();
+                ImGui::Text("Z:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##ZRSlider", &_scene->getObjects()[selectedObject]->getRotation()[2], -360.0f, 360.0f))
+                    is_primitive_changed = true;
+
+                ImGui::Spacing();
+                ImGui::Text("SCALE:");
+
+                ImGui::Text("X:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##XSSlider", &_scene->getObjects()[selectedObject]->getScale()[0], -3.0f, 3.0f))
+                    is_primitive_changed = true;
+
+                ImGui::SameLine();
+                ImGui::Text("Y:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##YSSlider", &_scene->getObjects()[selectedObject]->getScale()[1], -3.0f, 3.0f))
+                    is_primitive_changed = true;
+
+                ImGui::SameLine();
+                ImGui::Text("Z:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(120);
+                if (ImGui::SliderFloat("##ZSSlider", &_scene->getObjects()[selectedObject]->getScale()[2], -3.0f, 3.0f))
+                    is_primitive_changed = true;
+
+                ImGui::Spacing();
+                ImGui::Text("MATERIAL:");
+                if(ImGui::SliderFloat("ambient_factor", _scene->getObjects()[selectedObject]->getMaterial()->getAmbientFactor(), 0.0f, 2.0f))
+                    _scene->getObjects()[selectedObject]->getMaterial()->setAmbientFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getAmbientFactor());
+
+                if(ImGui::SliderFloat("diffuse_factor", _scene->getObjects()[selectedObject]->getMaterial()->getDiffuseFactor(), 0.0f, 2.0f))
+                    _scene->getObjects()[selectedObject]->getMaterial()->setDiffuseFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getDiffuseFactor());
+
+                if(!_scene->getObjects()[selectedObject]->getMaterial()->checkRoughnessMap())
+                    if(ImGui::SliderFloat("roughness", _scene->getObjects()[selectedObject]->getMaterial()->getRoughnessFactor(), 1.0f, 128.0f))
+                        _scene->getObjects()[selectedObject]->getMaterial()->setRoughnessFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getRoughnessFactor());
+
+                if(ImGui::SliderFloat("specular_factor", _scene->getObjects()[selectedObject]->getMaterial()->getSpecularFactor(), 0.0f, 1.0f))
+                    _scene->getObjects()[selectedObject]->getMaterial()->setSpecularFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getSpecularFactor());
+
+                if(ImGui::SliderFloat("metallic_factor", _scene->getObjects()[selectedObject]->getMaterial()->getMetallicFactor(), 0.0f, 1.0f))
+                    _scene->getObjects()[selectedObject]->getMaterial()->setMetallicFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getMetallicFactor());
             }
-            
-            ImGui::End();
-
-            ImGui::Begin("Material");
-            if(ImGui::SliderFloat("ambient_factor", objects[3]->getMaterial()->getAmbientFactor(), 0.0f, 2.0f))
-                objects[3]->getMaterial()->setAmbientFactor(*objects[3]->getMaterial()->getAmbientFactor());
-
-            if(ImGui::SliderFloat("diffuse_factor", objects[3]->getMaterial()->getDiffuseFactor(), 0.0f, 2.0f))
-                objects[3]->getMaterial()->setDiffuseFactor(*objects[3]->getMaterial()->getDiffuseFactor());
-
-            if(!objects[3]->getMaterial()->checkRoughnessMap())
-                if(ImGui::SliderFloat("roughness", objects[3]->getMaterial()->getRoughnessFactor(), 1.0f, 128.0f))
-                    objects[3]->getMaterial()->setRoughnessFactor(*objects[3]->getMaterial()->getRoughnessFactor());
-
-            if(ImGui::SliderFloat("specular_factor", objects[3]->getMaterial()->getSpecularFactor(), 0.0f, 1.0f))
-                objects[3]->getMaterial()->setSpecularFactor(*objects[3]->getMaterial()->getSpecularFactor());
-
-            if(ImGui::SliderFloat("metallic_factor", objects[3]->getMaterial()->getMetallicFactor(), 0.0f, 1.0f))
-                objects[3]->getMaterial()->setMetallicFactor(*objects[3]->getMaterial()->getMetallicFactor());
-            ImGui::End();
-
-            ImGui::Begin("Light Sources");
-            ImGui::Checkbox("Draw points light with NO MESH", &draw_without_mesh);
-            if(ImGui::Checkbox("Cast shadow", &cast_shadow))
-                is_light_changed = true;
-
-            if(ImGui::SliderFloat("farPlane light", &light_far_plane, -500.0f, 500.0f))
-                is_light_changed = true;
-
-            if(ImGui::Button("Add Point Light"))
+            else
             {
-                if(LightTypeCounter::getNumberOfPointLights() < max_light_sources_for_type)
+                ImGui::Text("LIGHT OBJECT - ");
+                ImGui::SameLine();
+                ImGui::Text("%s", _scene->getLightObjects()[selectedLightObject]->getName().c_str());
+                ImGui::SameLine();
+                if(ImGui::Button("DELETE"))
                 {
-                    light_objects.push_back(std::make_unique<PointLight>("point_butt"));
-                    light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
+                    _scene->removeLightObjectByName(_scene->getLightObjects()[selectedLightObject]->getName());
                     is_light_changed = true;
                 }
-            }
-            ImGui::SameLine();
 
-            if(ImGui::Button("Add Spot Light"))
-            {
-                if(LightTypeCounter::getNumberOfSpotLights() < max_light_sources_for_type)
+                ImGui::Spacing();
+                ImGui::Text("LIGHT COLOR: ");
+                ImGui::ColorEdit3("color", _scene->getLightObjects()[selectedLightObject]->getColor());
+
+                if(_scene->getLightObjects()[selectedLightObject]->getLightType() != LightType::direction)
                 {
-                    light_objects.push_back(std::make_unique<SpotLight>("spot_butt"));
-                    light_objects[light_objects.size() - 1]->setLightMaterial(light_material);
-                    is_light_changed = true;
-                }
-            }
-
-            ImGui::Spacing();
-
-            for(size_t i = 0; i < light_objects.size(); i++)
-            {
-                char label_color[64];
-                char label_location[64];
-                char label_direction[64];
-
-                if(light_objects[i]->getLightType() == LightType::point)
-                {
-
-                    char label_const_attenation[64];
-                    char label_linear_attenation[64];
-
-                    snprintf(label_color, 64, "POINT_LIGHT_COLOR %d", i + 1);
-                    snprintf(label_location, 64, "POINT_LIGHT_LOCATION %d", i + 1);
-                    snprintf(label_const_attenation, 64, "POINT_LIGHT_CONST_ATTENATION %d", i + 1);
-                    snprintf(label_linear_attenation, 64, "POINT_LIGHT_LINEAR_ATTENATION %d", i + 1);
-
-                    ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
-                    if(ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f))
-                        is_light_changed = true;
-                    if(ImGui::SliderFloat(label_linear_attenation, light_objects[i]->getPtrLinearAttenuation() ,0.0f, 0.3f))
-                        is_light_changed = true;
-                    if(ImGui::SliderFloat(label_const_attenation, light_objects[i]->getPtrConstantAttenuation() ,0.0f, 0.3f))
-                        is_light_changed = true;
-
-
                     ImGui::Spacing();
+                    ImGui::Text("LOCATION:");
+                    ImGui::Text("X:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##XSlider", &_scene->getLightObjects()[selectedLightObject]->getLocation()[0], -25.0f, 25.0f))
+                        is_light_changed = true;
+
+                    ImGui::SameLine();
+                    ImGui::Text("Y:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##YSlider", &_scene->getLightObjects()[selectedLightObject]->getLocation()[1], -25.0f, 25.0f))
+                        is_light_changed = true;
+
+                    ImGui::SameLine();
+                    ImGui::Text("Z:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##ZSlider", &_scene->getLightObjects()[selectedLightObject]->getLocation()[2], -25.0f, 25.0f))
+                        is_light_changed = true;
                 }
-                else if(light_objects[i]->getLightType() == LightType::spot)
+
+                if(_scene->getLightObjects()[selectedLightObject]->getLightType() != LightType::point)
                 {
-                    char label_outer_cone[64];
-                    char label_inner_cone[64];
-
-                    snprintf(label_color, 64, "SPOT_LIGHT_COLOR %d", i + 1);
-                    snprintf(label_location, 64, "SPOT_LIGHT_LOCATION %d", i + 1);
-                    snprintf(label_direction, 64, "SPOT_LIGHT_DIRECTION %d", i + 1);
-                    snprintf(label_outer_cone, 64, "SPOT_LIGHT_OUTER_CONE %d", i + 1);
-                    snprintf(label_inner_cone, 64, "SPOT_LIGHT_INNER_CONE %d", i + 1);
-
-
-                    ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
-                    if(ImGui::SliderFloat3(label_location, light_objects[i]->getLocation(), -10.0f, 10.0f))
-                        is_light_changed = true;
-                    if(ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f))
-                        is_light_changed = true;
-                    if(ImGui::SliderFloat(label_inner_cone, light_objects[i]->getPtrInnerCone(), light_objects[i]->getOuterCone(), 2.0f))
-                        is_light_changed = true;
-                    if(ImGui::SliderFloat(label_outer_cone, light_objects[i]->getPtrOuterCone(), 0.0f, light_objects[i]->getInnerCone()))
-                        is_light_changed = true;
-
                     ImGui::Spacing();
+                    ImGui::Text("DIRECTION:");
+
+                    ImGui::Text("X:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##XDSlider", &_scene->getLightObjects()[selectedLightObject]->getDirection()[0], -20.0f, 20.0f))
+                        is_light_changed = true;
+
+                    ImGui::SameLine();
+                    ImGui::Text("Y:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##YDSlider", &_scene->getLightObjects()[selectedLightObject]->getDirection()[1], -20.0f, 20.0f))
+                        is_light_changed = true;
+
+                    ImGui::SameLine();
+                    ImGui::Text("Z:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##ZDSlider", &_scene->getLightObjects()[selectedLightObject]->getDirection()[2], -20.0f, 20.0f))
+                        is_light_changed = true;
                 }
-                else
-                {
-                    snprintf(label_direction, 64, "DIRECT_LIGHT_DIRECTION");
-                    snprintf(label_color, 64, "DIRECT_LIGHT_COLOR");
 
-                    ImGui::ColorEdit3(label_color, light_objects[i]->getColor());
-                    if(ImGui::SliderFloat3(label_direction, light_objects[i]->getDirection(), -10.0f, 10.0f))
-                        is_light_changed = true;
+                if(_scene->getLightObjects()[selectedLightObject]->getLightType() == LightType::point)
+                {
                     ImGui::Spacing();
+                    ImGui::Text("ADVANCED: ");
+
+                    if(ImGui::SliderFloat("linear_attenation",
+                        _scene->getLightObjects()[selectedLightObject]->getPtrLinearAttenuation() ,0.0f, 0.3f))
+                        is_light_changed = true;
+
+                    if(ImGui::SliderFloat("constant_attenation",
+                        _scene->getLightObjects()[selectedLightObject]->getPtrConstantAttenuation() ,0.0f, 0.3f))
+                        is_light_changed = true;
+                }
+
+                if(_scene->getLightObjects()[selectedLightObject]->getLightType() == LightType::spot)
+                {
+                    ImGui::Spacing();
+                    ImGui::Text("ADVANCED: ");
+
+                    if(ImGui::SliderFloat("Inner_cone", _scene->getLightObjects()[selectedLightObject]->getPtrInnerCone(),
+                        _scene->getLightObjects()[selectedLightObject]->getOuterCone(), 2.0f))
+                        is_light_changed = true;
+
+                    if(ImGui::SliderFloat("Outer_cone", _scene->getLightObjects()[selectedLightObject]->getPtrOuterCone(), 0.0f,
+                        _scene->getLightObjects()[selectedLightObject]->getInnerCone()))
+                        is_light_changed = true;
                 }
             }
 

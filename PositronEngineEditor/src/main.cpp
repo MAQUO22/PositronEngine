@@ -1,9 +1,12 @@
 #include <PositronEngineCore/Application.hpp>
 #include <PositronEngineCore/Input.hpp>
-#include <PositronEngineCore/RenderOpenGL.hpp>
-#include <PositronEngineCore/Planet.hpp>
-#include <PositronEngineCore/Star.hpp>
-#include <PositronEngineCore/ShaderProgram.hpp>
+#include <PositronEngineCore/Scene.hpp>
+
+#include <PositronEngineCore/Primitives/SpherePrimitive.hpp>
+#include <PositronEngineCore/Primitives/CubePrimitive.hpp>
+#include <PositronEngineCore/Primitives/PlatePrimitive.hpp>
+#include <PositronEngineCore/LightSources/DirectionLight.hpp>
+#include <PositronEngineCore/Primitives/Model.hpp>
 
 #include <memory>
 #include <imgui/imgui.h>
@@ -11,11 +14,14 @@
 #include <backends/imgui_impl_opengl3.h>
 
 
+
+
 class PositronEditor : public PositronEngine::Application
 {
     public:
         double initial_mouse_position_x = 0.0f;
         double initial_mouse_position_y = 0.0f;
+
 
         ~PositronEditor()
         {
@@ -130,14 +136,11 @@ class PositronEditor : public PositronEngine::Application
 int main()
 {
     auto application = std::make_unique<PositronEditor>();
-    
-    application->start(1920,1080,"Positron Engine Editor");
+    auto scene = std::make_shared<PositronEngine::Scene>("scene1");
 
-
-
-
-
-
+    application->setScene(scene); // Передача объекта сцены в приложение
+    application->start(1920, 1080, "Positron Engine Editor");
     std::cin.get();
     return 0;
+
  }

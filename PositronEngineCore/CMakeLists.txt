@@ -20,6 +20,7 @@ set(ENGINE_PUBLIC_INCLUDES
     includes/PositronEngineCore/RenderOpenGL.hpp
     includes/PositronEngineCore/Sphere.h
     includes/PositronEngineCore/stb_image.h
+    includes/PositronEngineCore/Scene.hpp
 
     includes/PositronEngineCore/GameObject.hpp
     includes/PositronEngineCore/LightObject.hpp
@@ -62,6 +63,7 @@ set(ENGINE_PRIVATE_SOURSES
     src/PositronEngineCore/Rendering/OpenGL/IndexBuffer.cpp
     src/PositronEngineCore/Rendering/OpenGL/RenderOpenGL.cpp
     src/PositronEngineCore/Modules/GUImodule.cpp
+    src/PositronEngineCore/Scene.cpp
 
     src/PositronEngineCore/Mesh.cpp
     src/PositronEngineCore/Material.cpp

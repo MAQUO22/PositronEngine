@@ -39,6 +39,7 @@ namespace PositronEngine
             std::vector<Texture2D> diffuse_textures;
             std::vector<Texture2D> normal_textures;
             std::vector<Texture2D> roughnes_textures;
+            std::vector<bool> mesh_maps;
 
             std::vector<std::shared_ptr<Mesh>> _meshes;
 

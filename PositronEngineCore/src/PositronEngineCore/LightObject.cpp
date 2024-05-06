@@ -1,5 +1,6 @@
 #include "PositronEngineCore/LightObject.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
 namespace PositronEngine
 {
@@ -88,6 +89,8 @@ namespace PositronEngine
     float LightObject::getInnerCone() { return 0.0f; }
 
     LightType LightObject::getLightType() { return LightType::unknown; };
+
+    std::string LightObject::getName() { return ""; }
 
     void LightObject::draw(Camera& camera) {}
     void LightObject::setLightMaterial(const std::shared_ptr<LightMaterial>& light_material) {}

@@ -127,6 +127,11 @@ namespace PositronEngine
         return calculateSpaceMatrix();
     }
 
+    std::string SpotLight::getName()
+    {
+        return _name;
+    }
+
     void SpotLight::draw(Camera& camera)
     {
 

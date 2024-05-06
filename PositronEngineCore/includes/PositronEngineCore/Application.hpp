@@ -2,6 +2,8 @@
 
 #include "PositronEngineCore/Event.hpp"
 #include "PositronEngineCore/Camera.hpp"
+#include "PositronEngineCore/Scene.hpp"
+
 #include <memory>
 
 namespace PositronEngine
@@ -22,6 +24,7 @@ namespace PositronEngine
             virtual void onInputUpdate() {}
             virtual void onGUIdraw() {}
             virtual void onMouseButtonEvent(const MouseButtonCode mouse_button, const double x, const double y, bool pressed) {}
+            void setScene(std::shared_ptr<Scene> scene) { _scene = scene; }
 
             glm::vec2 getCurrentCursorPosition() const;
 
@@ -41,8 +44,9 @@ namespace PositronEngine
 
         private:
             std::unique_ptr<class Window> _window;
-            EventDispathcer _event_dispatcher;
+            std::shared_ptr<Scene> _scene;
 
+            EventDispathcer _event_dispatcher;
             bool _is_window_alive = true;
     };
 }

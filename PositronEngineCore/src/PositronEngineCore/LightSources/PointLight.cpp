@@ -122,6 +122,11 @@ namespace PositronEngine
         return shadowTransforms;
     }
 
+    std::string PointLight::getName()
+    {
+        return _name;
+    }
+
     void PointLight::draw(Camera& camera)
     {
         _cube->setLocation(_location[0], _location[1], _location[2]);

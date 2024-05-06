@@ -36,6 +36,8 @@ namespace PositronEngine
 
             float getIntensity() const;
 
+            virtual std::string getName();
+
             virtual void setDirection(const float x, const float y, const float z);
             virtual void setDirectionVec3(const glm::vec3& direction);
 
