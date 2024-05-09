@@ -10,13 +10,9 @@ namespace PositronEngine
 {
     struct MapsForMesh
     {
-        Texture2D diffuse;
-        Texture2D normal;
-        Texture2D roughness;
-        bool has_diffuse = false;
-        bool has_normal = false;
-        bool has_roughness = false;
-
+        std::vector<std::string> diffuse;
+        std::vector<std::string> normal;
+        std::vector<std::string> roughness;
     };
 
     const std::string PATH_TO_MODEL = "../../ResourceFiles/Models/";
@@ -130,7 +126,6 @@ namespace PositronEngine
             std::vector<std::string> diffuse_paths;
             std::vector<std::string> normal_paths;
             std::vector<std::string> roughness_paths;
-            std::vector<MapsForMesh> maps_for_mesh;
 
             aiString texturePath;
 
@@ -149,7 +144,7 @@ namespace PositronEngine
 
             for (unsigned int i = 0; i < material->GetTextureCount(aiTextureType_SPECULAR); i++) {
 
-                if (material->GetTexture(aiTextureType_NORMALS, i, &texturePath) == AI_SUCCESS) {
+                if (material->GetTexture(aiTextureType_SPECULAR, i, &texturePath) == AI_SUCCESS) {
                     roughness_paths.push_back(texturePath.C_Str());
                 }
             }
@@ -172,9 +167,9 @@ namespace PositronEngine
                                                              TextureType::roughness));
             }
 
-            LOG_INFORMATION("diffuse maps count -> {0}", diffuse_textures.size());
-            LOG_INFORMATION("normal maps count -> {0}", normal_textures.size());
-            LOG_INFORMATION("specular maps count -> {0}", roughnes_textures.size());
+            LOG_INFORMATION("diffuse maps count -> {0}", diffuse_paths.size());
+            LOG_INFORMATION("normal maps count -> {0}", normal_paths.size());
+            LOG_INFORMATION("specular maps count -> {0}", roughness_paths.size());
         }
 
         LOG_INFORMATION("VERTICES COUNT -> {0}", vertices.size());
@@ -278,11 +273,12 @@ namespace PositronEngine
                 }
             }
 
+
             for(int i = 0; i < _meshes.size(); i++)
             {
                 _material->getShaderProgram()->bind();
 
-                if(diffuse_textures.size() >= i)
+                if(diffuse_textures.size() > i)
                 {
                     _material->getShaderProgram()->setBool("has_color_map", true);
                     diffuse_textures[i].bindUnit(0);

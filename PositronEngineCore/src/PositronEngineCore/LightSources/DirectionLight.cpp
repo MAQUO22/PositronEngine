@@ -10,7 +10,7 @@ namespace PositronEngine
 
         glm::mat4 viewMatrix = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-        glm::mat4 projectionMatrix = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 200.0f);
+        glm::mat4 projectionMatrix = glm::ortho(-25.0f, 25.0f, -25.0f, 25.0f, 0.1f, 200.0f);
 
         glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix;
 

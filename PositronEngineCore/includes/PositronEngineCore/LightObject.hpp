@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <memory>
 #include <vector>
+#include <string>
 #include "PositronEngineCore/LightTypeCounter.hpp"
 
 namespace PositronEngine

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PositronEngineCore/LightObject.hpp"
-#include <string>
 
 namespace PositronEngine
 {
