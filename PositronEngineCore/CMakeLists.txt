@@ -122,8 +122,10 @@ add_library(ImGUI STATIC
 target_include_directories(ImGUI PUBLIC ../submodules)
 target_include_directories(ImGUI PUBLIC ../submodules/imgui)
 
+
 target_link_libraries(ImGUI PRIVATE glad glfw)
 target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE ImGUI)
+
 
 if(WIN32)
     target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE opengl32)
@@ -152,4 +154,11 @@ target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE glm)
 
 add_subdirectory(../submodules/assimp ${CMAKE_CURRENT_BINARY_DIR}/assimp)
 target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE assimp)
+
+add_subdirectory(../submodules/ImGuiFileDialog ${CMAKE_CURRENT_BINARY_DIR}/ImGuiFileDialog)
+
+target_include_directories(ImGuiFileDialog PRIVATE ../submodules/imgui)
+target_link_libraries(${ENGINE_PROJECT_NAME} PRIVATE ImGuiFileDialog)
+
+
 

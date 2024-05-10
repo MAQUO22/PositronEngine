@@ -24,6 +24,12 @@ namespace PositronEngine
             void removeObjectByIndex(size_t index);
             void removeLightObjectByIndex(size_t index);
 
+            void setSelectedObjectIndex(int index);
+            void setSelectedLightObjectIndex(int index);
+
+            int getSelectedObjectIndex();
+            int getSelectedLightObjectIndex();
+
             void loadScene(char* path);
             void saveScene();
 
@@ -32,10 +38,16 @@ namespace PositronEngine
             std::vector<std::unique_ptr<GameObject>>& getObjects();
             std::vector<std::unique_ptr<LightObject>>& getLightObjects();
 
+            std::unique_ptr<GameObject>& getSelectedObject();
+            std::unique_ptr<LightObject>& getSelectedLightObject();
+
         private:
             std::string _name;
             std::vector<std::unique_ptr<GameObject>> _objects;
             std::vector<std::unique_ptr<LightObject>> _light_objects;
+
+            int _selected_object_index;
+            int _selected_light_object_index;
 
             void removeObject(std::vector<std::unique_ptr<GameObject>>::iterator it);
             void removeLightObject(std::vector<std::unique_ptr<LightObject>>::iterator it);

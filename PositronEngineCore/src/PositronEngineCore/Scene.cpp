@@ -3,7 +3,7 @@
 
 namespace PositronEngine
 {
-    Scene::Scene(std::string name) : _name(name)
+    Scene::Scene(std::string name) : _name(name) , _selected_object_index(-1), _selected_light_object_index(-1)
     {
 
     }
@@ -66,6 +66,26 @@ namespace PositronEngine
         _light_objects.erase(it);
     }
 
+    void Scene::setSelectedObjectIndex(int index)
+    {
+        _selected_object_index = index;
+    }
+
+    void Scene::setSelectedLightObjectIndex(int index)
+    {
+        _selected_light_object_index = index;
+    }
+
+    int Scene::getSelectedObjectIndex()
+    {
+        return _selected_object_index;
+    }
+
+    int Scene::getSelectedLightObjectIndex()
+    {
+        return _selected_light_object_index;
+    }
+
     std::string Scene::getName()
     {
         return _name;
@@ -80,6 +100,28 @@ namespace PositronEngine
         return _light_objects;
     }
 
+    std::unique_ptr<GameObject>& Scene::getSelectedObject()
+    {
+        if(_selected_object_index >= 0)
+            return _objects[_selected_object_index]; // Возвращает указатель на выбранный объект
+        else
+        {
+            static std::unique_ptr<GameObject> null_ptr;
+            return null_ptr;
+        }
+
+    }
+
+    std::unique_ptr<LightObject>& Scene::getSelectedLightObject()
+    {
+        if(_selected_light_object_index >= 0)
+            return _light_objects[_selected_light_object_index];
+        else
+        {
+            static std::unique_ptr<LightObject> null_ptr;
+            return null_ptr;
+        }
+    }
 
     void Scene::loadScene(char* path) {}
     void Scene::saveScene() {}

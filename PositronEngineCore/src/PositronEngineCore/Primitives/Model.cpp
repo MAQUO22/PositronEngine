@@ -38,7 +38,7 @@ namespace PositronEngine
     void Model::loadModel(std::string path)
     {
         Assimp::Importer importer;
-        const aiScene *scene = importer.ReadFile(PATH_TO_MODEL + path, aiProcess_Triangulate | aiProcess_FlipUVs);
+        const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
         if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -48,6 +48,7 @@ namespace PositronEngine
 
         _directory = path.substr(0, path.find_last_of('/'));
         processNode(scene->mRootNode, scene);
+        LOG_INFORMATION("DIRECTORY -> {0}", _directory);
 
     }
 
@@ -151,29 +152,23 @@ namespace PositronEngine
 
             for(size_t i = 0; i < diffuse_paths.size(); i++)
             {
-                diffuse_textures.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + diffuse_paths[i]).c_str(),
+                diffuse_textures.push_back(Texture2D((_directory + '/' + diffuse_paths[i]).c_str(),
                                                              TextureType::diffuse));
             }
 
             for(size_t i = 0; i < normal_paths.size(); i++)
             {
-                normal_textures.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + normal_paths[i]).c_str(),
+                normal_textures.push_back(Texture2D((_directory + '/' + normal_paths[i]).c_str(),
                                                              TextureType::normal));
             }
 
             for(size_t i = 0; i < roughness_paths.size(); i++)
             {
-                roughnes_textures.push_back(Texture2D((PATH_TO_MODEL + _directory + '/' + roughness_paths[i]).c_str(),
+                roughnes_textures.push_back(Texture2D((_directory + '/' + roughness_paths[i]).c_str(),
                                                              TextureType::roughness));
             }
-
-            LOG_INFORMATION("diffuse maps count -> {0}", diffuse_paths.size());
-            LOG_INFORMATION("normal maps count -> {0}", normal_paths.size());
-            LOG_INFORMATION("specular maps count -> {0}", roughness_paths.size());
         }
 
-        LOG_INFORMATION("VERTICES COUNT -> {0}", vertices.size());
-        LOG_INFORMATION("INDICES COUNT -> {0}", indices.size());
         return std::make_shared<Mesh>(vertices, indices);
     }
 
@@ -278,7 +273,7 @@ namespace PositronEngine
             {
                 _material->getShaderProgram()->bind();
 
-                if(diffuse_textures.size() > i)
+                if(i < diffuse_textures.size())
                 {
                     _material->getShaderProgram()->setBool("has_color_map", true);
                     diffuse_textures[i].bindUnit(0);

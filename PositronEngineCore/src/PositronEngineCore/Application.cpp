@@ -26,11 +26,11 @@
 #include "PositronEngineCore/LightSources/SpotLight.hpp"
 
 #include <imgui/imgui.h>
+#include <ImGuiFileDialog.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_glfw.h>
-#include <list>
 
 namespace PositronEngine
 {
@@ -40,9 +40,6 @@ namespace PositronEngine
     bool bloom_activate = false;
     bool draw_without_mesh = false;
     bool draw_skybox = true;
-
-    int selectedObject;
-    int selectedLightObject;
 
     bool is_primitive_changed = true;
     bool is_light_changed = true;
@@ -241,8 +238,11 @@ namespace PositronEngine
         _scene->getObjects()[2]->setMaterial(concrete);
 
 
-        _scene->addObject(std::make_unique<Model>("yorha_number_2_type_b/scene.gltf", "2B"));
-        _scene->addObject(std::make_unique<Model>("vr_room_-_art_gallery/scene.gltf", "SCENE"));
+        _scene->addObject(std::make_unique<Model>("/home/n0rr/Desctop/C++/PositronEngine/ResourceFiles/Models/yorha_number_2_type_b/scene.gltf",
+                                                  "2B"));
+        _scene->addObject(std::make_unique<Model>("/home/n0rr/Desctop/C++/PositronEngine/ResourceFiles/Models/vr_room_-_art_gallery/scene.gltf",
+                                                  "SCENE"));
+
         _scene->getObjects()[4]->setScale(2.0f, 2.0f, 2.0f);
 
         _scene->addLightObject(std::make_unique<DirectionLight>("dir"));
@@ -593,8 +593,8 @@ namespace PositronEngine
                 is_primitive_changed = true;
                 objectNameBuffer[0] = '\0';
             }
-            ImGui::SameLine();
 
+            ImGui::SameLine();
             if(ImGui::Button("Add Sphere"))
             {
                 _scene->addObject(std::make_unique<SpherePrimitive>(std::string(objectNameBuffer)));
@@ -603,12 +603,35 @@ namespace PositronEngine
                 is_primitive_changed = true;
                 objectNameBuffer[0] = '\0';
             }
-            ImGui::SameLine();
 
+            ImGui::SameLine();
             if(ImGui::Button("Add Plate"))
             {
                 _scene->addObject(std::make_unique<PlatePrimitive>(std::string(objectNameBuffer)));
                 _scene->getObjects().back()->setMaterial(stone);
+
+                is_primitive_changed = true;
+                objectNameBuffer[0] = '\0';
+            }
+
+            if (ImGui::Button("Add Model"))
+            {
+                IGFD::FileDialogConfig config;
+                config.path = "../../ResourceFiles/Models/";
+                config.sidePaneWidth = 800; // Ширина окна
+                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*,.obj,.fbx,.gltf", config);
+            }
+
+            if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+            {
+                if (ImGuiFileDialog::Instance()->IsOk())
+                {
+                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+
+                    _scene->addObject(std::make_unique<Model>(filePathName.c_str(), std::string(objectNameBuffer)));
+                }
+
+                ImGuiFileDialog::Instance()->Close();
 
                 is_primitive_changed = true;
                 objectNameBuffer[0] = '\0';
@@ -648,21 +671,22 @@ namespace PositronEngine
                 if (ImGui::TreeNode("Objects")) {
                     for(size_t i = 0; i < _scene->getObjects().size(); i++)
                     {
-                        if (ImGui::Selectable(_scene->getObjects()[i]->getName().c_str(), selectedObject == i))
+                        if (ImGui::Selectable(_scene->getObjects()[i]->getName().c_str(), _scene->getSelectedObjectIndex() == i))
                         {
-                            selectedObject = i;
-                            selectedLightObject = -1;
+                            _scene->setSelectedObjectIndex(i);
+                            _scene->setSelectedLightObjectIndex(-1);
                         }
+
                     }
                     ImGui::TreePop();
                 }
                 if (ImGui::TreeNode("Light Objects")) {
                     for(size_t l = 0; l < _scene->getLightObjects().size(); l++)
                     {
-                        if (ImGui::Selectable(_scene->getLightObjects()[l]->getName().c_str(), selectedLightObject == l))
+                        if (ImGui::Selectable(_scene->getLightObjects()[l]->getName().c_str(), _scene->getSelectedLightObjectIndex() == l))
                         {
-                            selectedLightObject = l;
-                            selectedObject = -1;
+                            _scene->setSelectedObjectIndex(-1);
+                            _scene->setSelectedLightObjectIndex(l);
                         }
                     }
                     ImGui::TreePop();
@@ -685,199 +709,218 @@ namespace PositronEngine
             ImGui::End();
 
             ImGui::Begin("Properties");
-
-            if(selectedObject >= 0)
+            if(_scene->getSelectedObject())
             {
-                ImGui::Text("OBJECT - ");
-                ImGui::SameLine();
-                ImGui::Text("%s", _scene->getObjects()[selectedObject]->getName().c_str());
-                ImGui::SameLine();
-                if(ImGui::Button("DELETE"))
+                if(_scene->getObjects().size() > 0)
                 {
-                    _scene->removeObjectByName(_scene->getObjects()[selectedObject]->getName());
-                    is_primitive_changed = true;
+                    ImGui::Text("OBJECT - ");
+                    ImGui::SameLine();
+                    ImGui::Text("%s", _scene->getSelectedObject()->getName().c_str());
+                    ImGui::SameLine();
+
+                    if(ImGui::Button("DELETE"))
+                    {
+                        _scene->removeObjectByName(_scene->getSelectedObject()->getName());
+                        is_primitive_changed = true;
+
+                    }
                 }
 
-                ImGui::Spacing();
-                ImGui::Text("LOCATION:");
-
-                ImGui::Text("X:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##XSlider", &_scene->getObjects()[selectedObject]->getLocation()[0], -25.0f, 25.0f))
-                    is_primitive_changed = true;
-
-                ImGui::SameLine();
-                ImGui::Text("Y:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##YSlider", &_scene->getObjects()[selectedObject]->getLocation()[1], -25.0f, 25.0f))
-                    is_primitive_changed = true;
-
-                ImGui::SameLine();
-                ImGui::Text("Z:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##ZSlider", &_scene->getObjects()[selectedObject]->getLocation()[2], -25.0f, 25.0f))
-                    is_primitive_changed = true;
-
-                ImGui::Spacing();
-                ImGui::Text("ROTATION:");
-
-                ImGui::Text("X:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##XRSlider", &_scene->getObjects()[selectedObject]->getRotation()[0], -360.0f, 360.0f))
-                    is_primitive_changed = true;
-
-                ImGui::SameLine();
-                ImGui::Text("Y:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##YRSlider", &_scene->getObjects()[selectedObject]->getRotation()[1], -360.0f, 360.0f))
-                    is_primitive_changed = true;
-
-                ImGui::SameLine();
-                ImGui::Text("Z:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##ZRSlider", &_scene->getObjects()[selectedObject]->getRotation()[2], -360.0f, 360.0f))
-                    is_primitive_changed = true;
-
-                ImGui::Spacing();
-                ImGui::Text("SCALE:");
-
-                ImGui::Text("X:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##XSSlider", &_scene->getObjects()[selectedObject]->getScale()[0], -3.0f, 3.0f))
-                    is_primitive_changed = true;
-
-                ImGui::SameLine();
-                ImGui::Text("Y:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##YSSlider", &_scene->getObjects()[selectedObject]->getScale()[1], -3.0f, 3.0f))
-                    is_primitive_changed = true;
-
-                ImGui::SameLine();
-                ImGui::Text("Z:");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(120);
-                if (ImGui::SliderFloat("##ZSSlider", &_scene->getObjects()[selectedObject]->getScale()[2], -3.0f, 3.0f))
-                    is_primitive_changed = true;
-
-                ImGui::Spacing();
-                ImGui::Text("MATERIAL:");
-                if(ImGui::SliderFloat("ambient_factor", _scene->getObjects()[selectedObject]->getMaterial()->getAmbientFactor(), 0.0f, 2.0f))
-                    _scene->getObjects()[selectedObject]->getMaterial()->setAmbientFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getAmbientFactor());
-
-                if(ImGui::SliderFloat("diffuse_factor", _scene->getObjects()[selectedObject]->getMaterial()->getDiffuseFactor(), 0.0f, 2.0f))
-                    _scene->getObjects()[selectedObject]->getMaterial()->setDiffuseFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getDiffuseFactor());
-
-                if(!_scene->getObjects()[selectedObject]->getMaterial()->checkRoughnessMap())
-                    if(ImGui::SliderFloat("roughness", _scene->getObjects()[selectedObject]->getMaterial()->getRoughnessFactor(), 1.0f, 128.0f))
-                        _scene->getObjects()[selectedObject]->getMaterial()->setRoughnessFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getRoughnessFactor());
-
-                if(ImGui::SliderFloat("specular_factor", _scene->getObjects()[selectedObject]->getMaterial()->getSpecularFactor(), 0.0f, 1.0f))
-                    _scene->getObjects()[selectedObject]->getMaterial()->setSpecularFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getSpecularFactor());
-
-                if(ImGui::SliderFloat("metallic_factor", _scene->getObjects()[selectedObject]->getMaterial()->getMetallicFactor(), 0.0f, 1.0f))
-                    _scene->getObjects()[selectedObject]->getMaterial()->setMetallicFactor(*_scene->getObjects()[selectedObject]->getMaterial()->getMetallicFactor());
-            }
-            else
-            {
-                ImGui::Text("LIGHT OBJECT - ");
-                ImGui::SameLine();
-                ImGui::Text("%s", _scene->getLightObjects()[selectedLightObject]->getName().c_str());
-                ImGui::SameLine();
-                if(ImGui::Button("DELETE"))
-                {
-                    _scene->removeLightObjectByName(_scene->getLightObjects()[selectedLightObject]->getName());
-                    is_light_changed = true;
-                }
-
-                ImGui::Spacing();
-                ImGui::Text("LIGHT COLOR: ");
-                ImGui::ColorEdit3("color", _scene->getLightObjects()[selectedLightObject]->getColor());
-
-                if(_scene->getLightObjects()[selectedLightObject]->getLightType() != LightType::direction)
+                if(_scene->getSelectedObject())
                 {
                     ImGui::Spacing();
                     ImGui::Text("LOCATION:");
+
                     ImGui::Text("X:");
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(120);
-                    if (ImGui::SliderFloat("##XSlider", &_scene->getLightObjects()[selectedLightObject]->getLocation()[0], -25.0f, 25.0f))
-                        is_light_changed = true;
+                    if (ImGui::SliderFloat("##XSlider", &_scene->getSelectedObject()->getLocation()[0], -25.0f, 25.0f))
+                        is_primitive_changed = true;
 
                     ImGui::SameLine();
                     ImGui::Text("Y:");
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(120);
-                    if (ImGui::SliderFloat("##YSlider", &_scene->getLightObjects()[selectedLightObject]->getLocation()[1], -25.0f, 25.0f))
-                        is_light_changed = true;
+                    if (ImGui::SliderFloat("##YSlider", &_scene->getSelectedObject()->getLocation()[1], -25.0f, 25.0f))
+                        is_primitive_changed = true;
 
                     ImGui::SameLine();
                     ImGui::Text("Z:");
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(120);
-                    if (ImGui::SliderFloat("##ZSlider", &_scene->getLightObjects()[selectedLightObject]->getLocation()[2], -25.0f, 25.0f))
-                        is_light_changed = true;
-                }
+                    if (ImGui::SliderFloat("##ZSlider", &_scene->getSelectedObject()->getLocation()[2], -25.0f, 25.0f))
+                        is_primitive_changed = true;
 
-                if(_scene->getLightObjects()[selectedLightObject]->getLightType() != LightType::point)
-                {
                     ImGui::Spacing();
-                    ImGui::Text("DIRECTION:");
+                    ImGui::Text("ROTATION:");
 
                     ImGui::Text("X:");
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(120);
-                    if (ImGui::SliderFloat("##XDSlider", &_scene->getLightObjects()[selectedLightObject]->getDirection()[0], -20.0f, 20.0f))
-                        is_light_changed = true;
+                    if (ImGui::SliderFloat("##XRSlider", &_scene->getSelectedObject()->getRotation()[0], -360.0f, 360.0f))
+                        is_primitive_changed = true;
 
                     ImGui::SameLine();
                     ImGui::Text("Y:");
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(120);
-                    if (ImGui::SliderFloat("##YDSlider", &_scene->getLightObjects()[selectedLightObject]->getDirection()[1], -20.0f, 20.0f))
-                        is_light_changed = true;
+                    if (ImGui::SliderFloat("##YRSlider", &_scene->getSelectedObject()->getRotation()[1], -360.0f, 360.0f))
+                        is_primitive_changed = true;
 
                     ImGui::SameLine();
                     ImGui::Text("Z:");
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(120);
-                    if (ImGui::SliderFloat("##ZDSlider", &_scene->getLightObjects()[selectedLightObject]->getDirection()[2], -20.0f, 20.0f))
-                        is_light_changed = true;
-                }
+                    if (ImGui::SliderFloat("##ZRSlider", &_scene->getSelectedObject()->getRotation()[2], -360.0f, 360.0f))
+                        is_primitive_changed = true;
 
-                if(_scene->getLightObjects()[selectedLightObject]->getLightType() == LightType::point)
-                {
                     ImGui::Spacing();
-                    ImGui::Text("ADVANCED: ");
+                    ImGui::Text("SCALE:");
 
-                    if(ImGui::SliderFloat("linear_attenation",
-                        _scene->getLightObjects()[selectedLightObject]->getPtrLinearAttenuation() ,0.0f, 0.3f))
-                        is_light_changed = true;
+                    ImGui::Text("X:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##XSSlider", &_scene->getSelectedObject()->getScale()[0], -3.0f, 3.0f))
+                        is_primitive_changed = true;
 
-                    if(ImGui::SliderFloat("constant_attenation",
-                        _scene->getLightObjects()[selectedLightObject]->getPtrConstantAttenuation() ,0.0f, 0.3f))
-                        is_light_changed = true;
-                }
+                    ImGui::SameLine();
+                    ImGui::Text("Y:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##YSSlider", &_scene->getSelectedObject()->getScale()[1], -3.0f, 3.0f))
+                        is_primitive_changed = true;
 
-                if(_scene->getLightObjects()[selectedLightObject]->getLightType() == LightType::spot)
-                {
+                    ImGui::SameLine();
+                    ImGui::Text("Z:");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(120);
+                    if (ImGui::SliderFloat("##ZSSlider", &_scene->getSelectedObject()->getScale()[2], -3.0f, 3.0f))
+                        is_primitive_changed = true;
+
                     ImGui::Spacing();
-                    ImGui::Text("ADVANCED: ");
+                    ImGui::Text("MATERIAL:");
+                    if(ImGui::SliderFloat("ambient_factor", _scene->getSelectedObject()->getMaterial()->getAmbientFactor(), 0.0f, 2.0f))
+                        _scene->getSelectedObject()->getMaterial()->setAmbientFactor(*_scene->getSelectedObject()->getMaterial()->getAmbientFactor());
 
-                    if(ImGui::SliderFloat("Inner_cone", _scene->getLightObjects()[selectedLightObject]->getPtrInnerCone(),
-                        _scene->getLightObjects()[selectedLightObject]->getOuterCone(), 2.0f))
-                        is_light_changed = true;
+                    if(ImGui::SliderFloat("diffuse_factor", _scene->getSelectedObject()->getMaterial()->getDiffuseFactor(), 0.0f, 2.0f))
+                        _scene->getSelectedObject()->getMaterial()->setDiffuseFactor(*_scene->getSelectedObject()->getMaterial()->getDiffuseFactor());
 
-                    if(ImGui::SliderFloat("Outer_cone", _scene->getLightObjects()[selectedLightObject]->getPtrOuterCone(), 0.0f,
-                        _scene->getLightObjects()[selectedLightObject]->getInnerCone()))
-                        is_light_changed = true;
+                    if(!_scene->getSelectedObject()->getMaterial()->checkRoughnessMap())
+                        if(ImGui::SliderFloat("roughness", _scene->getSelectedObject()->getMaterial()->getRoughnessFactor(), 1.0f, 128.0f))
+                            _scene->getSelectedObject()->getMaterial()->setRoughnessFactor(*_scene->getSelectedObject()->getMaterial()->getRoughnessFactor());
+
+                    if(ImGui::SliderFloat("specular_factor", _scene->getSelectedObject()->getMaterial()->getSpecularFactor(), 0.0f, 1.0f))
+                        _scene->getSelectedObject()->getMaterial()->setSpecularFactor(*_scene->getSelectedObject()->getMaterial()->getSpecularFactor());
+
+                    if(ImGui::SliderFloat("metallic_factor", _scene->getSelectedObject()->getMaterial()->getMetallicFactor(), 0.0f, 1.0f))
+                        _scene->getSelectedObject()->getMaterial()->setMetallicFactor(*_scene->getSelectedObject()->getMaterial()->getMetallicFactor());
+                }
+            }
+            else if (_scene->getSelectedLightObject())
+            {
+                if(_scene->getLightObjects().size() > 0)
+                {
+                    ImGui::Text("LIGHT OBJECT - ");
+                    ImGui::SameLine();
+                    ImGui::Text("%s", _scene->getSelectedLightObject()->getName().c_str());
+                    ImGui::SameLine();
+
+                    if(_scene->getSelectedLightObject()->getLightType() != LightType::direction)
+                    {
+                        if(ImGui::Button("DELETE"))
+                        {
+                            _scene->removeLightObjectByName(_scene->getSelectedLightObject()->getName());
+                            is_light_changed = true;
+                        }
+                    }
+
+                    ImGui::Spacing();
+
+                    if(_scene->getSelectedLightObject())
+                    {
+                        ImGui::Spacing();
+                        ImGui::Text("LIGHT COLOR: ");
+                        ImGui::ColorEdit3("color", _scene->getSelectedLightObject()->getColor());
+
+                        if(_scene->getSelectedLightObject()->getLightType() != LightType::direction)
+                        {
+                            ImGui::Spacing();
+                            ImGui::Text("LOCATION:");
+                            ImGui::Text("X:");
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(120);
+                            if (ImGui::SliderFloat("##XSlider", &_scene->getSelectedLightObject()->getLocation()[0], -25.0f, 25.0f))
+                                is_light_changed = true;
+
+                            ImGui::SameLine();
+                            ImGui::Text("Y:");
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(120);
+                            if (ImGui::SliderFloat("##YSlider", &_scene->getSelectedLightObject()->getLocation()[1], -25.0f, 25.0f))
+                                is_light_changed = true;
+
+                            ImGui::SameLine();
+                            ImGui::Text("Z:");
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(120);
+                            if (ImGui::SliderFloat("##ZSlider", &_scene->getSelectedLightObject()->getLocation()[2], -25.0f, 25.0f))
+                                is_light_changed = true;
+                        }
+
+                        if(_scene->getSelectedLightObject()->getLightType() != LightType::point)
+                        {
+                            ImGui::Spacing();
+                            ImGui::Text("DIRECTION:");
+
+                            ImGui::Text("X:");
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(120);
+                            if (ImGui::SliderFloat("##XDSlider", &_scene->getSelectedLightObject()->getDirection()[0], -20.0f, 20.0f))
+                                is_light_changed = true;
+
+                            ImGui::SameLine();
+                            ImGui::Text("Y:");
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(120);
+                            if (ImGui::SliderFloat("##YDSlider", &_scene->getSelectedLightObject()->getDirection()[1], -20.0f, 20.0f))
+                                is_light_changed = true;
+
+                            ImGui::SameLine();
+                            ImGui::Text("Z:");
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(120);
+                            if (ImGui::SliderFloat("##ZDSlider", &_scene->getSelectedLightObject()->getDirection()[2], -20.0f, 20.0f))
+                                is_light_changed = true;
+                        }
+
+                        if(_scene->getSelectedLightObject()->getLightType() == LightType::point)
+                        {
+                            ImGui::Spacing();
+                            ImGui::Text("ADVANCED: ");
+
+                            if(ImGui::SliderFloat("linear_attenation",
+                                _scene->getSelectedLightObject()->getPtrLinearAttenuation() ,0.0f, 0.3f))
+                                is_light_changed = true;
+
+                            if(ImGui::SliderFloat("constant_attenation",
+                                _scene->getSelectedLightObject()->getPtrConstantAttenuation() ,0.0f, 0.3f))
+                                is_light_changed = true;
+                        }
+
+                        if(_scene->getSelectedLightObject()->getLightType() == LightType::spot)
+                        {
+                            ImGui::Spacing();
+                            ImGui::Text("ADVANCED: ");
+
+                            if(ImGui::SliderFloat("Inner_cone", _scene->getSelectedLightObject()->getPtrInnerCone(),
+                                _scene->getSelectedLightObject()->getOuterCone(), 2.0f))
+                                is_light_changed = true;
+
+                            if(ImGui::SliderFloat("Outer_cone", _scene->getSelectedLightObject()->getPtrOuterCone(), 0.0f,
+                                _scene->getSelectedLightObject()->getInnerCone()))
+                                is_light_changed = true;
+                        }
+                    }
                 }
             }
 
