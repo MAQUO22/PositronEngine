@@ -193,7 +193,7 @@ namespace PositronEngine
 
     void Texture2D::unbindUnit() const
     {
-        glBindTextureUnit(_id, 0);
+        glBindTextureUnit(0, _id);
     }
 
     Texture2D::Texture2D(Texture2D && texture) noexcept
