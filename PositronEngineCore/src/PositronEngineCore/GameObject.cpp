@@ -105,4 +105,9 @@ namespace PositronEngine
         return emp;
     }
 
+    ObjectType GameObject::getObjectType()
+    {
+        return ObjectType::unknown;
+    }
+
 }

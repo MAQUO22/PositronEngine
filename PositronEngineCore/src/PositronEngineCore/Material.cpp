@@ -5,6 +5,7 @@ namespace PositronEngine
 {
 
     Material::Material() :
+        _name("default"),
         _base_color(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),
         _metallic(0.0f), _specular(0.3f), _roughness(16.0f),
         _diffuse_factor(1.0f), _ambient_factor(0.3f),
@@ -30,7 +31,8 @@ namespace PositronEngine
         _shader_program->setFloat("ambient_factor", _ambient_factor);
     }
 
-    Material::Material(std::vector<Texture2D>& textures) :
+    Material::Material(std::string name, std::vector<Texture2D>& textures) :
+        _name(name),
         _base_color(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),
         _metallic(0.0f), _specular(0.3f), _roughness(16.0f),
         _diffuse_factor(1.0f), _ambient_factor(0.3f),
@@ -281,6 +283,11 @@ namespace PositronEngine
         // getShaderProgram()->setBool("has_normal_map", _has_normal_map);
         // getShaderProgram()->setBool("has_roughness_map", _has_roughness_map);
 
+    }
+
+    std::string Material::getName()
+    {
+        return _name;
     }
 
     std::shared_ptr<ShaderProgram> Material::getShaderProgram()

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <PositronEngineCore/RenderOpenGL.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <filesystem>
 
 
 namespace PositronEngine
@@ -35,6 +36,21 @@ namespace PositronEngine
         throw(errno);
     }
 
+    std::string getDirectoryFromPath(const std::string& path)
+    {
+        std::size_t lastSlashPos = path.find_last_of('/');
+        std::size_t lastBackslashPos = path.find_last_of('\\');
+
+        if (lastSlashPos == std::string::npos && lastBackslashPos == std::string::npos) {
+            // Нет символов '/', '\' в пути, возвращаем пустую строку
+            return "";
+        }
+
+        std::size_t lastSeparatorPos = (lastSlashPos != std::string::npos) ? lastSlashPos : lastBackslashPos;
+
+        return path.substr(0, lastSeparatorPos);
+    }
+
     void Model::loadModel(std::string path)
     {
         Assimp::Importer importer;
@@ -46,7 +62,8 @@ namespace PositronEngine
             return;
         }
 
-        _directory = path.substr(0, path.find_last_of('/'));
+        _is_loaded = true;
+        _directory = getDirectoryFromPath(path);
         processNode(scene->mRootNode, scene);
         LOG_INFORMATION("DIRECTORY -> {0}", _directory);
 
@@ -55,6 +72,7 @@ namespace PositronEngine
     Model::Model(const char* file_name, std::string name)
     {
         _name = name;
+        _type = ObjectType::model;
         loadModel(file_name);
         _material = std::make_shared<Material>();
     }
@@ -188,6 +206,16 @@ namespace PositronEngine
        return _name;
     }
 
+    ObjectType Model::getObjectType()
+    {
+        return _type;
+    }
+
+    bool Model::checkSuccessUpload()
+    {
+        return _is_loaded;
+    }
+
     void Model::draw(Camera& camera, std::vector<std::unique_ptr<LightObject>>& light_sources)
     {
         if(_material == nullptr)
@@ -318,7 +346,6 @@ namespace PositronEngine
         shader_program->setMatrix4("lightSpaceMatrix", space_matrix);
         shader_program->setMatrix4("model", getModelMatrix());
 
-        LOG_INFORMATION("MESHES SIZE -> {0}", _meshes.size());
         for(int i = 0; i < _meshes.size(); i++)
         {
             RenderOpenGL::draw(*_meshes[i]->getVertexArray());

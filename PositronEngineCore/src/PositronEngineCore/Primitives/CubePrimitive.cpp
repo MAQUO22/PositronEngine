@@ -76,6 +76,7 @@ namespace PositronEngine
          std::vector<GLuint> ind(Cube::indices, Cube::indices + sizeof(Cube::indices) / sizeof(GLuint));
 
         _name = name;
+        _type = ObjectType::primitive;
         _mesh = std::make_shared<Mesh>(verts, ind);
     }
 
@@ -227,6 +228,11 @@ namespace PositronEngine
     std::string CubePrimitive::getName()
     {
         return _name;
+    }
+
+    ObjectType CubePrimitive::getObjectType()
+    {
+        return _type;
     }
 
     void CubePrimitive::setMaterial(const std::shared_ptr<Material>& material)

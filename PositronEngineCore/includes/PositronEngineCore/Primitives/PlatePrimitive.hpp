@@ -27,9 +27,11 @@ namespace PositronEngine
             std::unique_ptr<Mesh> getMesh();
 
             std::string getName() override;
+            ObjectType getObjectType() override;
 
         private:
             std::string _name;
+            ObjectType _type;
             std::unique_ptr<Mesh> _mesh;
             std::shared_ptr<Material> _material;
 

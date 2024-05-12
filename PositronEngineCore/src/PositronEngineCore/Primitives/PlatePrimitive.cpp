@@ -34,6 +34,7 @@ namespace PositronEngine
          std::vector<GLuint> ind(Plate::indices, Plate::indices + sizeof(Plate::indices) / sizeof(GLuint));
 
         _name = name;
+        _type = ObjectType::primitive;
         _mesh = std::make_unique<Mesh>(verts, ind);
 
     }
@@ -185,6 +186,11 @@ namespace PositronEngine
     std::string PlatePrimitive::getName()
     {
         return _name;
+    }
+
+    ObjectType PlatePrimitive::getObjectType()
+    {
+        return _type;
     }
 
     void PlatePrimitive::setMaterial(const std::shared_ptr<Material>& material)

@@ -211,20 +211,30 @@ namespace PositronEngine
 
         std::vector<Texture2D> textures_light;
 
-        std::shared_ptr<Material> rock = std::make_shared<Material>(textures_rock);
-        std::shared_ptr<Material> brick = std::make_shared<Material>(textures_brick);
-        std::shared_ptr<Material> stone = std::make_shared<Material>(textures_stone);
-        std::shared_ptr<Material> concrete = std::make_shared<Material>(textures_concrete);
-        std::shared_ptr<Material> paving = std::make_shared<Material>(textures_paving);
+        std::shared_ptr<Material> rock = std::make_shared<Material>("Rock", textures_rock);
+        std::shared_ptr<Material> brick = std::make_shared<Material>("Brick", textures_brick);
+        std::shared_ptr<Material> stone = std::make_shared<Material>("Stone",textures_stone);
+        std::shared_ptr<Material> concrete = std::make_shared<Material>("Concrete", textures_concrete);
+        std::shared_ptr<Material> paving = std::make_shared<Material>("Paving", textures_paving);
+
+        std::vector<std::shared_ptr<Material>> materials {rock, brick, stone, concrete, paving };
+
+        std::vector<std::string> materialNames;
+        std::vector<const char*> materialNamesCombo;
+        int selectedMaterialIndex = 0;
+
+        for (const auto& material : materials)
+        {
+            materialNames.push_back(material->getName().c_str());
+            LOG_INFORMATION("MAterial name -> {0}", materialNames.back());
+        }
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);
-
 
         _scene->addObject(std::make_unique<SpherePrimitive>("sphere"));
         _scene->getObjects()[0]->setLocation(0.0, 0.0, -2.0);
         _scene->getObjects()[0]->setScale(0.5, 0.5, 0.5);
         _scene->getObjects()[0]->setMaterial(brick);
-
 
         _scene->addObject(std::make_unique<CubePrimitive>("cube"));
         _scene->getObjects()[1]->setLocation(2.1, -2.1, 0.0);
@@ -236,14 +246,6 @@ namespace PositronEngine
         _scene->getObjects()[2]->setRotation(0.0, 90.0, 0.0);
         _scene->getObjects()[2]->setScale(1.0f, 10.0f, 10.0f);
         _scene->getObjects()[2]->setMaterial(concrete);
-
-
-        _scene->addObject(std::make_unique<Model>("/home/n0rr/Desctop/C++/PositronEngine/ResourceFiles/Models/yorha_number_2_type_b/scene.gltf",
-                                                  "2B"));
-        _scene->addObject(std::make_unique<Model>("/home/n0rr/Desctop/C++/PositronEngine/ResourceFiles/Models/vr_room_-_art_gallery/scene.gltf",
-                                                  "SCENE"));
-
-        _scene->getObjects()[4]->setScale(2.0f, 2.0f, 2.0f);
 
         _scene->addLightObject(std::make_unique<DirectionLight>("dir"));
         _scene->addLightObject(std::make_unique<PointLight>("point"));
@@ -618,7 +620,7 @@ namespace PositronEngine
             {
                 IGFD::FileDialogConfig config;
                 config.path = "../../ResourceFiles/Models/";
-                config.sidePaneWidth = 800; // Ширина окна
+                config.sidePaneWidth = 800;
                 ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*,.obj,.fbx,.gltf", config);
             }
 
@@ -627,8 +629,11 @@ namespace PositronEngine
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
                     std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-
-                    _scene->addObject(std::make_unique<Model>(filePathName.c_str(), std::string(objectNameBuffer)));
+                    auto model = std::make_unique<Model>(filePathName.c_str(), std::string(objectNameBuffer));
+                    if(model->checkSuccessUpload())
+                        _scene->addObject(std::move(model));
+                    else
+                        LOG_CRITICAL("MODEL - {0} HAS NOT BEEN LOADED", model->getName());
                 }
 
                 ImGuiFileDialog::Instance()->Close();
@@ -799,6 +804,23 @@ namespace PositronEngine
 
                     ImGui::Spacing();
                     ImGui::Text("MATERIAL:");
+
+                    if(_scene->getSelectedObject()->getObjectType() != ObjectType::model)
+                    {
+                        for (size_t i = 0; i < materialNames.size(); i++)
+                            materialNamesCombo.push_back(materialNames[i].c_str());
+
+                        if (ImGui::Combo("##MaterialsCombo", &selectedMaterialIndex, materialNamesCombo.data(), materialNamesCombo.size()))
+                        {
+                            if (selectedMaterialIndex >= 0 && selectedMaterialIndex < materials.size()) {
+                                _scene->getSelectedObject()->setMaterial(materials[selectedMaterialIndex]);
+                            }
+                        }
+
+                        materialNamesCombo.clear();
+                    }
+                    ImGui::Spacing();
+
                     if(ImGui::SliderFloat("ambient_factor", _scene->getSelectedObject()->getMaterial()->getAmbientFactor(), 0.0f, 2.0f))
                         _scene->getSelectedObject()->getMaterial()->setAmbientFactor(*_scene->getSelectedObject()->getMaterial()->getAmbientFactor());
 

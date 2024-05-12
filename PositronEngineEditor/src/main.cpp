@@ -14,8 +14,6 @@
 #include <backends/imgui_impl_opengl3.h>
 
 
-
-
 class PositronEditor : public PositronEngine::Application
 {
     public:

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
-
 #include "PositronEngineCore/ShaderProgram.hpp"
 #include "PositronEngineCore/Texture2D.hpp"
 
+#include <vector>
+#include <string>
 #include <memory>
 
 namespace PositronEngine
@@ -14,7 +14,7 @@ namespace PositronEngine
         public:
             Material();
 
-            Material(std::vector<Texture2D>& textures);
+            Material(std::string name,std::vector<Texture2D>& textures);
             ~Material() = default;
 
             void setBaseColor(const glm::vec4 base_color);
@@ -48,11 +48,14 @@ namespace PositronEngine
             void bindMaterialMaps();
             void unbindMaterialMaps();
 
+            std::string getName();
+
             std::shared_ptr<ShaderProgram> getShaderProgram();
             std::vector<Texture2D>& getTextures();
             void clearTextures();
 
         private:
+            std::string _name;
             glm::vec4 _base_color;
             float _metallic;
             float _specular;

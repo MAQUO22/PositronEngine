@@ -13,6 +13,13 @@ namespace PositronEngine
     class Material;
     class ShaderProgram;
 
+    enum class ObjectType
+    {
+        primitive,
+        model,
+        unknown
+    };
+
     class GameObject
     {
         public:
@@ -34,6 +41,7 @@ namespace PositronEngine
             float* getScale();
 
             virtual std::string getName();
+            virtual ObjectType getObjectType();
 
             glm::vec3 getLocationVec3();
             glm::vec3 getRotationVec3();
@@ -45,7 +53,6 @@ namespace PositronEngine
             virtual std::shared_ptr<Material> getMaterial();
 
         private:
-
             float _location[3] = {0.0f, 0.0f, 0.0f};
             float _rotation[3] = {0.0f, 0.0f, 0.0f};
             float _scale[3] = {1.0f, 1.0f, 1.0f};

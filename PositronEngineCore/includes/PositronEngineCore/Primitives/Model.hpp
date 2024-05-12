@@ -27,12 +27,18 @@ namespace PositronEngine
 
             void setMaterial(const std::shared_ptr<Material>& material) override;
             std::shared_ptr<Material> getMaterial() override;
+
             std::string getName() override;
+            ObjectType getObjectType() override;
+
+            bool checkSuccessUpload();
 
         private:
             const char* _file;
             std::string _name;
+            ObjectType _type;
             std::string _directory;
+            bool _is_loaded = false;
 
             std::shared_ptr<Material> _material;
 

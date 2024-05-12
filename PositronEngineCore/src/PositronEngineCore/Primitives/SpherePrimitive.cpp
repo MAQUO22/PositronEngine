@@ -43,6 +43,7 @@ namespace PositronEngine
         std::copy(_sphere->getIndices(), _sphere->getIndices() + _sphere->getIndexCount(), std::back_inserter(ind));
 
         _name = name;
+        _type = ObjectType::primitive;
         _mesh = std::make_shared<Mesh>(vertices, ind);
     }
 
@@ -199,6 +200,11 @@ namespace PositronEngine
     std::string SpherePrimitive::getName()
     {
         return _name;
+    }
+
+    ObjectType SpherePrimitive::getObjectType()
+    {
+        return _type;
     }
 }
 
