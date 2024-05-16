@@ -20,7 +20,6 @@ class PositronEditor : public PositronEngine::Application
         double initial_mouse_position_x = 0.0f;
         double initial_mouse_position_y = 0.0f;
 
-
         ~PositronEditor()
         {
         }

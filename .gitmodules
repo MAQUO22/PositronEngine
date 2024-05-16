@@ -10,3 +10,6 @@
 [submodule "submodules/glm"]
 	path = submodules/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "submodules/gTests"]
+	path = submodules/gTests
+	url = https://github.com/google/googletest.git

@@ -7,5 +7,6 @@ set(CMAKE_PROJECT_INCLUDE_BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EnableCMP004
 add_subdirectory(subproj/)
 add_subdirectory(PositronEngineCore)
 add_subdirectory(PositronEngineEditor)
+add_subdirectory(Tests)
 
 unset(CMAKE_PROJECT_INCLUDE_BEFORE)
