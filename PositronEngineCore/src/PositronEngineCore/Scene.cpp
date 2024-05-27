@@ -1,4 +1,5 @@
 #include "PositronEngineCore/Scene.hpp"
+#include "PositronEngineCore/Log.hpp"
 #include <algorithm>
 
 namespace PositronEngine
@@ -10,12 +11,18 @@ namespace PositronEngine
 
     void Scene::addObject(std::unique_ptr<GameObject> object)
     {
-        _objects.emplace_back(std::move(object));
+        if(isObjectNameAlreadyExists(object->getName()))
+            LOG_CRITICAL("OBJECT WITH THIS NAME ALREADY EXISTS!");
+        else
+            _objects.emplace_back(std::move(object));
     }
 
     void Scene::addLightObject(std::unique_ptr<LightObject> light_object)
     {
-        _light_objects.emplace_back(std::move(light_object));
+        if(isLightObjectNameAlreadyExists(light_object->getName()))
+            LOG_CRITICAL("LIGHT OBJECT WITH THIS NAME ALREADY EXISTS!");
+        else
+            _light_objects.emplace_back(std::move(light_object));
     }
 
     void Scene::removeObjectByName(const std::string& name)
@@ -54,6 +61,28 @@ namespace PositronEngine
             auto it = _light_objects.begin() + index;
             removeLightObject(it);
         }
+    }
+
+    bool Scene::isObjectNameAlreadyExists(std::string name)
+    {
+        for (const auto& obj : _objects)
+        {
+            if (obj->getName() == name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool Scene::isLightObjectNameAlreadyExists(std::string name)
+    {
+        for (const auto& obj : _light_objects)
+        {
+            if (obj->getName() == name) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void Scene::removeObject(std::vector<std::unique_ptr<GameObject>>::iterator it)

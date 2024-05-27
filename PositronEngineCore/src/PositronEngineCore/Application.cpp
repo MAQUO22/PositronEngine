@@ -589,35 +589,57 @@ namespace PositronEngine
 
             ImGui::Text("Objects: ");
             if (ImGui::Button("Add Cube")) {
-                _scene->addObject(std::make_unique<CubePrimitive>(std::string(objectNameBuffer)));
-                _scene->getObjects().back()->setMaterial(stone);
+                if(std::string(objectNameBuffer).size() > 0)
+                {
+                    _scene->addObject(std::make_unique<CubePrimitive>(std::string(objectNameBuffer)));
+                    _scene->getObjects().back()->setMaterial(stone);
 
-                is_primitive_changed = true;
-                objectNameBuffer[0] = '\0';
+                    is_primitive_changed = true;
+                    objectNameBuffer[0] = '\0';
+                }
+                else
+                {
+                    LOG_CRITICAL("NAME FOR THIS OBJECT IS EMPTY!! PLEASE ENTER CORRECT NAME !");
+                }
             }
 
             ImGui::SameLine();
             if(ImGui::Button("Add Sphere"))
             {
-                _scene->addObject(std::make_unique<SpherePrimitive>(std::string(objectNameBuffer)));
-                _scene->getObjects().back()->setMaterial(stone);
+                if(std::string(objectNameBuffer).size() > 0)
+                {
+                    _scene->addObject(std::make_unique<SpherePrimitive>(std::string(objectNameBuffer)));
+                    _scene->getObjects().back()->setMaterial(stone);
 
-                is_primitive_changed = true;
-                objectNameBuffer[0] = '\0';
+                    is_primitive_changed = true;
+                    objectNameBuffer[0] = '\0';
+                }
+                else
+                {
+                    LOG_CRITICAL("NAME FOR THIS OBJECT IS EMPTY!! PLEASE ENTER CORRECT NAME !");
+                }
             }
 
             ImGui::SameLine();
             if(ImGui::Button("Add Plate"))
             {
-                _scene->addObject(std::make_unique<PlatePrimitive>(std::string(objectNameBuffer)));
-                _scene->getObjects().back()->setMaterial(stone);
+                if(std::string(objectNameBuffer).size() > 0)
+                {
+                    _scene->addObject(std::make_unique<PlatePrimitive>(std::string(objectNameBuffer)));
+                    _scene->getObjects().back()->setMaterial(stone);
 
-                is_primitive_changed = true;
-                objectNameBuffer[0] = '\0';
+                    is_primitive_changed = true;
+                    objectNameBuffer[0] = '\0';
+                }
+                else
+                {
+                    LOG_CRITICAL("NAME FOR THIS OBJECT IS EMPTY!! PLEASE ENTER CORRECT NAME !");
+                }
             }
 
             if (ImGui::Button("Add Model"))
             {
+
                 IGFD::FileDialogConfig config;
                 config.path = "../../ResourceFiles/Models/";
                 config.sidePaneWidth = 800;
@@ -628,12 +650,19 @@ namespace PositronEngine
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                    auto model = std::make_unique<Model>(filePathName.c_str(), std::string(objectNameBuffer));
-                    if(model->checkSuccessUpload())
-                        _scene->addObject(std::move(model));
+                    if(std::string(objectNameBuffer).size() > 0)
+                    {
+                        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                        auto model = std::make_unique<Model>(filePathName.c_str(), std::string(objectNameBuffer));
+                        if(model->checkSuccessUpload())
+                            _scene->addObject(std::move(model));
+                        else
+                            LOG_CRITICAL("MODEL - {0} HAS NOT BEEN LOADED", model->getName());
+                    }
                     else
-                        LOG_CRITICAL("MODEL - {0} HAS NOT BEEN LOADED", model->getName());
+                    {
+                        LOG_CRITICAL("NAME FOR THIS OBJECT IS EMPTY!! PLEASE ENTER CORRECT NAME !");
+                    }
                 }
 
                 ImGuiFileDialog::Instance()->Close();
@@ -649,11 +678,18 @@ namespace PositronEngine
             {
                 if(LightTypeCounter::getNumberOfPointLights() < max_light_sources_for_type)
                 {
-                    _scene->addLightObject(std::make_unique<PointLight>(std::string(objectNameBuffer)));
-                    _scene->getLightObjects().back()->setLightMaterial(light_material);
+                    if(std::string(objectNameBuffer).size() > 0)
+                    {
+                        _scene->addLightObject(std::make_unique<PointLight>(std::string(objectNameBuffer)));
+                        _scene->getLightObjects().back()->setLightMaterial(light_material);
 
-                    is_light_changed = true;
-                    objectNameBuffer[0] = '\0';
+                        is_light_changed = true;
+                        objectNameBuffer[0] = '\0';
+                    }
+                    else
+                    {
+                        LOG_CRITICAL("NAME FOR THIS LIGHT OBJECT IS EMPTY!! PLEASE ENTER CORRECT NAME !");
+                    }
                 }
             }
             ImGui::SameLine();
@@ -662,11 +698,18 @@ namespace PositronEngine
             {
                 if(LightTypeCounter::getNumberOfSpotLights() < max_light_sources_for_type)
                 {
-                    _scene->addLightObject(std::make_unique<SpotLight>(std::string(objectNameBuffer)));
-                    _scene->getLightObjects().back()->setLightMaterial(light_material);
+                    if(std::string(objectNameBuffer).size() > 0)
+                    {
+                        _scene->addLightObject(std::make_unique<SpotLight>(std::string(objectNameBuffer)));
+                        _scene->getLightObjects().back()->setLightMaterial(light_material);
 
-                    is_light_changed = true;
-                    objectNameBuffer[0] = '\0';
+                        is_light_changed = true;
+                        objectNameBuffer[0] = '\0';
+                    }
+                    else
+                    {
+                        LOG_CRITICAL("NAME FOR THIS LIGHT OBJECT IS EMPTY!! PLEASE ENTER CORRECT NAME !");
+                    }
                 }
             }
 
@@ -700,7 +743,7 @@ namespace PositronEngine
             }
             ImGui::End();
 
-            ImGui::Begin("Viewport");
+            ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar);
             ImVec2 viewport_size = ImGui::GetWindowSize();
             camera.setViewportSize(viewport_size.x, viewport_size.y);
             ImGui::Image((void*)(intptr_t)resultTextureID.getID(), viewport_size);
@@ -723,11 +766,13 @@ namespace PositronEngine
                     ImGui::Text("%s", _scene->getSelectedObject()->getName().c_str());
                     ImGui::SameLine();
 
-                    if(ImGui::Button("DELETE"))
+                    if(_scene->getObjects().size() > 1)
                     {
-                        _scene->removeObjectByName(_scene->getSelectedObject()->getName());
-                        is_primitive_changed = true;
-
+                        if(ImGui::Button("DELETE"))
+                        {
+                           _scene->removeObjectByName(_scene->getSelectedObject()->getName());
+                            is_primitive_changed = true;
+                        }
                     }
                 }
 
@@ -849,10 +894,14 @@ namespace PositronEngine
 
                     if(_scene->getSelectedLightObject()->getLightType() != LightType::direction)
                     {
-                        if(ImGui::Button("DELETE"))
+                        if(_scene->getLightObjects().size() > 1)
                         {
-                            _scene->removeLightObjectByName(_scene->getSelectedLightObject()->getName());
-                            is_light_changed = true;
+                            if(ImGui::Button("DELETE"))
+                            {
+                               _scene->removeLightObjectByName(_scene->getSelectedLightObject()->getName());
+                                is_light_changed = true;
+                            }
+
                         }
                     }
 

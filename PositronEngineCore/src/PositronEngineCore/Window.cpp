@@ -125,12 +125,12 @@ namespace PositronEngine
         glfwSetWindowSizeCallback(_window,
             [](GLFWwindow* window,int width, int height)
             {
-                WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
-                window_data._width = width;
-                window_data._heigth = height;
-
-                EventWindowResized event(width, height);
-                window_data._event_callback_function(event);
+                // WindowData& window_data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+                // window_data._width = width;
+                // window_data._heigth = height;
+                //
+                // EventWindowResized event(width, height);
+                // window_data._event_callback_function(event);
             });
 
         glfwSetCursorPosCallback(_window,

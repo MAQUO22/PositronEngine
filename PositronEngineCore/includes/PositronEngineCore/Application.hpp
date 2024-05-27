@@ -28,17 +28,15 @@ namespace PositronEngine
 
             glm::vec2 getCurrentCursorPosition() const;
 
-            Camera camera {glm::vec3(0.0f, 0.0f, 0.0f)};
+            Camera camera {glm::vec3(-5.0f, 0.0f, 0.0f)};
 
-            float camera_location[3] = {0.0f, 0.0f, 3.0f};
+            float camera_location[3] = {0.0f, 0.0f, 0.0f};
             float camera_rotation[3] = {0.0f, 0.0f, 0.0f};
 
             float camera_speed = 0.080f;
             float camera_FOV = 60.0f;
             float camera_near_plane = 0.1f;
             float camera_far_plane = 100.0f;
-
-
 
             bool is_perspective_mode = true;
 
@@ -48,6 +46,7 @@ namespace PositronEngine
 
             EventDispathcer _event_dispatcher;
             bool _is_window_alive = true;
+            bool _is_window_resized = true;
     };
 }
 

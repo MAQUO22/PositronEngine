@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <PositronEngineCore/Application.hpp>
 #include <PositronEngineCore/Primitives/CubePrimitive.hpp>
 #include <PositronEngineCore/Primitives/SpherePrimitive.hpp>
 #include <PositronEngineCore/Primitives/PlatePrimitive.hpp>
@@ -161,7 +162,8 @@ TEST(TextureTest, CreateShadowTexture)
     EXPECT_EQ(shadow_texture.getType(), PositronEngine::TextureType::shadow);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

@@ -51,5 +51,8 @@ namespace PositronEngine
 
             void removeObject(std::vector<std::unique_ptr<GameObject>>::iterator it);
             void removeLightObject(std::vector<std::unique_ptr<LightObject>>::iterator it);
+
+            bool isObjectNameAlreadyExists(std::string name);
+            bool isLightObjectNameAlreadyExists(std::string name);
     };
 }
