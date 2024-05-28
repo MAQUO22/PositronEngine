@@ -209,6 +209,21 @@ namespace PositronEngine
         textures_paving.push_back(Texture2D("paving_roughness.jpg", TextureType::roughness));
         textures_paving.push_back(Texture2D("paving_normal.jpg", TextureType::normal));
 
+        std::vector<Texture2D> textures_foil;
+        textures_foil.push_back(Texture2D("foil_color.jpg", TextureType::diffuse));
+        textures_foil.push_back(Texture2D("foil_roughness.jpg", TextureType::roughness));
+        textures_foil.push_back(Texture2D("foil_normal.jpg", TextureType::normal));
+
+        std::vector<Texture2D> textures_fabric;
+        textures_fabric.push_back(Texture2D("fabric_color.jpg", TextureType::diffuse));
+        textures_fabric.push_back(Texture2D("fabric_roughness.jpg", TextureType::roughness));
+        textures_fabric.push_back(Texture2D("fabric_normal.jpg", TextureType::normal));
+
+        std::vector<Texture2D> textures_grass;
+        textures_grass.push_back(Texture2D("grass_color.jpg", TextureType::diffuse));
+        textures_grass.push_back(Texture2D("grass_roughness.jpg", TextureType::roughness));
+        textures_grass.push_back(Texture2D("grass_normal.jpg", TextureType::normal));
+
         std::vector<Texture2D> textures_light;
 
         std::shared_ptr<Material> rock = std::make_shared<Material>("Rock", textures_rock);
@@ -216,8 +231,11 @@ namespace PositronEngine
         std::shared_ptr<Material> stone = std::make_shared<Material>("Stone",textures_stone);
         std::shared_ptr<Material> concrete = std::make_shared<Material>("Concrete", textures_concrete);
         std::shared_ptr<Material> paving = std::make_shared<Material>("Paving", textures_paving);
+        std::shared_ptr<Material> foil = std::make_shared<Material>("Foil", textures_foil);
+        std::shared_ptr<Material> fabric = std::make_shared<Material>("Fabric", textures_fabric);
+        std::shared_ptr<Material> grass = std::make_shared<Material>("Grass", textures_grass);
 
-        std::vector<std::shared_ptr<Material>> materials {rock, brick, stone, concrete, paving };
+        std::vector<std::shared_ptr<Material>> materials {rock, brick, stone, concrete, paving, foil, fabric, grass};
 
         std::vector<std::string> materialNames;
         std::vector<const char*> materialNamesCombo;
@@ -226,7 +244,7 @@ namespace PositronEngine
         for (const auto& material : materials)
         {
             materialNames.push_back(material->getName().c_str());
-            LOG_INFORMATION("MAterial name -> {0}", materialNames.back());
+            LOG_INFORMATION("Material name -> {0}", materialNames.back());
         }
 
         std::shared_ptr<LightMaterial> light_material = std::make_shared<LightMaterial>(textures_light);

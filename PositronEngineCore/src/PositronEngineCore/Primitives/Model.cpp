@@ -185,6 +185,8 @@ namespace PositronEngine
                 roughnes_textures.push_back(Texture2D((_directory + '/' + roughness_paths[i]).c_str(),
                                                              TextureType::roughness));
             }
+
+            LOG_INFORMATION("PATH -> {0}", diffuse_paths[0]);
         }
 
         return std::make_shared<Mesh>(vertices, indices);

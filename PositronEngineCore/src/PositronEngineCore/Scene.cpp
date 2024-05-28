@@ -131,8 +131,8 @@ namespace PositronEngine
 
     std::unique_ptr<GameObject>& Scene::getSelectedObject()
     {
-        if(_selected_object_index >= 0)
-            return _objects[_selected_object_index]; // Возвращает указатель на выбранный объект
+        if(_selected_object_index >= 0 && _selected_object_index < _objects.size())
+            return _objects[_selected_object_index];
         else
         {
             static std::unique_ptr<GameObject> null_ptr;
@@ -143,7 +143,7 @@ namespace PositronEngine
 
     std::unique_ptr<LightObject>& Scene::getSelectedLightObject()
     {
-        if(_selected_light_object_index >= 0)
+        if(_selected_light_object_index >= 0 && _selected_light_object_index < _light_objects.size())
             return _light_objects[_selected_light_object_index];
         else
         {
