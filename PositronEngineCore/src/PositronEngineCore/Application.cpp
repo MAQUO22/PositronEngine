@@ -94,7 +94,7 @@ namespace PositronEngine
         _event_dispatcher.addEventListener<EventWindowResized>(
             [&](EventWindowResized& event)
             {
-                LOG_INFORMATION("Event WINDOW_RESIZED is triggered. New window size is {0}x{1}", event.width, event.height);
+                //LOG_INFORMATION("Event WINDOW_RESIZED is triggered. New window size is {0}x{1}", event.width, event.height);
                 camera.setViewportSize(event.width, event.height);
             }
         );
@@ -112,7 +112,7 @@ namespace PositronEngine
             [](EventKeyPressed& event)
             {
                 Input::pressKey(event.key_code);
-                LOG_INFORMATION("Event KEY_PRESSED : Key '{0} is pressed'",static_cast<char>(event.key_code));
+                //LOG_INFORMATION("Event KEY_PRESSED : Key '{0} is pressed'",static_cast<char>(event.key_code));
             }
         );
 
@@ -120,16 +120,16 @@ namespace PositronEngine
             [](EventKeyReleased& event)
             {
                 Input::releaseKey(event.key_code);
-                LOG_INFORMATION("Event KEY_RELEASED : Key '{0} is released'",static_cast<char>(event.key_code));
+                //LOG_INFORMATION("Event KEY_RELEASED : Key '{0} is released'",static_cast<char>(event.key_code));
             }
         );
 
         _event_dispatcher.addEventListener<EventMouseButtonPressed>(
             [&](EventMouseButtonPressed& event)
             {
-                LOG_INFORMATION("Event MOUSE_BUTTON_PRESSED : Button '{0} is pressed (pos_x: {1}, pos_y: {2})'", static_cast<int>(event.mouse_button_code),
-                event.x,
-                event.y);
+                //LOG_INFORMATION("Event MOUSE_BUTTON_PRESSED : Button '{0} is pressed (pos_x: {1}, pos_y: {2})'", //static_cast<int>(event.mouse_button_code),
+                //event.x,
+                //event.y);
 
                 Input::pressMouseButton(event.mouse_button_code);
                 onMouseButtonEvent(event.mouse_button_code, event.x, event.y, true);
@@ -139,9 +139,9 @@ namespace PositronEngine
         _event_dispatcher.addEventListener<EventMouseButtonReleased>(
             [&](EventMouseButtonReleased& event)
             {
-                LOG_INFORMATION("Event MOUSE_BUTTON_RELEASED : Button '{0} is released (pos_x: {1}, pos_y: {2})'", static_cast<int>(event.mouse_button_code),
-                event.x,
-                event.y);
+                //LOG_INFORMATION("Event MOUSE_BUTTON_RELEASED : Button '{0} is released (pos_x: {1}, pos_y: {2})'", static_cast<int>(event.mouse_button_code),
+                //event.x,
+                //event.y);
 
                 Input::releaseMouseButton(event.mouse_button_code);
                 onMouseButtonEvent(event.mouse_button_code, event.x, event.y, false);
@@ -380,7 +380,7 @@ namespace PositronEngine
             {
                 if(is_light_changed || is_primitive_changed)
                 {
-                    LOG_INFORMATION("CHANGED");
+                    //LOG_INFORMATION("CHANGED");
                     //===============================================SHADOW_MAP_DIRECTION_LIGH==========================================================
 
 

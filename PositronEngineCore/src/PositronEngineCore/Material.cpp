@@ -45,7 +45,7 @@ namespace PositronEngine
 
         _textures = std::move(textures);
 
-        LOG_INFORMATION("TEXTURES SIZE -> {0}", _textures.size());
+        //LOG_INFORMATION("TEXTURES SIZE -> {0}", _textures.size());
 
         for(size_t i = 0; i < _textures.size(); i++)
         {

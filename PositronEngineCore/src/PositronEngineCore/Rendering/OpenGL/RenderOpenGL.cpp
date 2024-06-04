@@ -180,7 +180,7 @@ namespace PositronEngine
             double fps = _frame_count / _elapsed_time;
             _elapsed_time = 0.0f;
             _frame_count = 0;
-            LOG_INFORMATION("FPS: {0}",fps);
+            //LOG_INFORMATION("FPS: {0}",fps);
         }
     }
 

@@ -136,7 +136,7 @@ int main()
     auto scene = std::make_shared<PositronEngine::Scene>("scene1");
 
     application->setScene(scene); // Передача объекта сцены в приложение
-    application->start(1920, 1080, "Positron Engine Editor");
+    application->start(1280, 720, "Positron Engine Editor");
     std::cin.get();
     return 0;
 
